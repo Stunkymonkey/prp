@@ -92,6 +92,7 @@ dependencies = [
 name = "prp_pre"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "serde",
 ]
 
