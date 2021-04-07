@@ -5,7 +5,7 @@ pub fn read_file(
     file_path: &str,
     nodes: &mut Vec<Node>,
     edges: &mut Vec<Edge>,
-    edge_weights: &mut Vec<Weight>,
+    metrics: &mut Vec<String>,
 ) -> std::io::Result<()> {
     let mut node_amount = 0;
     let mut edge_amount = 0;
@@ -14,11 +14,26 @@ pub fn read_file(
     let mut reader = file_reader::BufReader::open(file_path)?;
     let mut buffer = String::new();
 
+    // iterate over comments
     while let Some(line) = reader.read_line(&mut buffer) {
-        if !line?.starts_with('#') {
+        let line = line?;
+        if line.starts_with('#') {
+            if line.starts_with("# metrics:") {
+                let line = line.trim().to_string();
+                // remove "# metrics:" from line
+                let metric_info: String = line.chars().skip("# metrics:".len()).collect();
+                for metric in metric_info.split(',') {
+                    if !metric.is_empty() {
+                        // remove commas and leading- and trailing-spaces
+                        metrics.push(metric.replace(',', "").trim().to_string());
+                    }
+                }
+            }
+        } else {
             break;
         }
     }
+
     if let Some(line) = reader.read_line(&mut buffer) {
         file_edge_dimensions = line?.trim().parse().unwrap();
     }
@@ -32,7 +47,6 @@ pub fn read_file(
     // allocate space for nodes & edges
     nodes.reserve_exact(node_amount);
     edges.reserve_exact(edge_amount);
-    edge_weights.reserve_exact(edge_amount * file_edge_dimensions);
 
     for _ in 0..node_amount {
         if let Some(line) = reader.read_line(&mut buffer) {
@@ -40,7 +54,9 @@ pub fn read_file(
             nodes.push(Node {
                 latitude: v[2].parse().unwrap(),
                 longitude: v[3].parse().unwrap(),
-                cluster: INVALID_CLUSTER,
+                rank: INVALID_RANK,
+                partition: None,
+                layer_height: INVALID_LAYER_HEIGHT,
             });
         }
     }
@@ -48,10 +64,16 @@ pub fn read_file(
     for _ in 0..edge_amount {
         if let Some(line) = reader.read_line(&mut buffer) {
             let v: Vec<&str> = line?.trim().split(' ').collect();
-            edges.push(Edge::new(v[0].parse().unwrap(), v[1].parse().unwrap()));
+            let mut edge_weights = Vec::new();
             for weight in v.iter().skip(2).take(file_edge_dimensions) {
                 edge_weights.push(weight.parse().unwrap());
             }
+
+            edges.push(Edge::new(
+                v[0].parse().unwrap(),
+                v[1].parse().unwrap(),
+                edge_weights,
+            ));
         }
     }
 

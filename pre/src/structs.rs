@@ -3,21 +3,24 @@ use std::cmp::Ordering;
 
 use crate::constants::*;
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug)]
 pub struct Node {
     pub latitude: f32,
     pub longitude: f32,
-    pub cluster: ClusterId,
+    pub rank: Rank,
+    #[serde(skip_serializing)]
+    pub partition: Option<PartitionId>,
+    pub layer_height: LayerHeight,
 }
 
-#[derive(Serialize, Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Serialize, Debug, Clone, PartialEq)]
 pub struct Edge {
-    pub source: NodeId,
-    pub target: NodeId,
+    pub from: NodeId,
+    pub to: NodeId,
     #[serde(skip_serializing)]
     pub id: Option<EdgeId>,
-    pub contrated_previous: Option<EdgeId>,
-    pub contrated_next: Option<EdgeId>,
+    pub weight: Vec<Weight>,
+    pub contrated_edges: Option<(EdgeId, EdgeId)>,
 }
 
 impl PartialOrd for Edge {
@@ -28,22 +31,67 @@ impl PartialOrd for Edge {
 
 impl Ord for Edge {
     fn cmp(&self, other: &Edge) -> Ordering {
-        self.source
-            .cmp(&other.source)
-            .then(self.target.cmp(&other.target))
-            .then(self.contrated_previous.cmp(&other.contrated_previous))
-            .then(self.contrated_next.cmp(&other.contrated_next))
+        self.from.cmp(&other.from).then(self.to.cmp(&other.to))
+    }
+}
+impl Eq for Edge {}
+
+impl Edge {
+    pub fn new(from: NodeId, to: NodeId, weight: Vec<Weight>) -> Self {
+        Edge {
+            from,
+            to,
+            id: None,
+            weight,
+            contrated_edges: None,
+        }
+    }
+    #[allow(dead_code)]
+    pub fn test(from: NodeId, to: NodeId, weight: Vec<Weight>, id: NodeId) -> Self {
+        Edge {
+            from,
+            to,
+            weight,
+            id: Some(id),
+            contrated_edges: None,
+        }
+    }
+    #[allow(dead_code)]
+    pub fn shortcut(
+        from: NodeId,
+        to: NodeId,
+        weight: Vec<Weight>,
+        previous: NodeId,
+        next: NodeId,
+        id: NodeId,
+    ) -> Self {
+        Edge {
+            from,
+            to,
+            weight,
+            id: Some(id),
+            contrated_edges: Some((previous, next)),
+        }
     }
 }
 
-impl Edge {
-    pub fn new(from: NodeId, to: NodeId) -> Self {
-        Edge {
-            source: from,
-            target: to,
-            id: None,
-            contrated_previous: None,
-            contrated_next: None,
-        }
-    }
+#[derive(Serialize)]
+pub struct GridBounds {
+    pub lat_min: f32,
+    pub lat_max: f32,
+    pub lng_min: f32,
+    pub lng_max: f32,
+}
+
+#[derive(Serialize)]
+pub struct BinFile {
+    pub nodes: Vec<Node>,
+    pub up_offset: Vec<EdgeId>,
+    pub down_offset: Vec<EdgeId>,
+    pub down_index: Vec<EdgeId>,
+    pub edges: Vec<Edge>,
+    pub grid_offset: Vec<GridId>,
+    pub grid: Vec<NodeId>,
+    pub grid_bounds: GridBounds,
+    pub metrics: Vec<String>,
 }

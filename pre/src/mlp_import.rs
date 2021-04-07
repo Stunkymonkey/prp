@@ -1,5 +1,5 @@
+use super::*;
 use crate::fmi_import::file_reader;
-use crate::structs::*;
 
 pub fn read_file(
     file_path: &str,
@@ -22,13 +22,17 @@ pub fn read_file(
         }
     }
 
+    let max_partition = mlp_layers.iter().product::<usize>();
+
     if let Some(line) = reader.read_line(&mut buffer) {
         node_amount = line?.trim().parse().unwrap();
     }
 
     for node in nodes.iter_mut().take(node_amount) {
         if let Some(line) = reader.read_line(&mut buffer) {
-            node.cluster = line?.trim().parse().unwrap();
+            let partition = line?.trim().parse().unwrap();
+            assert!(partition < max_partition);
+            node.partition = Some(partition);
         }
     }
 
