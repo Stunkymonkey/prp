@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+	integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+	crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+	integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+	crossorigin=""></script>
+	<link rel="stylesheet" href="style.css">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="shortcut icon" href="#">
+		<title>prp_web</title>
+	</head>
+	<body>
+		<div id="info">
+			<div class="input-wrapper">
+				<label-big>
+					<h4>Preferences</h4>
+				</label-big>
+				<label id="slidecontainer">
+				</label>
+			</div>
+			<button class="info-button search" onclick="query()">Search</button>
+		</div>
+		<div id="map"></div>
+		<div class="toast" id="invalid-request" style="display:none" onclick="hide_invalid_request()">Invalid Request</div>
+		<div class="toast" id="no-path-found" style="display:none" onclick="hide_no_path_found()">No Path found</div>
+		<div class="toast" id="select-start-and-end" style="display:block" onclick="hide_select_start_and_end()">Please select start and end on the map</div>
+		<div class="toast" id="result" style="display:none" onclick="hide_result()">Resulting cost</div>
+		<script src="leaflet_script.js"></script>
+	</body>
+</html>

@@ -1,7 +1,0 @@
-[package]
-name = "prp_web"
-version = "0.1.0"
-authors = ["Felix Buehler <account@buehler.rocks>"]
-edition = "2018"
-
-[dependencies]
