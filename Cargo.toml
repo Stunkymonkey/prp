@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "cluster",
+    "kmeans",
     "pre",
-    "web",
+    "query",
 ]
