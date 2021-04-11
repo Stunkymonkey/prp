@@ -5,13 +5,13 @@ use std::cmp::Ordering;
 #[derive(Copy, Clone)]
 pub struct MinHeapItem {
     pub node: NodeId,
-    pub dist: Weight,
+    pub dist: Cost,
     pub prev_edge: Option<EdgeId>,
 }
 
 // Manually implement Ord so we get a min-heap instead of a max-heap
 impl MinHeapItem {
-    pub fn new(node: NodeId, dist: Weight, prev_edge: Option<EdgeId>) -> MinHeapItem {
+    pub fn new(node: NodeId, dist: Cost, prev_edge: Option<EdgeId>) -> MinHeapItem {
         MinHeapItem {
             node,
             dist,
@@ -32,7 +32,6 @@ impl Ord for MinHeapItem {
         OrderedFloat(self.dist)
             .cmp(&OrderedFloat(other.dist))
             .reverse()
-        // self.dist.cmp(&other.dist).reverse()
     }
 }
 

@@ -19,7 +19,7 @@ pub struct Edge {
     pub to: NodeId,
     #[serde(skip_serializing)]
     pub id: Option<EdgeId>,
-    pub weight: Vec<Weight>,
+    pub cost: Vec<Cost>,
     pub contrated_edges: Option<(EdgeId, EdgeId)>,
 }
 
@@ -37,21 +37,21 @@ impl Ord for Edge {
 impl Eq for Edge {}
 
 impl Edge {
-    pub fn new(from: NodeId, to: NodeId, weight: Vec<Weight>) -> Self {
+    pub fn new(from: NodeId, to: NodeId, cost: Vec<Cost>) -> Self {
         Edge {
             from,
             to,
             id: None,
-            weight,
+            cost,
             contrated_edges: None,
         }
     }
     #[allow(dead_code)]
-    pub fn test(from: NodeId, to: NodeId, weight: Vec<Weight>, id: NodeId) -> Self {
+    pub fn test(from: NodeId, to: NodeId, cost: Vec<Cost>, id: NodeId) -> Self {
         Edge {
             from,
             to,
-            weight,
+            cost,
             id: Some(id),
             contrated_edges: None,
         }
@@ -60,7 +60,7 @@ impl Edge {
     pub fn shortcut(
         from: NodeId,
         to: NodeId,
-        weight: Vec<Weight>,
+        cost: Vec<Cost>,
         previous: NodeId,
         next: NodeId,
         id: NodeId,
@@ -68,7 +68,7 @@ impl Edge {
         Edge {
             from,
             to,
-            weight,
+            cost,
             id: Some(id),
             contrated_edges: Some((previous, next)),
         }

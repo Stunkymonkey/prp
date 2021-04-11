@@ -7,21 +7,21 @@ use std::collections::BinaryHeap;
 use valid_flag::*;
 
 #[derive(Clone)]
-pub struct Dijkstra {
-    dist: Vec<(Weight, Option<NodeId>)>,
+pub struct NDijkstra {
+    dist: Vec<(Cost, Option<NodeId>)>,
     heap: BinaryHeap<MinHeapItem>,
     visited: ValidFlag,
     last_from: NodeId,
-    last_pref: Vec<Weight>,
+    last_pref: Vec<Cost>,
 }
 
-impl Dijkstra {
+impl NDijkstra {
     /// general constructor
     pub fn new(amount_nodes: usize, dim: usize) -> Self {
-        let dist = vec![(WEIGHT_MAX, None); amount_nodes];
+        let dist = vec![(COST_MAX, None); amount_nodes];
         let heap = BinaryHeap::new();
         let visited = ValidFlag::new(amount_nodes);
-        Dijkstra {
+        NDijkstra {
             dist,
             heap,
             visited,
@@ -46,10 +46,10 @@ impl Dijkstra {
         offset: &[EdgeId],
         edges: &[Edge],
         with_path: bool,
-    ) -> Option<(Vec<NodeId>, Weight)> {
+    ) -> Option<(Vec<NodeId>, Cost)> {
         if self.last_from == from && same_array(&self.last_pref, &alpha) {
             if self.visited.is_valid(to) {
-                return self.resolve_path(to, &edges, with_path);
+                return Some(self.resolve_path(to, &edges, with_path));
             }
         } else {
             // If something changed, we initialize it normally
@@ -79,7 +79,7 @@ impl Dijkstra {
             for edge in graph_helper::get_up_edge_ids(node, &offset) {
                 let new_edge = &edges[edge];
                 println!("new_edge {:?}", new_edge);
-                let alt = dist + costs_by_alpha(&new_edge.weight, &alpha);
+                let alt = dist + costs_by_alpha(&new_edge.cost, &alpha);
                 println!("current_dist {:?}", self.dist[new_edge.to].0);
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
                     self.heap
@@ -89,32 +89,17 @@ impl Dijkstra {
 
             // found end
             if node == to {
-                return self.resolve_path(to, &edges, with_path);
+                return Some(self.resolve_path(to, &edges, with_path));
             }
         }
-        println!("self.visited.is_valid(2) {:?} ", self.visited.is_valid(2));
-        println!("self.visited.is_valid(to) {:?} ", self.visited.is_valid(to));
-        println!(
-            "self.resolve_path(to, &edges, with_path) {:?}",
-            self.resolve_path(to, &edges, with_path)
-        );
-        if self.visited.is_valid(to) {
-            return self.resolve_path(to, &edges, with_path);
-        } else {
-            None
-        }
+        None
     }
 
     /// recreate path backwards
-    fn resolve_path(
-        &self,
-        end: NodeId,
-        edges: &[Edge],
-        with_path: bool,
-    ) -> Option<(Vec<NodeId>, Weight)> {
+    fn resolve_path(&self, end: NodeId, edges: &[Edge], with_path: bool) -> (Vec<NodeId>, Cost) {
         let weight = self.dist[end].0;
         if !with_path {
-            return Some((Vec::new(), weight));
+            return (Vec::new(), weight);
         }
         let mut path = Vec::with_capacity(self.dist.len() / 2);
         let mut current_dist = self.dist[end];
@@ -123,7 +108,7 @@ impl Dijkstra {
             current_dist = self.dist[edges[prev].from];
         }
         path.reverse();
-        Some((path, weight))
+        (path, weight)
     }
 }
 
@@ -143,7 +128,7 @@ fn no_path() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 1);
+    let mut d = NDijkstra::new(amount_nodes, 1);
     let result = d.find_path(1, 0, vec![1.0], &up_offset, &edges, true);
 
     assert!(result.is_none());
@@ -171,7 +156,7 @@ fn simple_path() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 1);
+    let mut d = NDijkstra::new(amount_nodes, 1);
     let result = d.find_path(0, 2, vec![1.0], &up_offset, &edges, true);
 
     assert!(result.is_some());
@@ -205,7 +190,7 @@ fn shortest_path() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 1);
+    let mut d = NDijkstra::new(amount_nodes, 1);
     let result = d.find_path(0, 2, vec![1.0], &up_offset, &edges, true);
 
     assert!(result.is_some());
@@ -227,7 +212,7 @@ fn simple_line() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 1);
+    let mut d = NDijkstra::new(amount_nodes, 1);
 
     let result = d.find_path(3, 0, vec![1.0], &up_offset, &edges, true);
     assert!(result.is_none());
@@ -251,7 +236,7 @@ fn twice() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 1);
+    let mut d = NDijkstra::new(amount_nodes, 1);
 
     let result = d.find_path(0, 2, vec![1.0], &up_offset, &edges, true);
     assert!(result.is_some());
@@ -311,7 +296,7 @@ fn multiple_paths() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 1);
+    let mut d = NDijkstra::new(amount_nodes, 1);
 
     let result = d.find_path(4, 0, vec![1.0], &up_offset, &edges, true);
     assert!(result.is_none());
@@ -365,7 +350,7 @@ fn ndim() {
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
-    let mut d: Dijkstra = Dijkstra::new(amount_nodes, 2);
+    let mut d = NDijkstra::new(amount_nodes, 2);
 
     let result = d.find_path(0, 5, vec![1.0, 0.0], &up_offset, &edges, true);
     assert!(result.is_some());

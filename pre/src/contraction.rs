@@ -1,4 +1,5 @@
 use super::*;
+use ndijkstra::NDijkstra;
 use valid_flag::ValidFlag;
 
 use std::collections::BTreeSet;
@@ -14,7 +15,6 @@ fn layer_contraction(
     mut up_offset: &mut Vec<EdgeId>,
     mut down_offset: &mut Vec<EdgeId>,
     mut down_index: &mut Vec<EdgeId>,
-    mlp_layers: &[usize],
 ) {
     while !remaining_nodes.is_empty() {
         let get_independent_set_time = Instant::now();
@@ -34,23 +34,70 @@ fn layer_contraction(
                 get_independent_set_time.elapsed()
             );
         }
+        let mut mch = match mch::Contractor::new(
+            // dijkstra
+            |start, end, alpha| -> Vec<Cost> {
+                let mut d = NDijkstra::new(nodes.len(), edges[0].cost.len());
+                match d.find_path(start, end, alpha.to_vec(), &up_offset, &edges, false) {
+                    Some(costs) => vec![costs.1],
+                    None => vec![COST_MAX],
+                }
+            },
+            // to-edges
+            |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
+                let up_edge_ids = graph_helper::get_up_edge_ids(node_id, &up_offset);
+                let mut mch_edges = Vec::new();
+                for up_edge_id in up_edge_ids {
+                    let edge = &edges[up_edge_id];
+                    mch_edges.push(mch::Edge::new(
+                        edge.id.unwrap(),
+                        edge.from,
+                        edge.to,
+                        edge.cost.clone(),
+                    ))
+                }
+                mch_edges
+            },
+            // from-edges
+            |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
+                let down_edge_ids =
+                    graph_helper::get_down_edge_ids(node_id, &down_offset, &down_index);
+                let mut mch_edges = Vec::new();
+                for down_edge_id in down_edge_ids {
+                    let edge = &edges[down_edge_id];
+                    mch_edges.push(mch::Edge::new(
+                        edge.id.unwrap(),
+                        edge.from,
+                        edge.to,
+                        edge.cost.clone(),
+                    ))
+                }
+                mch_edges
+            },
+            //dims
+            edges[0].cost.len(),
+        ) {
+            Ok(mch) => mch,
+            Err(error) => {
+                panic!("error with mch (glpk): '{:?}'", error);
+            }
+        };
+        println!(
+            "mch::contract{:?}",
+            mch.contract(*remaining_nodes.iter().next().unwrap())
+        );
+
         /*
-        contract idependent set in parallel without looking what partition it really is
+        contract idependent set in parallel
         save new edges to new list
         make new graph (unsure about vectors)
         */
-        // mch::Contractor::new(
-        //     dijkstra: D,
-        //     to_edges: ToEdges,
-        //     from_edges: FromEdges,
-        //     dim: usize,
-        // );
         break;
     }
 }
 
 //TODO
-pub fn pch_contraction(
+pub fn prp_contraction(
     nodes: &mut Vec<Node>,
     mut edges: &mut Vec<Edge>,
     mut up_offset: &mut Vec<EdgeId>,
@@ -60,6 +107,12 @@ pub fn pch_contraction(
 ) {
     let mut independent_set_flags = ValidFlag::new(nodes.len());
     let mut heuristics = ordering::calculate_heuristics(nodes.len(), &up_offset, &down_offset);
+
+    // make edges have indices
+    edges
+        .par_iter_mut()
+        .enumerate()
+        .for_each(|(i, x)| x.id = Some(i));
 
     for layer_height in 0..=mlp_layers.len() {
         let mut remaining_nodes = BTreeSet::new();
@@ -77,7 +130,6 @@ pub fn pch_contraction(
             &mut up_offset,
             &mut down_offset,
             &mut down_index,
-            &mlp_layers,
         )
     }
 

@@ -54,10 +54,10 @@ fn main() {
         &down_index,
         &mlp_layers,
     );
-    println!("highest_diff in: {:?}", highest_diff_time.elapsed());
+    println!("MLP-Layer in: {:?}", highest_diff_time.elapsed());
 
     let contraction_time = Instant::now();
-    contraction::pch_contraction(
+    contraction::prp_contraction(
         &mut nodes,
         &mut edges,
         &mut up_offset,
