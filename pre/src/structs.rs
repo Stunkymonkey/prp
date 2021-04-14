@@ -61,16 +61,15 @@ impl Edge {
         from: NodeId,
         to: NodeId,
         cost: Vec<Cost>,
-        previous: NodeId,
-        next: NodeId,
         id: NodeId,
+        contrated_edges: (EdgeId, EdgeId),
     ) -> Self {
         Edge {
             from,
             to,
             cost,
             id: Some(id),
-            contrated_edges: Some((previous, next)),
+            contrated_edges: Some(contrated_edges),
         }
     }
 }

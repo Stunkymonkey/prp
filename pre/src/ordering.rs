@@ -7,16 +7,19 @@ use std::collections::BTreeSet;
 #[allow(dead_code)]
 pub fn calculate_single_heuristic(
     node: NodeId,
+    deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
 ) -> usize {
-    up_offset[node + 1] - up_offset[node] * down_offset[node + 1] - down_offset[node]
+    (up_offset[node + 1] - up_offset[node] * down_offset[node + 1] - down_offset[node])
+        + deleted_neighbors[node]
 }
 
 /// calculate heuristic in parallel
 #[allow(clippy::too_many_arguments)]
 pub fn calculate_heuristics(
     amount_nodes: usize,
+    deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
 ) -> Vec<usize> {
@@ -24,6 +27,7 @@ pub fn calculate_heuristics(
     for node_id in 0..amount_nodes {
         heuristics.push(calculate_single_heuristic(
             node_id,
+            deleted_neighbors,
             &up_offset,
             &down_offset,
         ));
@@ -36,11 +40,13 @@ pub fn calculate_heuristics(
 pub fn update_neighbor_heuristics(
     neighbors: Vec<NodeId>,
     heuristics: &mut Vec<usize>,
+    deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
 ) {
     for neighbor in neighbors {
-        heuristics[neighbor] = calculate_single_heuristic(neighbor, &up_offset, &down_offset);
+        heuristics[neighbor] =
+            calculate_single_heuristic(neighbor, deleted_neighbors, &up_offset, &down_offset);
     }
 }
 
