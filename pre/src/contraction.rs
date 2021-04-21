@@ -217,12 +217,11 @@ fn layer_contraction(
                 panic!("error with mch: '{:?}'", error);
             }
         };
-        let mut arc = Arc::new(Mutex::new(mch));
 
         let shortcuts: Vec<Edge> = minimas
-            .par_iter()
-            .map_with(arc.clone(), |mut arc, node| {
-                let mch_shortcuts = match arc.lock().unwrap().contract(*node) {
+            .iter()
+            .map(|node| {
+                let mch_shortcuts = match mch.contract(*node) {
                     Ok(ok) => ok,
                     Err(err) => panic!("contraction error: '{:?}'", err),
                 };
@@ -240,6 +239,30 @@ fn layer_contraction(
             })
             .flatten()
             .collect();
+
+        // let mut arc = Arc::new(Mutex::new(mch));
+
+        // let shortcuts: Vec<Edge> = minimas
+        //     .par_iter()
+        //     .map_with(arc.clone(), |mut arc, node| {
+        //         let mch_shortcuts = match arc.lock().unwrap().contract(*node) {
+        //             Ok(ok) => ok,
+        //             Err(err) => panic!("contraction error: '{:?}'", err),
+        //         };
+        //         let mut node_shortcuts = Vec::with_capacity(mch_shortcuts.len());
+        //         for shortcut in mch_shortcuts {
+        //             node_shortcuts.push(Edge::shortcut(
+        //                 shortcut.from,
+        //                 shortcut.to,
+        //                 shortcut.cost,
+        //                 shortcut_id.fetch_add(1, Ordering::SeqCst),
+        //                 shortcut.replaced_edges,
+        //             ));
+        //         }
+        //         node_shortcuts
+        //     })
+        //     .flatten()
+        //     .collect();
 
         if remaining_nodes.len() > 100_000 {
             println!("shortcuts time in: {:?}", shortcuts_time.elapsed());

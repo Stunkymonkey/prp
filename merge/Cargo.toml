@@ -1,0 +1,11 @@
+[package]
+name = "prp_merge"
+version = "0.1.0"
+authors = ["Felix Buehler <account@buehler.rocks>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.33"
+rand = "0.8"
+rayon = "1.5"
+ordered-float = "2.1"

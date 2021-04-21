@@ -1,0 +1,144 @@
+use super::*;
+
+/// fill offset array
+pub fn fill_offset(edges: Vec<NodeId>, offset: &mut Vec<usize>) {
+    for edge in edges {
+        offset[edge + 1] += 1;
+    }
+    for i in 1..offset.len() {
+        offset[i] += offset[i - 1];
+    }
+}
+
+/// make sure edges are already sorted!!
+#[allow(dead_code)]
+pub fn generate_offsets_unstable(
+    edges: &mut Vec<Edge>,
+    mut up_offset: &mut Vec<EdgeId>,
+    mut down_offset: &mut Vec<EdgeId>,
+    amount_nodes: usize,
+) -> Vec<EdgeId> {
+    up_offset.clear();
+    up_offset.resize(amount_nodes + 1, 0);
+    down_offset.clear();
+    down_offset.resize(amount_nodes + 1, 0);
+
+    // generate up edges
+    let sources: Vec<EdgeId> = edges.par_iter().map(|x| x.from).rev().collect();
+    fill_offset(sources, &mut up_offset);
+
+    // generate down edges, but without sorting edges
+    // first collect offsets
+    let targets: Vec<EdgeId> = edges.par_iter().map(|x| x.to).rev().collect();
+    fill_offset(targets, &mut down_offset);
+    let mut down_index = vec![INVALID_EDGE; edges.len()];
+    // fill offsets, where not already filled
+    for (i, edge) in edges.iter().enumerate() {
+        let start_index = down_offset[edge.to];
+        let end_index = down_offset[edge.to + 1];
+        for j in down_index.iter_mut().take(end_index).skip(start_index) {
+            if *j == INVALID_EDGE {
+                *j = i;
+                break;
+            }
+        }
+    }
+    down_index
+}
+
+#[allow(dead_code)]
+pub fn generate_offsets(
+    edges: &mut Vec<Edge>,
+    up_offset: &mut Vec<EdgeId>,
+    down_offset: &mut Vec<EdgeId>,
+    amount_nodes: usize,
+) -> Vec<EdgeId> {
+    edges.par_sort_unstable();
+    generate_offsets_unstable(edges, up_offset, down_offset, amount_nodes)
+}
+
+#[test]
+fn fill_offset_test() {
+    let mut offset = vec![0; 8];
+    let edges = vec![0, 0, 0, 2, 3, 4, 4, 4, 6];
+    fill_offset(edges, &mut offset);
+
+    assert_eq!(offset[0], 0);
+    assert_eq!(offset[1], 3);
+    assert_eq!(offset[2], 3);
+    assert_eq!(offset[3], 4);
+    assert_eq!(offset[4], 5);
+    assert_eq!(offset[5], 8);
+    assert_eq!(offset[6], 8);
+    assert_eq!(offset[7], 9);
+}
+
+#[test]
+fn all_offsets() {
+    //      7 -> 8 -> 9
+    //      |         |
+    // 0 -> 5 -> 6 -  |
+    // |         |  \ |
+    // 1 -> 2 -> 3 -> 4
+
+    let amount_nodes = 10;
+
+    let mut edges = Vec::<Edge>::new();
+    edges.push(Edge::new(0, 1));
+    edges.push(Edge::new(1, 2));
+    edges.push(Edge::new(2, 3));
+    edges.push(Edge::new(3, 4));
+    edges.push(Edge::new(0, 5));
+    edges.push(Edge::new(5, 6));
+    edges.push(Edge::new(6, 4));
+    edges.push(Edge::new(6, 3));
+    edges.push(Edge::new(5, 7));
+    edges.push(Edge::new(7, 8));
+    edges.push(Edge::new(8, 9));
+    edges.push(Edge::new(9, 4));
+
+    let mut up_offset = Vec::<EdgeId>::new();
+    let mut down_offset = Vec::<EdgeId>::new();
+    edges.par_sort_unstable();
+    let down_index =
+        offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
+
+    println!("{:?}", up_offset);
+
+    assert_eq!(up_offset[0], 0);
+    assert_eq!(up_offset[1], 2);
+    assert_eq!(up_offset[2], 3);
+    assert_eq!(up_offset[3], 4);
+    assert_eq!(up_offset[4], 5);
+    assert_eq!(up_offset[5], 5);
+    assert_eq!(up_offset[6], 7);
+    assert_eq!(up_offset[7], 9);
+    assert_eq!(up_offset[8], 10);
+    assert_eq!(up_offset[9], 11);
+    assert_eq!(up_offset[10], 12);
+
+    assert_eq!(down_offset[0], 0);
+    assert_eq!(down_offset[1], 0);
+    assert_eq!(down_offset[2], 1);
+    assert_eq!(down_offset[3], 2);
+    assert_eq!(down_offset[4], 4);
+    assert_eq!(down_offset[5], 7);
+    assert_eq!(down_offset[6], 8);
+    assert_eq!(down_offset[7], 9);
+    assert_eq!(down_offset[8], 10);
+    assert_eq!(down_offset[9], 11);
+    assert_eq!(down_offset[10], 12);
+
+    assert_eq!(down_index[0], 0);
+    assert_eq!(down_index[1], 2);
+    assert_eq!(down_index[2], 3);
+    assert_eq!(down_index[3], 7);
+    assert_eq!(down_index[4], 4);
+    assert_eq!(down_index[5], 8);
+    assert_eq!(down_index[6], 11);
+    assert_eq!(down_index[7], 1);
+    assert_eq!(down_index[8], 5);
+    assert_eq!(down_index[9], 6);
+    assert_eq!(down_index[10], 9);
+    assert_eq!(down_index[11], 10);
+}
