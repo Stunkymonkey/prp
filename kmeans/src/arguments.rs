@@ -2,9 +2,9 @@ use clap::{App, Arg};
 
 pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
     let matches = App::new("prp-cluster")
-        .version("1.0.0")
+        .version(clap::crate_version!())
+        .author(clap::crate_authors!())
         .about("generates multi-layer-partition")
-        .author("Felix Bühler")
         .arg(
             Arg::with_name("graph-file")
                 .help("the input file to use")
