@@ -16,6 +16,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Fetch submodules
+      run: git submodule update --init --recursive
+    - name: Install glpk
+      run: sudo apt-get install libglpk-dev
     - name: Build
       run: cargo build --verbose
     - name: Run tests
