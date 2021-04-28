@@ -57,7 +57,7 @@ pub fn partition(clusters: &[usize], nodes: &mut Vec<Node>) -> Result<(), String
     Ok(())
 }
 
-pub fn make_cluster(
+fn make_cluster(
     k: usize,
     node_ids: &[NodeId],
     nodes: &[Node],
