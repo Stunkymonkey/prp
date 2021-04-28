@@ -5,8 +5,7 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::collections::{BTreeSet, BinaryHeap};
 use std::time::Instant;
 
-// TODO: test if edge removal of inner edges is better
-// TODO: test not using sets is faster?
+// TODO: test if edge removal of inner edges is good
 
 pub fn merge(
     partition_amounts: &mut Vec<usize>,
@@ -42,7 +41,10 @@ pub fn merge(
     let mut amount_layer: usize = 0;
 
     // save current_partition and amount of partitions
-    let mut results: Vec<(Vec<BTreeSet<NodeId>>, Vec<PartitionId>, usize)> = Vec::new();
+    let mut results: Vec<(Vec<BTreeSet<NodeId>>, usize)> = Vec::with_capacity(std::cmp::max(
+        partition_amounts.len(),
+        partition_sizes.len(),
+    ));
 
     for node_id in 0..nodes.len() {
         let mut new_partiton = BTreeSet::new();
@@ -108,9 +110,12 @@ pub fn merge(
         }
         amount_merges[set_a] += 1;
         amount_merges[set_b] += 1;
-        // combine both sets
-        sets[set_a] = sets[set_a].union(&sets[set_b]).cloned().collect();
-        sets[set_b] = BTreeSet::new();
+        // combine both sets and switch so the small get merged into the bigger
+        let mut merge_set = std::mem::take(&mut sets[set_b]);
+        if merge_set.len() > sets[set_a].len() {
+            std::mem::swap(&mut sets[set_a], &mut merge_set);
+        }
+        sets[set_a].extend(merge_set);
 
         heuristic_sum += heuristic;
 
@@ -155,10 +160,6 @@ pub fn merge(
         partition_amount -= 1;
         let partition_size = sets[set_a].len();
 
-        // if partition_amount % 1000 == 0 {
-        //     println!("partition_amount {:?}", partition_amount);
-        // }
-
         // check if saving of one layer is needed
         if (!partition_sizes.is_empty() && partition_sizes[amount_layer] <= partition_size)
             || (!partition_amounts.is_empty()
@@ -168,8 +169,12 @@ pub fn merge(
                     .product::<usize>()
                     >= partition_amount)
         {
+            println!(
+                "one layer finished with {:?} partitions and a maximum partition-size of {:?}",
+                partition_amount, partition_sizes[amount_layer]
+            );
             amount_layer += 1;
-            results.push((sets.clone(), current_partition.clone(), partition_amount));
+            results.push((sets.clone(), partition_amount));
         }
         // now the layers are all finished
         if amount_layer >= std::cmp::max(partition_sizes.len(), partition_amounts.len()) {
@@ -185,47 +190,48 @@ pub fn merge(
     drop(sets);
     drop(current_partition);
 
-    // write new sizes back (if option `-p` is used it should be the same as before)
-    let mut tmp: Vec<usize> = results
+    *partition_amounts = results
         .iter()
         .rev()
-        .map(|(_, _, partition_amount)| *partition_amount)
+        .map(|(_, partition_amount)| *partition_amount)
         .collect();
 
-    // divide, to get divider-numbers
-    let old_values = tmp.clone();
-    for (index, amount) in tmp.iter_mut().skip(1).enumerate() {
-        // round up division
-        *amount = *amount / old_values[index] + (*amount % old_values[index] != 0) as usize;
-    }
-    if !partition_amounts.is_empty() {
-        assert_eq!(tmp.len(), partition_amounts.len());
-    }
-    *partition_amounts = tmp;
+    // to check if all ids are correct
+    let maximum_id = partition_amounts.iter().product::<usize>();
 
-    // TODO test if correct
-    for node in nodes.into_iter() {
+    for node in nodes.iter_mut() {
         node.partition = 0;
     }
-    for (layer, (sets, current_partition, _)) in results.iter().rev().enumerate() {
-        let multiplier = partition_amounts
-            .iter()
-            .skip(1)
-            .take(partition_amounts.len() - layer)
-            .product::<usize>();
-        // println!("multiplier {:?}", multiplier);
-        for (s, set) in sets.iter().enumerate() {
+    // assign ids
+    for (i, (sets, _)) in results.iter().rev().enumerate() {
+        let offset = maximum_id
+            / partition_amounts
+                .iter()
+                .rev()
+                .take(i + 1)
+                .product::<usize>();
+        // lazy work to keep track how far each interval has been assigned (bigger then needed)
+        let mut set_amount = vec![0; maximum_id];
+        for set in sets {
             // skip empty sets
             if set.is_empty() {
                 continue;
             }
-            // get the id of the current set
-            let previous_id = nodes[set.iter().next().unwrap().clone()].partition;
+            // get the id of the set previously assigned
+            let previous_id = nodes[*set.iter().next().unwrap()].partition;
+            // println!("previous_id {:?}", previous_id);
+            // calculate the new id
+            let new_set_id = previous_id + (offset * set_amount[previous_id]);
+            // println!("new_set_id {:?}", new_set_id);
+
+            // check if ids are not exceeting the maximum
+            assert!(new_set_id <= maximum_id, "export-partition-id is too big");
 
             // set all nodes
             for node in set {
-                nodes[*node].partition = previous_id + s * multiplier;
+                nodes[*node].partition = new_set_id;
             }
+            set_amount[previous_id] += 1;
         }
     }
 
@@ -247,17 +253,8 @@ fn get_priority(
     edges: &[Edge],
     up_offset: &[EdgeId],
 ) -> f64 {
-    // TODO maybe collect nodes by iterating one time over all nodes and collect them
     let nodes_a = &sets[node_id_a];
     let nodes_b = &sets[node_id_b];
-
-    // let mut nodes_a: Vec<NodeId> = current_partition
-    //     .par_iter()
-    //     .enumerate()
-    //     .filter(|(_id, partition)| **partition == node_id_a)
-    //     .map(|(id, _partition)| id)
-    //     .collect();
-    // nodes_a.par_sort_unstable();
 
     // count amount of edges between both sets (bidirectional -> onsoly one side-comparison)
     let mut connecting_a_b = 0;
