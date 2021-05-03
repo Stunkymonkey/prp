@@ -67,6 +67,8 @@ fn main() {
     );
     println!("Contraction in: {:?}", contraction_time.elapsed());
 
+    let edge_costs: Vec<Cost> = edges.iter().map(|e| e.cost.clone()).flatten().collect();
+
     let grid_time = Instant::now();
     let mut grid_offset = Vec::<GridId>::new();
     let mut grid = Vec::<NodeId>::new();
@@ -80,6 +82,7 @@ fn main() {
         up_offset,
         down_index,
         down_offset,
+        edge_costs,
         grid,
         grid_offset,
         grid_bounds,

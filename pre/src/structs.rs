@@ -19,6 +19,7 @@ pub struct Edge {
     pub to: NodeId,
     #[serde(skip_serializing)]
     pub id: Option<EdgeId>,
+    #[serde(skip_serializing)]
     pub cost: Vec<Cost>,
     pub contrated_edges: Option<(EdgeId, EdgeId)>,
 }
@@ -89,6 +90,7 @@ pub struct BinFile {
     pub down_offset: Vec<EdgeId>,
     pub down_index: Vec<EdgeId>,
     pub edges: Vec<Edge>,
+    pub edge_costs: Vec<Cost>,
     pub grid_offset: Vec<GridId>,
     pub grid: Vec<NodeId>,
     pub grid_bounds: GridBounds,
