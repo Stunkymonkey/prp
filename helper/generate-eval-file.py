@@ -35,7 +35,7 @@ def main():
         next(fmireader)  # amount_edges
         for i in range(amount_nodes_fmi):
             tmp = next(fmireader)
-            nodes.append([tmp[2], tmp[3]])
+            nodes.append([float(tmp[2]), float(tmp[3])])
     # generate random
     rand_nodes = np.random.randint(amount_nodes_fmi, size=(args.count, 2))
     rand_pos = list()
