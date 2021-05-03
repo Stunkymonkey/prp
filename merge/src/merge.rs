@@ -219,10 +219,8 @@ pub fn merge(
             }
             // get the id of the set previously assigned
             let previous_id = nodes[*set.iter().next().unwrap()].partition;
-            // println!("previous_id {:?}", previous_id);
             // calculate the new id
             let new_set_id = previous_id + (offset * set_amount[previous_id]);
-            // println!("new_set_id {:?}", new_set_id);
 
             // check if ids are not exceeting the maximum
             assert!(new_set_id <= maximum_id, "export-partition-id is too big");
