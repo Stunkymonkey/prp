@@ -11,26 +11,31 @@ pub fn calculate_single_heuristic(
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
 ) -> usize {
-    (up_offset[node + 1] - up_offset[node] * down_offset[node + 1] - down_offset[node])
+    ((up_offset[node + 1] - up_offset[node]) * (down_offset[node + 1] - down_offset[node]))
         + deleted_neighbors[node]
 }
 
 /// calculate heuristic in parallel
 #[allow(clippy::too_many_arguments)]
 pub fn calculate_heuristics(
-    amount_nodes: usize,
+    layer_height: LayerHeight,
+    nodes: &[Node],
     deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
 ) -> Vec<usize> {
-    let mut heuristics: Vec<usize> = Vec::with_capacity(amount_nodes);
-    for node_id in 0..amount_nodes {
-        heuristics.push(calculate_single_heuristic(
-            node_id,
-            deleted_neighbors,
-            &up_offset,
-            &down_offset,
-        ));
+    let mut heuristics: Vec<usize> = Vec::with_capacity(nodes.len());
+    for node_id in 0..nodes.len() {
+        if nodes[node_id].layer_height != layer_height {
+            heuristics.push(std::usize::MAX);
+        } else {
+            heuristics.push(calculate_single_heuristic(
+                node_id,
+                deleted_neighbors,
+                &up_offset,
+                &down_offset,
+            ));
+        }
     }
     heuristics
 }
@@ -39,14 +44,18 @@ pub fn calculate_heuristics(
 #[allow(clippy::too_many_arguments)]
 pub fn update_neighbor_heuristics(
     neighbors: Vec<NodeId>,
+    layer_height: LayerHeight,
     heuristics: &mut Vec<usize>,
+    nodes: &[Node],
     deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
 ) {
     for neighbor in neighbors {
-        heuristics[neighbor] =
-            calculate_single_heuristic(neighbor, deleted_neighbors, &up_offset, &down_offset);
+        if nodes[neighbor].layer_height == layer_height {
+            heuristics[neighbor] =
+                calculate_single_heuristic(neighbor, deleted_neighbors, &up_offset, &down_offset);
+        }
     }
 }
 
@@ -62,12 +71,13 @@ pub fn get_independent_set(
 ) -> Vec<NodeId> {
     let subset: Vec<NodeId>;
     let mut remaining_nodes_vector: Vec<NodeId> = remaining_nodes.iter().copied().collect();
-    if remaining_nodes.len() > 10_000 {
+    if remaining_nodes.len() > 10 {
         // sort remaining_nodes via heuristic
-        remaining_nodes_vector.par_sort_by_key(|&node| heuristics[node]);
-        // take lower 1/4
-        // TODO maybe do this adaptive
-        subset = (&remaining_nodes_vector[0..remaining_nodes_vector.len() / 4]).to_vec();
+        remaining_nodes_vector.par_sort_unstable_by_key(|&node| heuristics[node]);
+
+        // take lower 1/8
+        // TODO maybe do this more adaptive
+        subset = (&remaining_nodes_vector[0..remaining_nodes_vector.len() / 10]).to_vec();
     } else {
         subset = remaining_nodes_vector;
     }
@@ -75,25 +85,29 @@ pub fn get_independent_set(
     minimas_bool.invalidate_all();
     // mark all neighbors with greater equal value as invalid
     for node in &subset {
+        let mut is_valid = true;
         for neighbor in
             graph_helper::get_all_neighbours(*node, &edges, &up_offset, &down_offset, &down_index)
         {
-            if !minimas_bool.is_valid(neighbor)
-                && neighbor != *node
-                && heuristics[*node] >= heuristics[neighbor]
+            if minimas_bool.is_valid(neighbor)
+                || *node == neighbor
+                || heuristics[*node] > heuristics[neighbor]
             {
-                minimas_bool.set_valid(*node);
+                is_valid = false;
+                break;
             }
+        }
+        if is_valid {
+            minimas_bool.set_valid(*node);
         }
     }
 
     // collect all indices of valid nodes
-    let result: Vec<NodeId> = subset
+    subset
         .par_iter()
-        .filter(|&node| !minimas_bool.is_valid(*node))
+        .filter(|&node| minimas_bool.is_valid(*node))
         .map(|node| *node)
-        .collect();
-    result
+        .collect()
 }
 
 #[test]
