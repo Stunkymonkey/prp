@@ -1,10 +1,10 @@
-use clap::{App, Arg};
+use clap::{crate_authors, crate_version, App, Arg};
 
 pub fn get_arguments() -> clap::Result<(String, String, String)> {
     let matches = App::new("prp-pre")
-        .version("0.1.0")
+        .version(crate_version!())
+        .author(crate_authors!())
         .about("generates overlay-graph")
-        .author("Felix Bühler")
         .arg(
             Arg::with_name("graph-file")
                 .help("the input file to use")
