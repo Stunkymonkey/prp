@@ -2,13 +2,13 @@ use super::*;
 
 /// get in what PartitionId it is on a specific layer
 pub fn get_partition_id_on_level(
-    node: NodeId,
+    node_id: NodeId,
     layer: usize,
     nodes: &[Node],
     mlp_layers: &[usize],
 ) -> PartitionId {
     let divisor = mlp_layers.iter().take(layer).product::<usize>();
-    if let Some(partition) = nodes[node].partition {
+    if let Some(partition) = nodes[node_id].partition {
         if divisor == 0 {
             partition
         } else {
@@ -58,7 +58,6 @@ pub fn calculate_node_layer_heights(
             .map(|edge_id| highest_edge_diff[*edge_id])
             .max()
             .unwrap_or(0);
-        node.partition = None;
     }
 }
 
@@ -74,6 +73,7 @@ fn layer_partition_ids() {
             rank: 0,
             partition: Some(partition),
             layer_height: INVALID_LAYER_HEIGHT,
+            old_id: None,
         });
     }
     nodes.push(Node {
@@ -82,6 +82,7 @@ fn layer_partition_ids() {
         rank: 0,
         partition: Some(27),
         layer_height: INVALID_LAYER_HEIGHT,
+        old_id: None,
     });
 
     assert_eq!(get_partition_id_on_level(7, 0, &nodes, &partitions), 7);
@@ -119,6 +120,7 @@ fn node_height() {
             rank: 0,
             partition: Some(partition % 6),
             layer_height: INVALID_LAYER_HEIGHT,
+            old_id: None,
         });
     }
     nodes.push(Node {
@@ -127,6 +129,7 @@ fn node_height() {
         rank: 0,
         partition: Some(5),
         layer_height: INVALID_LAYER_HEIGHT,
+        old_id: None,
     });
 
     nodes.push(Node {
@@ -135,6 +138,7 @@ fn node_height() {
         rank: 0,
         partition: Some(5),
         layer_height: INVALID_LAYER_HEIGHT,
+        old_id: None,
     });
 
     let mut edges = Vec::<Edge>::new();

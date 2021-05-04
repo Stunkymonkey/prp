@@ -25,8 +25,8 @@ pub fn calculate_heuristics(
     down_offset: &[EdgeId],
 ) -> Vec<usize> {
     let mut heuristics: Vec<usize> = Vec::with_capacity(nodes.len());
-    for node_id in 0..nodes.len() {
-        if nodes[node_id].layer_height != layer_height {
+    for (node_id, node) in nodes.iter().enumerate() {
+        if node.layer_height != layer_height {
             heuristics.push(std::usize::MAX);
         } else {
             heuristics.push(calculate_single_heuristic(

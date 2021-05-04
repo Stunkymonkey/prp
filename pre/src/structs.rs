@@ -11,6 +11,8 @@ pub struct Node {
     #[serde(skip_serializing)]
     pub partition: Option<PartitionId>,
     pub layer_height: LayerHeight,
+    #[serde(skip_serializing)]
+    pub old_id: Option<NodeId>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -86,11 +88,11 @@ pub struct GridBounds {
 #[derive(Serialize)]
 pub struct BinFile {
     pub nodes: Vec<Node>,
+    pub edges: Vec<Edge>,
+    pub edge_costs: Vec<Cost>,
     pub up_offset: Vec<EdgeId>,
     pub down_offset: Vec<EdgeId>,
     pub down_index: Vec<EdgeId>,
-    pub edges: Vec<Edge>,
-    pub edge_costs: Vec<Cost>,
     pub grid_offset: Vec<GridId>,
     pub grid: Vec<NodeId>,
     pub grid_bounds: GridBounds,

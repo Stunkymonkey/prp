@@ -2,11 +2,12 @@ use super::*;
 use ndijkstra::NDijkstra;
 use valid_flag::ValidFlag;
 
+use mch::same_array;
 use std::cmp::Reverse;
 use std::collections::BTreeSet;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::RwLock;
-use std::sync::{Arc, Mutex};
+// use std::sync::{Arc, Mutex};
 
 fn revert_indices(edges: &mut Vec<Edge>) {
     let maximum_id = edges
@@ -29,11 +30,29 @@ fn revert_indices(edges: &mut Vec<Edge>) {
             ));
         }
     });
+
+    // check if indices are not invalid
+    for edge in edges {
+        if let Some((prev, next)) = edge.contrated_edges {
+            assert!(prev != INVALID_NODE, "at least one index is invalid");
+            assert!(next != INVALID_NODE, "at least one index is invalid");
+        }
+    }
 }
+
+// fn worker_contractor(
+//     input: Arc<Mutex<Vec<NodeId>>>,
+//     shortcut_id: &AtomicUsize,
+//     output: Arc<Mutex<Vec<Edge>>>,
+//     amount_nodes: usize,
+//     edges: Arc<Mutex<Vec<Edge>>>,
+// ) {
+// }
 
 // contract one layer until end
 #[allow(clippy::too_many_arguments)]
 fn layer_contraction(
+    layer_height: LayerHeight,
     remaining_nodes: &mut BTreeSet<NodeId>,
     mut independent_set_flags: &mut ValidFlag,
     mut heuristics: &mut Vec<usize>,
@@ -52,8 +71,9 @@ fn layer_contraction(
 
     let thread_count = num_cpus::get();
 
+    let to_rank_50_time = Instant::now();
+
     while !remaining_nodes.is_empty() {
-        let get_independent_set_time = Instant::now();
         // I ← independent node set
         let mut minimas = ordering::get_independent_set(
             &remaining_nodes,
@@ -64,211 +84,97 @@ fn layer_contraction(
             &down_offset,
             &down_index,
         );
-        if remaining_nodes.len() > 100_000 {
-            println!(
-                "get_independent_set time in: {:?}",
-                get_independent_set_time.elapsed()
-            );
-        }
-
-        let shortcuts_time = Instant::now();
 
         // E ← necessary shortcuts
-        // TODO check if better size available
-        // let parallel_shortcuts: RwLock<Vec<Edge>> =
-        //     RwLock::new(Vec::with_capacity(2 * minimas.len()));
+        let parallel_shortcuts: RwLock<Vec<Edge>> =
+            RwLock::new(Vec::with_capacity(dim * minimas.len()));
 
-        // let chunk_size = (minimas.len() + thread_count - 1) / thread_count;
-        // if chunk_size > 0 {
-        //     rayon::scope(|s| {
-        //         for datachunk_items in minimas.chunks_mut(chunk_size) {
-        //             s.spawn(|_| {
-        //                 let mut dijkstra = NDijkstra::new(amount_nodes, dim);
-        //                 let mut mch = match mch::Contractor::new(
-        //                     // dijkstra
-        //                     |start, end, alpha| -> Vec<Cost> {
-        //                         match dijkstra.find_path(
-        //                             start,
-        //                             end,
-        //                             alpha.to_vec(),
-        //                             &up_offset,
-        //                             &edges,
-        //                         ) {
-        //                             Some(costs) => costs.1,
-        //                             None => vec![COST_MAX; edges[0].cost.len()],
-        //                         }
-        //                     },
-        //                     // to-edges
-        //                     |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
-        //                         let down_edge_ids = graph_helper::get_down_edge_ids(
-        //                             node_id,
-        //                             &down_offset,
-        //                             &down_index,
-        //                         );
-        //                         let mut mch_edges = Vec::new();
-        //                         for down_edge_id in down_edge_ids {
-        //                             let edge = &edges[down_edge_id];
-        //                             mch_edges.push(mch::Edge::new(
-        //                                 edge.id.unwrap(),
-        //                                 edge.from,
-        //                                 edge.to,
-        //                                 edge.cost.clone(),
-        //                             ))
-        //                         }
-        //                         mch_edges
-        //                     },
-        //                     // from-edges
-        //                     |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
-        //                         let up_edge_ids =
-        //                             graph_helper::get_up_edge_ids(node_id, &up_offset);
-        //                         let mut mch_edges = Vec::new();
-        //                         for up_edge_id in up_edge_ids {
-        //                             let edge = &edges[up_edge_id];
-        //                             mch_edges.push(mch::Edge::new(
-        //                                 edge.id.unwrap(),
-        //                                 edge.from,
-        //                                 edge.to,
-        //                                 edge.cost.clone(),
-        //                             ))
-        //                         }
-        //                         mch_edges
-        //                     },
-        //                     //dims
-        //                     edges[0].cost.len(),
-        //                 ) {
-        //                     Ok(mch) => mch,
-        //                     Err(error) => {
-        //                         panic!("error with mch: '{:?}'", error);
-        //                     }
-        //                 };
-        //                 for node in datachunk_items {
-        //                     let mch_shortcuts = match mch.contract(*node) {
-        //                         Ok(ok) => ok,
-        //                         Err(err) => panic!("contraction error: '{:?}'", err),
-        //                     };
-        //                     let mut node_shortcuts = Vec::with_capacity(mch_shortcuts.len());
-        //                     for shortcut in mch_shortcuts {
-        //                         node_shortcuts.push(Edge::shortcut(
-        //                             shortcut.from,
-        //                             shortcut.to,
-        //                             shortcut.cost,
-        //                             shortcut_id.fetch_add(1, Ordering::SeqCst),
-        //                             shortcut.replaced_edges,
-        //                         ));
-        //                     }
-        //                     let mut tmp = parallel_shortcuts.write().unwrap();
-        //                     tmp.extend(node_shortcuts);
-        //                 }
-        //                 println!(
-        //                     "one core finished with edge id: {:?}",
-        //                     shortcut_id.load(Ordering::Relaxed)
-        //                 );
-        //             });
-        //         }
-        //     });
-        // }
-        // let shortcuts = parallel_shortcuts.into_inner().unwrap();
-
-        let mut dijkstra = NDijkstra::new(amount_nodes, dim);
-        let mut mch = match mch::Contractor::new(
-            // dijkstra
-            |start, end, alpha| -> Vec<Cost> {
-                match dijkstra.find_path(start, end, alpha.to_vec(), &up_offset, &edges) {
-                    Some(costs) => costs.1,
-                    None => vec![COST_MAX; edges[0].cost.len()],
+        let chunk_size = (minimas.len() + thread_count - 1) / thread_count;
+        if chunk_size > 0 {
+            rayon::scope(|s| {
+                for datachunk_items in minimas.chunks_mut(chunk_size) {
+                    s.spawn(|_| {
+                        let mut dijkstra = NDijkstra::new(amount_nodes, dim);
+                        let mut mch = match mch::Contractor::new(
+                            // dijkstra
+                            |start, end, alpha| -> Vec<Cost> {
+                                match dijkstra.find_path(
+                                    start,
+                                    end,
+                                    alpha.to_vec(),
+                                    &up_offset,
+                                    &edges,
+                                ) {
+                                    Some(costs) => costs.1,
+                                    None => vec![COST_MAX; edges[0].cost.len()],
+                                }
+                            },
+                            // to-edges
+                            |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
+                                let down_edge_ids = graph_helper::get_down_edge_ids(
+                                    node_id,
+                                    &down_offset,
+                                    &down_index,
+                                );
+                                let mut mch_edges = Vec::new();
+                                for down_edge_id in down_edge_ids {
+                                    let edge = &edges[down_edge_id];
+                                    mch_edges.push(mch::Edge::new(
+                                        edge.id.unwrap(),
+                                        edge.from,
+                                        edge.to,
+                                        edge.cost.clone(),
+                                    ))
+                                }
+                                mch_edges
+                            },
+                            // from-edges
+                            |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
+                                let up_edge_ids =
+                                    graph_helper::get_up_edge_ids(node_id, &up_offset);
+                                let mut mch_edges = Vec::new();
+                                for up_edge_id in up_edge_ids {
+                                    let edge = &edges[up_edge_id];
+                                    mch_edges.push(mch::Edge::new(
+                                        edge.id.unwrap(),
+                                        edge.from,
+                                        edge.to,
+                                        edge.cost.clone(),
+                                    ))
+                                }
+                                mch_edges
+                            },
+                            //dims
+                            edges[0].cost.len(),
+                        ) {
+                            Ok(mch) => mch,
+                            Err(error) => {
+                                panic!("error with mch: '{:?}'", error);
+                            }
+                        };
+                        for node in datachunk_items {
+                            let mch_shortcuts = match mch.contract(*node) {
+                                Ok(ok) => ok,
+                                Err(err) => panic!("contraction error: '{:?}'", err),
+                            };
+                            let mut node_shortcuts = Vec::with_capacity(mch_shortcuts.len());
+                            for shortcut in mch_shortcuts {
+                                node_shortcuts.push(Edge::shortcut(
+                                    shortcut.from,
+                                    shortcut.to,
+                                    shortcut.cost,
+                                    shortcut_id.fetch_add(1, Ordering::SeqCst),
+                                    shortcut.replaced_edges,
+                                ));
+                            }
+                            let mut tmp = parallel_shortcuts.write().unwrap();
+                            tmp.extend(node_shortcuts);
+                        }
+                    });
                 }
-            },
-            // to-edges
-            |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
-                let down_edge_ids =
-                    graph_helper::get_down_edge_ids(node_id, &down_offset, &down_index);
-                let mut mch_edges = Vec::new();
-                for down_edge_id in down_edge_ids {
-                    let edge = &edges[down_edge_id];
-                    mch_edges.push(mch::Edge::new(
-                        edge.id.unwrap(),
-                        edge.from,
-                        edge.to,
-                        edge.cost.clone(),
-                    ))
-                }
-                mch_edges
-            },
-            // from-edges
-            |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
-                let up_edge_ids = graph_helper::get_up_edge_ids(node_id, &up_offset);
-                let mut mch_edges = Vec::new();
-                for up_edge_id in up_edge_ids {
-                    let edge = &edges[up_edge_id];
-                    mch_edges.push(mch::Edge::new(
-                        edge.id.unwrap(),
-                        edge.from,
-                        edge.to,
-                        edge.cost.clone(),
-                    ))
-                }
-                mch_edges
-            },
-            //dims
-            edges[0].cost.len(),
-        ) {
-            Ok(mch) => mch,
-            Err(error) => {
-                panic!("error with mch: '{:?}'", error);
-            }
-        };
-
-        let shortcuts: Vec<Edge> = minimas
-            .iter()
-            .map(|node| {
-                let mch_shortcuts = match mch.contract(*node) {
-                    Ok(ok) => ok,
-                    Err(err) => panic!("contraction error: '{:?}'", err),
-                };
-                let mut node_shortcuts = Vec::with_capacity(mch_shortcuts.len());
-                for shortcut in mch_shortcuts {
-                    node_shortcuts.push(Edge::shortcut(
-                        shortcut.from,
-                        shortcut.to,
-                        shortcut.cost,
-                        shortcut_id.fetch_add(1, Ordering::SeqCst),
-                        shortcut.replaced_edges,
-                    ));
-                }
-                node_shortcuts
-            })
-            .flatten()
-            .collect();
-
-        // let mut arc = Arc::new(Mutex::new(mch));
-
-        // let shortcuts: Vec<Edge> = minimas
-        //     .par_iter()
-        //     .map_with(arc.clone(), |mut arc, node| {
-        //         let mch_shortcuts = match arc.lock().unwrap().contract(*node) {
-        //             Ok(ok) => ok,
-        //             Err(err) => panic!("contraction error: '{:?}'", err),
-        //         };
-        //         let mut node_shortcuts = Vec::with_capacity(mch_shortcuts.len());
-        //         for shortcut in mch_shortcuts {
-        //             node_shortcuts.push(Edge::shortcut(
-        //                 shortcut.from,
-        //                 shortcut.to,
-        //                 shortcut.cost,
-        //                 shortcut_id.fetch_add(1, Ordering::SeqCst),
-        //                 shortcut.replaced_edges,
-        //             ));
-        //         }
-        //         node_shortcuts
-        //     })
-        //     .flatten()
-        //     .collect();
-
-        if remaining_nodes.len() > 100_000 {
-            println!("shortcuts time in: {:?}", shortcuts_time.elapsed());
+            });
         }
-
-        let other_time = Instant::now();
+        let mut shortcuts = parallel_shortcuts.into_inner().unwrap();
 
         // collecting all edges to be removed
         let mut connected_edges: Vec<EdgeId> = minimas
@@ -279,7 +185,10 @@ fn layer_contraction(
             .flatten()
             .collect();
 
-        // diamond shape shortcuts? dedup?
+        // dedup shortcuts; preventing shortcuts in diamond-shapes
+        shortcuts.par_sort_unstable();
+        // only dedup exakt duplicates
+        shortcuts.dedup_by(|a, b| a.from == b.from && a.to == b.to && same_array(&a.cost, &b.cost));
 
         // update heuristic of neighbors of I with simulated contractions
         let mut neighbors: Vec<NodeId> = minimas
@@ -302,14 +211,16 @@ fn layer_contraction(
         neighbors.dedup();
         ordering::update_neighbor_heuristics(
             neighbors,
+            layer_height,
             &mut heuristics,
+            &nodes,
             &deleted_neighbors,
             &up_offset,
             &down_offset,
         );
 
         // sort in reverse order for removing from bottom up
-        connected_edges.par_sort_by_key(|&edge| Reverse(edge));
+        connected_edges.par_sort_unstable_by_key(|&edge| Reverse(edge));
         // insert E into remaining graph
         for edge_id in connected_edges.iter() {
             resulting_edges.push(edges.swap_remove(*edge_id));
@@ -328,13 +239,10 @@ fn layer_contraction(
             nodes[*node].rank = *rank;
             remaining_nodes.remove(&node);
         }
-        *rank += 1;
-        if remaining_nodes.len() > 100_000 {
-            println!("other things time in: {:?}", other_time.elapsed());
-        }
 
         println!(
-            "remaining_nodes {:?} \tindependent_set.len {:?} \tedges.len {:?} \tshortcuts.len {:?} \tremoving_edges.len {:?} \tresulting_edges.len {:?}",
+            "rank {:?}  \tremaining_nodes {:?} \tindependent_set {:?} \tedges {:?} \tshortcuts {:?}    \tremoving_edges {:?} \tresulting_edges {:?}",
+            rank,
             remaining_nodes.len(),
             minimas.len(),
             edges.len(),
@@ -342,11 +250,13 @@ fn layer_contraction(
             connected_edges.len(),
             resulting_edges.len()
         );
+        *rank += 1;
+        if *rank == 100 {
+            println!("to_rank_100 in: {:?}", to_rank_50_time.elapsed());
+        }
     }
-    println!("max_rank: {:?}", rank);
 }
 
-//TODO
 pub fn prp_contraction(
     mut nodes: &mut Vec<Node>,
     mut edges: &mut Vec<Edge>,
@@ -358,8 +268,6 @@ pub fn prp_contraction(
     let mut independent_set_flags = ValidFlag::new(nodes.len());
 
     let mut deleted_neighbors = vec![0; nodes.len()];
-    let mut heuristics =
-        ordering::calculate_heuristics(nodes.len(), &deleted_neighbors, &up_offset, &down_offset);
 
     let mut rank: Rank = 0;
 
@@ -371,16 +279,24 @@ pub fn prp_contraction(
         .enumerate()
         .for_each(|(i, x)| x.id = Some(i));
 
-    let mut resulting_edges = Vec::<Edge>::with_capacity(edges.len() * 2);
+    let mut resulting_edges = Vec::<Edge>::with_capacity(edges.len() * mlp_layers.len());
 
-    for layer_height in 0..=mlp_layers.len() {
+    for layer_height in 0..mlp_layers.len() {
         let mut remaining_nodes = BTreeSet::new();
         for (node_id, node) in nodes.iter().enumerate() {
             if layer_height == node.layer_height {
                 remaining_nodes.insert(node_id);
             }
         }
+        let mut heuristics = ordering::calculate_heuristics(
+            layer_height,
+            &nodes,
+            &deleted_neighbors,
+            &up_offset,
+            &down_offset,
+        );
         layer_contraction(
+            layer_height,
             &mut remaining_nodes,
             &mut independent_set_flags,
             &mut heuristics,
@@ -401,6 +317,30 @@ pub fn prp_contraction(
     assert_eq!(unique_set.len(), edges.len());
 
     *edges = resulting_edges;
+
+    // sort nodes based on layerheight & rank so only forward walking is done in dijkstra
+    nodes
+        .par_iter_mut()
+        .enumerate()
+        .for_each(|(i, node)| node.old_id = Some(i));
+    nodes.par_sort_unstable_by(|a, b| {
+        a.layer_height
+            .cmp(&b.layer_height)
+            .then(a.rank.cmp(&b.rank))
+    });
+    // create new index
+    let mut new_node_index = vec![INVALID_NODE; nodes.len()];
+    nodes
+        .iter()
+        .enumerate()
+        .for_each(|(i, node)| new_node_index[node.old_id.unwrap()] = i);
+
+    // iterate over edges and fix all from/to ids
+    edges.par_iter_mut().for_each(|edge| {
+        edge.to = new_node_index[edge.to];
+        edge.from = new_node_index[edge.from];
+    });
+
     // and calculate the offsets
     *down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());

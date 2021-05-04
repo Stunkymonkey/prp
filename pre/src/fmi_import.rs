@@ -57,6 +57,7 @@ pub fn read_file(
                 rank: INVALID_RANK,
                 partition: None,
                 layer_height: INVALID_LAYER_HEIGHT,
+                old_id: None,
             });
         }
     }
