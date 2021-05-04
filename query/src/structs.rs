@@ -24,7 +24,7 @@ impl Edge {
         self.to
     }
 
-    /// get to field
+    /// get from field
     pub fn get_from(&self) -> NodeId {
         self.from
     }

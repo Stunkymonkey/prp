@@ -45,7 +45,7 @@ impl Graph {
     /// get all up edges from one node
     #[allow(dead_code)]
     pub fn get_edges_from_id(&self, ids: Vec<EdgeId>) -> Vec<Edge> {
-        ids.par_iter().map(|x| self.edges[*x].clone()).collect()
+        ids.par_iter().map(|x| self.edges[*x]).collect()
     }
 
     /// get all up edge-ids from one node
