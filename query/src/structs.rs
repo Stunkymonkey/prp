@@ -1,7 +1,7 @@
 use serde::Deserialize;
-use std::cmp::Ordering;
 
 use crate::constants::*;
+use crate::graph::Graph;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Node {
@@ -11,61 +11,22 @@ pub struct Node {
     pub layer_height: LayerHeight,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Copy, Clone, PartialEq)]
 pub struct Edge {
-    pub source: NodeId,
-    pub target: NodeId,
-    pub weight: Vec<Weight>,
+    pub from: NodeId,
+    pub to: NodeId,
     pub contrated_edges: Option<(EdgeId, EdgeId)>,
 }
 
-impl PartialOrd for Edge {
-    fn partial_cmp(&self, other: &Edge) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Edge {
-    fn cmp(&self, other: &Edge) -> Ordering {
-        self.source
-            .cmp(&other.source)
-            .then(self.target.cmp(&other.target))
-    }
-}
-impl Eq for Edge {}
-
 impl Edge {
-    pub fn new(from: NodeId, to: NodeId, weight: Vec<Weight>) -> Self {
-        Edge {
-            source: from,
-            target: to,
-            weight,
-            contrated_edges: None,
-        }
+    /// get to field
+    pub fn get_to(&self) -> NodeId {
+        self.to
     }
-    #[allow(dead_code)]
-    pub fn test(from: NodeId, to: NodeId, weight: Vec<Weight>) -> Self {
-        Edge {
-            source: from,
-            target: to,
-            weight,
-            contrated_edges: None,
-        }
-    }
-    #[allow(dead_code)]
-    pub fn shortcut(
-        from: NodeId,
-        to: NodeId,
-        weight: Vec<Weight>,
-        previous: NodeId,
-        next: NodeId,
-    ) -> Self {
-        Edge {
-            source: from,
-            target: to,
-            weight,
-            contrated_edges: Some((previous, next)),
-        }
+
+    /// get to field
+    pub fn get_from(&self) -> NodeId {
+        self.from
     }
 }
 
@@ -80,12 +41,37 @@ pub struct GridBounds {
 #[derive(Deserialize, Clone)]
 pub struct BinFile {
     pub nodes: Vec<Node>,
+    pub edges: Vec<Edge>,
+    pub edge_costs: Vec<Cost>,
     pub up_offset: Vec<EdgeId>,
     pub down_offset: Vec<EdgeId>,
     pub down_index: Vec<EdgeId>,
-    pub edges: Vec<Edge>,
     pub grid_offset: Vec<GridId>,
     pub grid: Vec<NodeId>,
     pub grid_bounds: GridBounds,
     pub metrics: Vec<String>,
+}
+
+#[derive(Clone)]
+pub struct WebData {
+    pub nodes: Vec<Node>,
+    pub graph: Graph,
+    pub grid_offset: Vec<GridId>,
+    pub grid: Vec<NodeId>,
+    pub grid_bounds: GridBounds,
+    pub metrics: Vec<String>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct EvalFile {
+    pub points: EvalPoint,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct EvalPoint {
+    pub orig_start_id: Option<NodeId>,
+    pub orig_end_id: Option<NodeId>,
+    pub start_pos: Vec<f64>,
+    pub end_pos: Vec<f64>,
+    pub alpha: Vec<f64>,
 }

@@ -13,9 +13,9 @@ use prp_query::*;
 #[post("/dijkstra")]
 async fn shortest_path(
     request: web::Json<GeoJsonRequest>,
-    data: web::Data<BinFile>,
+    data: web::Data<WebData>,
     dijkstra_cell: web::Data<RefCell<Dijkstra>>,
-) -> web::Json<GeoJsonRespone> {
+) -> Result<web::Json<GeoJsonResponse>, geojson::Error> {
     let total_time = Instant::now();
 
     // extract points
@@ -39,8 +39,26 @@ async fn shortest_path(
         rank: INVALID_RANK,
         layer_height: INVALID_LAYER_HEIGHT,
     };
+    // find alpha as property at any node from last node to front
+    let mut alpha_option = None;
+    for feature in features.iter().rev() {
+        alpha_option = match &feature.properties {
+            Some(properties) => properties.alpha.clone(),
+            None => alpha_option,
+        };
+    }
+    // return Error if no alpha is set
+    if alpha_option.is_none() {
+        return Err(geojson::Error {
+            msg: "alpha not found".to_string(),
+            status: 400,
+        });
+    }
+    let alpha = alpha_option.unwrap();
+
     debug!("Start: {},{}", start.latitude, start.longitude);
     debug!("End: {},{}", end.latitude, end.longitude);
+    debug!("Alpha: {:?}", alpha);
 
     // search for clicked points
     let grid_time = Instant::now();
@@ -65,67 +83,48 @@ async fn shortest_path(
     let mut dijkstra = dijkstra_cell.borrow_mut();
 
     let dijkstra_time = Instant::now();
-    let tmp = dijkstra.find_path(
-        start_id,
-        end_id,
-        &data.nodes,
-        &data.edges,
-        &data.up_offset,
-        &data.down_offset,
-        &data.down_index,
-    );
+    let tmp = dijkstra.find_path(start_id, end_id, alpha, &data.graph, &data.nodes);
     info!("    Dijkstra in: {:?}", dijkstra_time.elapsed());
 
-    let result: Vec<(f32, f32)>;
-    let mut cost: String = "".to_string();
-    match tmp {
+    let (result_path, cost): (Vec<(f32, f32)>, String) = match tmp {
         Some((path, path_cost)) => {
             let nodes = grid::get_coordinates(path, &data.nodes);
-            result = nodes
-                .par_iter()
-                .map(|node| (node.longitude, node.latitude))
-                .collect::<Vec<(f32, f32)>>();
-            // match data.optimized_by {
-            //     OptimizeBy::Time => {
-            //         if path_cost.trunc() >= 1.0 {
-            //             cost = path_cost.trunc().to_string();
-            //             cost.push_str(" h ");
-            //         }
-            //         cost.push_str(&format!("{:.0}", path_cost.fract() * 60.0));
-            //         cost.push_str(" min");
-            //     }
-            //     OptimizeBy::Distance => {
-            //         cost = format!("{:.2}", path_cost);
-            //         cost.push_str(" km");
-            //     }
-            // };
+            (
+                nodes
+                    .par_iter()
+                    .map(|node| (node.longitude, node.latitude))
+                    .collect::<Vec<(f32, f32)>>(),
+                format!("{:.2}", path_cost),
+            )
         }
         None => {
             warn!("no path found");
-            result = Vec::<(f32, f32)>::new();
-            cost = "no path found".to_string();
+            (Vec::<(f32, f32)>::new(), "no path found".to_string())
         }
-    }
+    };
 
     info!("        Overall: {:?}", total_time.elapsed());
 
-    return web::Json(GeoJsonRespone {
+    return Ok(web::Json(GeoJsonResponse {
         // escaping the rust-type command to normal type string
         r#type: "FeatureCollection".to_string(),
         features: vec![FeatureResponse {
             r#type: "Feature".to_string(),
             geometry: GeometryResponse {
                 r#type: "LineString".to_string(),
-                coordinates: result,
+                coordinates: result_path,
             },
-            properties: Some(Property { weight: cost }),
+            properties: Some(Property {
+                cost: Some(cost),
+                alpha: None,
+            }),
         }],
-    });
+    }));
 }
 
 #[get("/metrics")]
 async fn metrics(
-    data: web::Data<BinFile>,
+    data: web::Data<WebData>,
     _dijkstra_cell: web::Data<RefCell<Dijkstra>>,
 ) -> web::Json<Vec<String>> {
     return web::Json(data.metrics.clone());
@@ -144,7 +143,24 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let amount_nodes = data.nodes.len();
-    let data_ref = web::Data::new(data);
+    let dim = data.edge_costs.len() / data.edges.len();
+
+    let graph = Graph::new(
+        data.edges,
+        data.edge_costs,
+        data.up_offset,
+        data.down_offset,
+        data.down_index,
+        dim,
+    );
+    let data_ref = web::Data::new(WebData {
+        nodes: data.nodes,
+        graph,
+        grid_offset: data.grid_offset,
+        grid: data.grid,
+        grid_bounds: data.grid_bounds,
+        metrics: data.metrics,
+    });
 
     // check for static-html folder
     let html_path;
@@ -161,7 +177,7 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: http://localhost:{}", port);
     HttpServer::new(move || {
         // initialize thread-local dijkstra
-        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes));
+        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, dim));
         App::new()
             .wrap(middleware::Logger::default())
             .data(web::JsonConfig::default().limit(1024))
@@ -171,16 +187,17 @@ async fn main() -> std::io::Result<()> {
             .service(metrics)
             .service(actix_files::Files::new("/", html_path).index_file("index.html"))
     })
-    .bind(format!("localhost:{}", port))?
+    .bind(format!("localhost:{}", port))
+    .expect("Can not bind to port")
     .run()
     .await
 }
 
 fn get_arguments() -> (String, String) {
     let matches = clap::App::new("prp_web")
-        .version("0.1.0")
+        .version(clap::crate_version!())
+        .author(clap::crate_authors!())
         .about("provides webinterface and testing option")
-        .author("Felix Bühler")
         .arg(
             clap::Arg::with_name("fmi-file")
                 .help("the input file to use")

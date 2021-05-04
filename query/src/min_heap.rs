@@ -5,16 +5,16 @@ use std::cmp::Ordering;
 #[derive(Copy, Clone)]
 pub struct MinHeapItem {
     pub node: NodeId,
-    pub dist: Weight,
+    pub cost: Cost,
     pub prev_edge: Option<EdgeId>,
 }
 
 // Manually implement Ord so we get a min-heap instead of a max-heap
 impl MinHeapItem {
-    pub fn new(node: NodeId, dist: Weight, prev_edge: Option<EdgeId>) -> MinHeapItem {
+    pub fn new(node: NodeId, cost: Cost, prev_edge: Option<EdgeId>) -> MinHeapItem {
         MinHeapItem {
             node,
-            dist,
+            cost,
             prev_edge,
         }
     }
@@ -29,16 +29,15 @@ impl PartialOrd for MinHeapItem {
 // reverse, so the maxheap becomes a min-heap
 impl Ord for MinHeapItem {
     fn cmp(&self, other: &MinHeapItem) -> Ordering {
-        OrderedFloat(self.dist)
-            .cmp(&OrderedFloat(other.dist))
+        OrderedFloat(self.cost)
+            .cmp(&OrderedFloat(other.cost))
             .reverse()
-        // self.dist.cmp(&other.dist).reverse()
     }
 }
 
 impl PartialEq for MinHeapItem {
     fn eq(&self, other: &MinHeapItem) -> bool {
-        self.dist == other.dist
+        self.cost == other.cost
     }
 }
 

@@ -20,6 +20,7 @@ let endMarker;
 let tmpMarker;
 var last_path;
 let xhr = new XMLHttpRequest();
+var metrics;
 getMetrics();
 
 function onMapClick(e) {
@@ -38,7 +39,8 @@ function getMetrics() {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            var metrics = JSON.parse(xhr.responseText);
+            metrics = JSON.parse(xhr.responseText);
+
             setSlider(metrics);
         } else if (xhr.readyState === 4) {
             show_invalid_request();
@@ -48,12 +50,12 @@ function getMetrics() {
 }
 
 function setSlider(metrics) {
-    // console.log(metrics);
+    var slide_container = "";
     metrics.forEach(function (item, index) {
-        console.log(item, index);
-        document.getElementById("slidecontainer").innerHTML += item + "<br>";
-        // <input type="range" min="0" max="1" value="0" class="slider" step="0.01" id="slider-1">
+        // console.log(item, index);
+        slide_container += item + "<input type=\"range\" min=\"0\" max=\"1\" value=\"0\" class=\"slider\" step=\"0.01\" id=\"slider-" + index +"\"> <br>";
     });
+    document.getElementById("slidercontainer").innerHTML = slide_container;
 }
 
 function setStart() {
@@ -92,11 +94,28 @@ function setEnd() {
     query();
 }
 
+function get_alpha_vector() {
+    var alpa_vector = [];
+    for (var i = 0; i < metrics.length; i++) {
+        alpa_vector.push(parseFloat(document.getElementById("slider-" + i).value));
+    }
+    sum_alphas = alpa_vector.reduce((a, b) => a + b, 0);
+    if (sum_alphas === 0){
+        alpa_vector = alpa_vector.fill(1.0 / metrics.length);
+    } else {
+        alpa_vector = alpa_vector.map(function(x) { return x / sum_alphas; });
+    }
+    // console.log("alpa_vector", alpa_vector);
+    return alpa_vector;
+}
+
 function query() {
     hide_result();
     hide_invalid_request();
     hide_no_path_found();
     hide_select_start_and_end();
+
+    alpha_vector = get_alpha_vector();
 
     if (typeof last_path === 'object') {
         map.removeLayer(last_path);
@@ -116,7 +135,7 @@ function query() {
             var json = JSON.parse(xhr.responseText);
             if (json.path != "") {
                 printPath(json);
-                show_result(json.features[0].properties.weight);
+                show_result(json.features[0].properties.cost);
             } else {
                 show_no_path_found();
             }
@@ -136,12 +155,10 @@ function query() {
                         startPoint.lng,
                         startPoint.lat
                     ]
-                }//,
-                // "properties": {
-                //     "name": "Coors Field",
-                //     "amenity": "Baseball Stadium",
-                //     "popupContent": "This is where the Rockies play!"
-                // },
+                },
+                "properties": {
+                    "alpha": alpha_vector,
+                },
             },
             {
                 "type": "Feature",
@@ -151,6 +168,9 @@ function query() {
                         endPoint.lng,
                         endPoint.lat
                     ]
+                },
+                "properties": {
+                    "alpha": alpha_vector,
                 },
             }
         ]
@@ -202,7 +222,7 @@ function hide_select_start_and_end() {
 
 function show_result(costs) {
     var tmp = document.getElementById("result")
-    tmp.innerHTML = costs;
+    tmp.innerHTML = "costs: " + costs;
     tmp.style.display = "block";
 }
 
