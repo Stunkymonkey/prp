@@ -24,13 +24,19 @@ fn main() {
     let mut edges = Vec::<Edge>::new();
 
     // read pbfextrator-file
-    let header = match fmi_import::read_file(&in_file, &mut nodes, &mut edges) {
+    let mut header = match fmi_import::read_file(&in_file, &mut nodes, &mut edges) {
         Ok(result) => {
             println!("reading files finished");
             result
         }
         Err(error) => panic!("error while reading file: {:?}", error),
     };
+
+    // add note that the file was modified, to distinct them
+    header = header.replace(
+        "# Build by: pbfextractor",
+        "# Build by: pbfextractor\n# Modified by: fmi-disjoint-set",
+    );
 
     // make graph bidirect
     let bi_edges = bidirect_graph::create_bidirect(&edges);
