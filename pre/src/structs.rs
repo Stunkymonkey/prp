@@ -23,7 +23,7 @@ pub struct Edge {
     pub id: Option<EdgeId>,
     #[serde(skip_serializing)]
     pub cost: Vec<Cost>,
-    pub contrated_edges: Option<(EdgeId, EdgeId)>,
+    pub contracted_edges: Option<(EdgeId, EdgeId)>,
 }
 
 impl PartialOrd for Edge {
@@ -46,7 +46,7 @@ impl Edge {
             to,
             id: None,
             cost,
-            contrated_edges: None,
+            contracted_edges: None,
         }
     }
     #[allow(dead_code)]
@@ -56,7 +56,7 @@ impl Edge {
             to,
             cost,
             id: Some(id),
-            contrated_edges: None,
+            contracted_edges: None,
         }
     }
     #[allow(dead_code)]
@@ -65,14 +65,14 @@ impl Edge {
         to: NodeId,
         cost: Vec<Cost>,
         id: NodeId,
-        contrated_edges: (EdgeId, EdgeId),
+        contracted_edges: (EdgeId, EdgeId),
     ) -> Self {
         Edge {
             from,
             to,
             cost,
             id: Some(id),
-            contrated_edges: Some(contrated_edges),
+            contracted_edges: Some(contracted_edges),
         }
     }
 }

@@ -56,17 +56,17 @@ fn revert_indices(edges: &mut Vec<Edge>) {
     }
 
     edges.par_iter_mut().for_each(|edge| {
-        if edge.contrated_edges.is_some() {
-            edge.contrated_edges = Some((
-                indices[edge.contrated_edges.unwrap().0],
-                indices[edge.contrated_edges.unwrap().1],
+        if edge.contracted_edges.is_some() {
+            edge.contracted_edges = Some((
+                indices[edge.contracted_edges.unwrap().0],
+                indices[edge.contracted_edges.unwrap().1],
             ));
         }
     });
 
     // check if indices are not invalid
     for edge in edges {
-        if let Some((prev, next)) = edge.contrated_edges {
+        if let Some((prev, next)) = edge.contracted_edges {
             assert!(prev != INVALID_NODE, "at least one index is invalid");
             assert!(next != INVALID_NODE, "at least one index is invalid");
         }
