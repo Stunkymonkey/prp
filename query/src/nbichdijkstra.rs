@@ -96,6 +96,9 @@ impl Dijkstra {
             visited_,
             dist_,
         )) = {
+            // if self.heap_up.is_empty() && self.heap_down.is_empty() {
+            //     return None;
+            // }
             let next_up = self
                 .heap_up
                 .peek()
@@ -106,18 +109,7 @@ impl Dijkstra {
                 .peek()
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
-            // println!(
-            //     "next_up + next_down {:?} best_cost {:?}",
-            //     next_up + next_down,
-            //     best_cost
-            // );
-            if (next_up == COST_MAX && next_down == COST_MAX)
-            // || (next_up + next_down).is_infinite()
-            // || next_up + next_down >= best_cost
-            {
-                println!("breaking pop");
-                None
-            } else if next_up <= next_down {
+            if next_up <= next_down {
                 self.heap_up.pop().map(|x| {
                     (
                         x,
@@ -145,66 +137,34 @@ impl Dijkstra {
                 })
             }
         } {
-            // if visited.is_valid(node) && cost > dist[node].0 {
-            //     continue;
-            // }
-            // visited.set_valid(node);
-            // dist[node] = (cost, prev_edge);
+            // node has already been visited and can be skipped
+            // replacement for decrease key operation
+            if visited.is_valid(node) && cost > dist[node].0 {
+                continue;
+            }
 
-            // for edge in get_edges(&graph, node) {
-            //     let next = walk(&graph.get_edge(edge));
+            visited.set_valid(node);
+            dist[node] = (cost, prev_edge);
 
-            //     // skip nodes with lower rank and lower layer_height
-            //     if nodes[next].layer_height < nodes[node].layer_height
-            //         || (nodes[next].layer_height == nodes[node].layer_height
-            //             && nodes[next].rank <= nodes[node].rank)
-            //     {
-            //         break;
-            //     }
+            for edge in get_edges(&graph, node) {
+                let next = walk(&graph.get_edge(edge));
 
-            //     let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
+                // skip pch ranks & top-layer nodes have maximum layer number so no equal test
+                if nodes[node].rank > nodes[next].rank {
+                    break;
+                }
 
-            //     if !visited.is_valid(next) || (visited.is_valid(next) && alt < dist[next].0) {
-            //         heap.push(MinHeapItem::new(next, alt, Some(edge)));
-            //     }
-            // }
-            // if visited_.is_valid(node) && cost + dist_[node].0 < best_cost {
-            //     best_cost = cost + dist_[node].0;
-            //     meeting_node = node;
-            // }
-            if visited.is_valid(node) && cost == dist[node].0 {
-                for edge in get_edges(&graph, node) {
-                    let next = walk(&graph.get_edge(edge));
+                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
 
-                    println!(
-                        "node {:?} next {:?} node {:?} \t skip: {:?}",
-                        node,
-                        next,
-                        nodes[next],
-                        nodes[node].layer_height > nodes[next].layer_height
-                    );
+                if !visited.is_valid(next) || alt < dist[next].0 {
+                    heap.push(MinHeapItem::new(next, alt, Some(edge)));
 
-                    if nodes[node].layer_height > nodes[next].layer_height
-                    // || (nodes[next].layer_height == nodes[node].layer_height
-                    //     && nodes[next].rank <= nodes[node].rank)
-                    {
-                        // break;
-                        continue;
-                    }
-
-                    let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
-                    println!("visit {:?} new_cost {:?}", !visited.is_valid(next), alt);
-                    if !visited.is_valid(next) || (visited.is_valid(next) && dist[next].0 > alt) {
-                        dist[next] = (alt, prev_edge);
-                        println!(
-                            "pushing next {:?} \t alt {:?} \t  edge{:?}",
-                            next, alt, edge
-                        );
-                        heap.push(MinHeapItem::new(next, alt, Some(edge)));
-
-                        if visited_.is_valid(next) {
+                    // check if other dijkstra has visited this point before
+                    if visited_.is_valid(node) {
+                        let combined = dist_[node].0 + alt;
+                        if combined < best_cost {
                             meeting_node = node;
-                            best_cost = dist[next].0 + dist_[next].0;
+                            best_cost = combined;
                         }
                     }
                 }
@@ -213,7 +173,8 @@ impl Dijkstra {
         if meeting_node == INVALID_NODE {
             None
         } else {
-            println!("meeting {:?}", meeting_node);
+            println!("meeting {:?} [{:?}]", meeting_node, nodes[meeting_node]);
+            // Some((vec![from, meeting_node, to], best_cost))
             Some(self.resolve_path(
                 meeting_node,
                 best_cost,
