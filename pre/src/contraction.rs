@@ -349,7 +349,8 @@ pub fn prp_contraction(
     let unique_set: BTreeSet<usize> = edges.iter().cloned().map(|e| e.id.unwrap()).collect();
     assert_eq!(unique_set.len(), edges.len());
 
-    *edges = resulting_edges;
+    // merging both graphs back together to have a single one
+    edges.par_extend(resulting_edges);
 
     // sort nodes based on layerheight & rank so only forward walking is done in dijkstra
     nodes
