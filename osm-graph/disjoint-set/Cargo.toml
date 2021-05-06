@@ -1,0 +1,9 @@
+[package]
+name = "fmi-disjoint-set"
+version = "0.1.0"
+authors = ["Felix Buehler <account@buehler.rocks>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.33"
+rayon = "1.5"
