@@ -3,7 +3,8 @@
     # nativeBuildInputs is usually what you want -- tools you need to run
     nativeBuildInputs = with pkgs.buildPackages; [
       pkg-config
-      brotli
-      glpk
+      brotli # web
+      glpk # pre
+      minizip # pbfextractor
     ];
 }
