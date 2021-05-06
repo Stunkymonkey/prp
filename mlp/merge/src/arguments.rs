@@ -1,10 +1,10 @@
 use clap::{values_t, App, Arg};
 
 pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)> {
-    let matches = App::new("prp-merge")
+    let matches = App::new("mlp_merge")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
-        .about("generates multi-layer-partition")
+        .about("generates multi-layer-partition using merge-algo")
         .arg(
             Arg::with_name("graph-file")
                 .help("the input file to use")

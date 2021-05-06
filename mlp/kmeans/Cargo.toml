@@ -1,5 +1,5 @@
 [package]
-name = "prp_kmeans"
+name = "mlp_kmeans"
 version = "0.1.0"
 authors = ["Felix Buehler <account@buehler.rocks>"]
 edition = "2018"
