@@ -9,6 +9,39 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::RwLock;
 // use std::sync::{Arc, Mutex};
 
+fn sort_edges_ranked(
+    edges: &mut Vec<Edge>,
+    down_offset: &[EdgeId],
+    down_index: &mut Vec<EdgeId>,
+    nodes: &[Node],
+) {
+    //sort by source then rank
+    edges.par_sort_unstable_by(|a, b| {
+        a.from
+            .cmp(&b.from)
+            .then(nodes[a.to].rank.cmp(&nodes[b.to].rank).reverse())
+    });
+
+    *down_index = vec![INVALID_EDGE; edges.len()];
+    // fill offsets, where not already filled
+    for (i, edge) in edges.iter().enumerate() {
+        let start_index = down_offset[edge.to];
+        let end_index = down_offset[edge.to + 1];
+        for j in down_index.iter_mut().take(end_index).skip(start_index) {
+            if *j == INVALID_EDGE {
+                *j = i;
+                break;
+            }
+        }
+    }
+
+    // sort down_index subvectors
+    for node in 0..nodes.len() {
+        let subvector = &mut down_index[down_offset[node]..down_offset[node + 1]];
+        subvector.sort_unstable_by_key(|edge_id| Reverse(nodes[edges[*edge_id].from].rank));
+    }
+}
+
 fn revert_indices(edges: &mut Vec<Edge>) {
     let maximum_id = edges
         .par_iter()
@@ -345,18 +378,8 @@ pub fn prp_contraction(
     *down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
-    //sort edges within offsets first based on layer_height then on rank
-    edges.par_sort_by(|a, b| {
-        a.from
-            .cmp(&b.from)
-            .then(
-                nodes[a.to]
-                    .layer_height
-                    .cmp(&nodes[b.to].layer_height)
-                    .reverse(),
-            )
-            .then(nodes[a.to].rank.cmp(&nodes[b.to].rank).reverse())
-    });
+    // sort edges from top to down ranks for bidijkstra
+    sort_edges_ranked(&mut edges, &down_offset, &mut down_index, &nodes);
 
     // revert the ids back to usual ids
     revert_indices(&mut edges);
