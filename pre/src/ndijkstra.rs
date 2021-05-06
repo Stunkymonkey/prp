@@ -67,7 +67,7 @@ impl NDijkstra {
         {
             // node has already been visited and can be skipped
             // replacement for decrease key operation
-            if self.visited.is_valid(node) && dist >= self.dist[node].0 {
+            if self.visited.is_valid(node) && dist > self.dist[node].0 {
                 continue;
             }
 
