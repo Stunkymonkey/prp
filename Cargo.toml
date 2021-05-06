@@ -1,8 +1,9 @@
 [workspace]
 
 members = [
-    "kmeans",
-    "merge",
+    "osm-graph/disjoint-set",
+    # "osm-graph/pbfextractor",
+    "mlp/merge",
     "pre",
     "pre/mch",
     "query",

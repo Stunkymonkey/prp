@@ -504,15 +504,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cogset"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f2ac61b949c02940a4e2a3a6de8253d22f8336b1376386aa5189d05b800f086"
-dependencies = [
- "order-stat",
-]
-
-[[package]]
 name = "const_fn"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -678,6 +669,14 @@ dependencies = [
  "crc32fast",
  "libc 0.2.94",
  "miniz_oxide",
+]
+
+[[package]]
+name = "fmi-disjoint-set"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "rayon",
 ]
 
 [[package]]
@@ -1195,12 +1194,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
-name = "order-stat"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efa535d5117d3661134dbf1719b6f0ffe06f2375843b13935db186cd094105eb"
-
-[[package]]
 name = "ordered-float"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1323,14 +1316,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a152013215dca273577e18d2bf00fa862b89b24169fb78c4c95aeb07992c9cec"
 dependencies = [
  "unicode-xid",
-]
-
-[[package]]
-name = "prp_kmeans"
-version = "0.1.0"
-dependencies = [
- "clap",
- "cogset",
 ]
 
 [[package]]

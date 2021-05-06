@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{values_t, App, Arg};
 
 pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)> {
     let matches = App::new("prp-merge")

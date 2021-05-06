@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate clap;
-
 mod arguments;
 mod bidirect_graph;
 mod constants;
@@ -44,7 +41,7 @@ fn main() {
         "amount of partitions to high or nodes to small"
     );
 
-    // make graph bidirected
+    // make graph bidirect
     bidirect_graph::create_bidirect(&mut edges);
 
     // do partitioning
