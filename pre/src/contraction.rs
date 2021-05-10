@@ -352,7 +352,7 @@ pub fn prp_contraction(
     // merging both graphs back together to have a single one
     edges.par_extend(resulting_edges);
 
-    // sort nodes based on layerheight & rank so only forward walking is done in dijkstra
+    // sort nodes based on layerheight & rank & edge-degree so hopefully forward walking is done in dijkstra
     nodes
         .par_iter_mut()
         .enumerate()
@@ -361,6 +361,11 @@ pub fn prp_contraction(
         a.layer_height
             .cmp(&b.layer_height)
             .then(a.rank.cmp(&b.rank))
+            .then(
+                graph_helper::node_degree(a.old_id.unwrap(), &up_offset, &down_offset).cmp(
+                    &graph_helper::node_degree(b.old_id.unwrap(), &up_offset, &down_offset),
+                ),
+            )
     });
     // create new index
     let mut new_node_index = vec![INVALID_NODE; nodes.len()];
