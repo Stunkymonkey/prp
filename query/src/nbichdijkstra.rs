@@ -56,11 +56,6 @@ impl Dijkstra {
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 
-        println!(
-            "from {:?} [{:?}] \nto {:?} [{:?}]",
-            from, nodes[from], to, nodes[to]
-        );
-
         if from == to {
             return Some((vec![], 0.0));
         }
@@ -96,9 +91,9 @@ impl Dijkstra {
             visited_,
             dist_,
         )) = {
-            // if self.heap_up.is_empty() && self.heap_down.is_empty() {
-            //     return None;
-            // }
+            if self.heap_up.is_empty() && self.heap_down.is_empty() {
+                return None;
+            }
             let next_up = self
                 .heap_up
                 .peek()
@@ -109,7 +104,10 @@ impl Dijkstra {
                 .peek()
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
-            if next_up <= next_down {
+            // TODO check if this is valid (might be that the cost of before has to be compared)
+            if next_up + next_down >= best_cost {
+                None
+            } else if next_up <= next_down {
                 self.heap_up.pop().map(|x| {
                     (
                         x,
@@ -173,8 +171,6 @@ impl Dijkstra {
         if meeting_node == INVALID_NODE {
             None
         } else {
-            println!("meeting {:?} [{:?}]", meeting_node, nodes[meeting_node]);
-            // Some((vec![from, meeting_node, to], best_cost))
             Some(self.resolve_path(
                 meeting_node,
                 best_cost,
