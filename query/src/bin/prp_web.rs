@@ -27,17 +27,13 @@ async fn shortest_path(
     assert_eq!(start_feature.len(), 2);
     assert_eq!(end_feature.len(), 2);
 
-    let start = Node {
+    let start = Location {
         longitude: start_feature[0],
         latitude: start_feature[1],
-        rank: INVALID_RANK,
-        layer_height: INVALID_LAYER_HEIGHT,
     };
-    let end = Node {
+    let end = Location {
         longitude: end_feature[0],
         latitude: end_feature[1],
-        rank: INVALID_RANK,
-        layer_height: INVALID_LAYER_HEIGHT,
     };
     // find alpha as property at any node from last node to front
     let mut alpha_option = None;
@@ -86,20 +82,20 @@ async fn shortest_path(
     let tmp = dijkstra.find_path(start_id, end_id, alpha, &data.graph, &data.nodes);
     info!("    Dijkstra in: {:?}", dijkstra_time.elapsed());
 
-    let (result_path, cost): (Vec<(f32, f32)>, String) = match tmp {
+    let (result_path, cost): (Vec<(Angle, Angle)>, String) = match tmp {
         Some((path, path_cost)) => {
             let nodes = grid::get_coordinates(path, &data.nodes);
             (
                 nodes
                     .par_iter()
                     .map(|node| (node.longitude, node.latitude))
-                    .collect::<Vec<(f32, f32)>>(),
+                    .collect::<Vec<(Angle, Angle)>>(),
                 format!("{:.2}", path_cost),
             )
         }
         None => {
             warn!("no path found");
-            (Vec::<(f32, f32)>::new(), "no path found".to_string())
+            (Vec::<(Angle, Angle)>::new(), "no path found".to_string())
         }
     };
 

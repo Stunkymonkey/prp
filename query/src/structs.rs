@@ -5,8 +5,8 @@ use crate::graph::Graph;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Node {
-    pub latitude: f32,
-    pub longitude: f32,
+    pub latitude: Angle,
+    pub longitude: Angle,
     pub rank: Rank,
     pub layer_height: LayerHeight,
 }
@@ -32,10 +32,10 @@ impl Edge {
 
 #[derive(Deserialize, Clone)]
 pub struct GridBounds {
-    pub lat_min: f32,
-    pub lat_max: f32,
-    pub lng_min: f32,
-    pub lng_max: f32,
+    pub lat_min: f64,
+    pub lat_max: f64,
+    pub lng_min: f64,
+    pub lng_max: f64,
 }
 
 #[derive(Deserialize, Clone)]
@@ -63,15 +63,19 @@ pub struct WebData {
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct EvalFile {
-    pub points: EvalPoint,
+pub struct Location {
+    pub latitude: Angle,
+    pub longitude: Angle,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct EvalPoint {
+    pub index: usize,
     pub orig_start_id: Option<NodeId>,
     pub orig_end_id: Option<NodeId>,
-    pub start_pos: Vec<f64>,
-    pub end_pos: Vec<f64>,
+    pub start_id: Option<NodeId>,
+    pub end_id: Option<NodeId>,
+    pub start_pos: Location,
+    pub end_pos: Location,
     pub alpha: Vec<f64>,
 }

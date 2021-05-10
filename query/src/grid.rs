@@ -3,8 +3,8 @@ use rayon::prelude::*;
 
 /// get node-ids by brute-force
 #[allow(dead_code)]
-pub fn get_closest_point_stupid(node: Node, nodes: &[Node]) -> usize {
-    let mut tmp_minimum = std::f32::MAX;
+pub fn get_closest_point_stupid(node: Location, nodes: &[Node]) -> usize {
+    let mut tmp_minimum = Angle::MAX;
     let mut tmp_closeset = INVALID_NODE;
     for (i, n) in nodes.iter().enumerate() {
         let dist = calc_distance(&node, n);
@@ -18,13 +18,13 @@ pub fn get_closest_point_stupid(node: Node, nodes: &[Node]) -> usize {
 
 /// get node-ids using grid
 pub fn get_closest_point(
-    node: Node,
+    node: Location,
     nodes: &[Node],
     grid: &[NodeId],
     grid_offset: &[GridId],
     grid_bounds: &GridBounds,
 ) -> usize {
-    let mut minimum = std::f32::MAX;
+    let mut minimum = Angle::MAX;
     let mut closeset = INVALID_NODE;
 
     let adjacent_nodes = get_adjacent_nodes(&node, grid, grid_offset, grid_bounds);
@@ -41,7 +41,7 @@ pub fn get_closest_point(
 
 /// get close node_ids
 fn get_adjacent_nodes(
-    node: &Node,
+    node: &Location,
     grid: &[NodeId],
     grid_offset: &[GridId],
     grid_bounds: &GridBounds,
@@ -148,17 +148,17 @@ fn get_points_from_cells(
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
-fn get_grid_lat(node: &Node, grid_bounds: &GridBounds) -> usize {
+fn get_grid_lat(node: &Location, grid_bounds: &GridBounds) -> usize {
     let lat_percent =
         (node.latitude - grid_bounds.lat_min) / (grid_bounds.lat_max - grid_bounds.lat_min);
-    (lat_percent * (LAT_GRID_AMOUNT - 1) as f32) as usize
+    (lat_percent * (LAT_GRID_AMOUNT - 1) as Angle) as usize
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
-fn get_grid_lng(node: &Node, grid_bounds: &GridBounds) -> usize {
+fn get_grid_lng(node: &Location, grid_bounds: &GridBounds) -> usize {
     let lng_percent =
         (node.longitude - grid_bounds.lng_min) / (grid_bounds.lng_max - grid_bounds.lng_min);
-    (lng_percent * (LNG_GRID_AMOUNT - 1) as f32) as usize
+    (lng_percent * (LNG_GRID_AMOUNT - 1) as Angle) as usize
 }
 
 fn calculate_grid_id(lat_index: usize, lng_index: usize) -> GridId {
@@ -166,27 +166,27 @@ fn calculate_grid_id(lat_index: usize, lng_index: usize) -> GridId {
 }
 
 #[allow(dead_code)]
-fn get_grid_id(node: &Node, grid_bounds: &GridBounds) -> GridId {
+fn get_grid_id(node: &Location, grid_bounds: &GridBounds) -> GridId {
     let lat_index = get_grid_lat(node, grid_bounds);
     let lng_index = get_grid_lng(node, grid_bounds);
     calculate_grid_id(lat_index, lng_index)
 }
 
 /// get distance on earth surface using haversine formula
-fn calc_distance(a: &Node, b: &Node) -> f32 {
+fn calc_distance(a: &Location, b: &Node) -> Angle {
     let lat_1 = a.latitude;
     let long_1 = a.longitude;
     let lat_2 = b.latitude;
     let long_2 = b.longitude;
-    let r: f32 = 6371.0; // constant used for meters
-    let d_lat: f32 = (lat_2 - lat_1).to_radians();
-    let d_lon: f32 = (long_2 - long_1).to_radians();
-    let lat1: f32 = (lat_1).to_radians();
-    let lat2: f32 = (lat_2).to_radians();
+    let r: Angle = 6371.0; // constant used for meters
+    let d_lat: Angle = (lat_2 - lat_1).to_radians();
+    let d_lon: Angle = (long_2 - long_1).to_radians();
+    let lat1: Angle = (lat_1).to_radians();
+    let lat2: Angle = (lat_2).to_radians();
 
-    let a: f32 = ((d_lat / 2.0).sin()) * ((d_lat / 2.0).sin())
+    let a: Angle = ((d_lat / 2.0).sin()) * ((d_lat / 2.0).sin())
         + ((d_lon / 2.0).sin()) * ((d_lon / 2.0).sin()) * (lat1.cos()) * (lat2.cos());
-    let c: f32 = 2.0 * ((a.sqrt()).atan2((1.0 - a).sqrt()));
+    let c: Angle = 2.0 * ((a.sqrt()).atan2((1.0 - a).sqrt()));
     r * c
 }
 

@@ -5,8 +5,8 @@ use crate::constants::*;
 
 #[derive(Serialize, Debug)]
 pub struct Node {
-    pub latitude: f32,
-    pub longitude: f32,
+    pub latitude: Angle,
+    pub longitude: Angle,
     pub rank: Rank,
     #[serde(skip_serializing)]
     pub partition: Option<PartitionId>,
@@ -79,10 +79,10 @@ impl Edge {
 
 #[derive(Serialize)]
 pub struct GridBounds {
-    pub lat_min: f32,
-    pub lat_max: f32,
-    pub lng_min: f32,
-    pub lng_max: f32,
+    pub lat_min: Angle,
+    pub lat_max: Angle,
+    pub lng_min: Angle,
+    pub lng_max: Angle,
 }
 
 #[derive(Serialize)]

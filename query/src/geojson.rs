@@ -1,3 +1,5 @@
+use crate::constants::*;
+
 use actix_web::http::StatusCode;
 use actix_web::{web, ResponseError};
 use serde::{Deserialize, Serialize};
@@ -8,8 +10,8 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Deserialize, Serialize)]
 pub struct Point {
-    pub latitude: f32,
-    pub longitude: f32,
+    pub latitude: Angle,
+    pub longitude: Angle,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -22,7 +24,7 @@ pub struct Property {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GeometryRequest {
     pub r#type: String,
-    pub coordinates: Vec<f32>,
+    pub coordinates: Vec<Angle>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -42,7 +44,7 @@ pub struct GeoJsonRequest {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GeometryResponse {
     pub r#type: String,
-    pub coordinates: Vec<(f32, f32)>,
+    pub coordinates: Vec<(Angle, Angle)>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

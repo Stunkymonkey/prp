@@ -5,6 +5,7 @@ pub type Rank = usize;
 pub type PartitionId = usize;
 pub type LayerHeight = usize;
 pub type GridId = usize;
+pub type Angle = f64;
 
 #[allow(dead_code)]
 pub const INVALID_NODE: NodeId = std::usize::MAX;

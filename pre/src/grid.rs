@@ -34,14 +34,14 @@ fn get_min_max(nodes: &[Node]) -> GridBounds {
 fn get_grid_lat(node: &Node, grid_bounds: &GridBounds) -> usize {
     let lat_percent =
         (node.latitude - grid_bounds.lat_min) / (grid_bounds.lat_max - grid_bounds.lat_min);
-    (lat_percent * (LAT_GRID_AMOUNT - 1) as f32) as usize
+    (lat_percent * (LAT_GRID_AMOUNT - 1) as Angle) as usize
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
 fn get_grid_lng(node: &Node, grid_bounds: &GridBounds) -> usize {
     let lng_percent =
         (node.longitude - grid_bounds.lng_min) / (grid_bounds.lng_max - grid_bounds.lng_min);
-    (lng_percent * (LNG_GRID_AMOUNT - 1) as f32) as usize
+    (lng_percent * (LNG_GRID_AMOUNT - 1) as Angle) as usize
 }
 
 fn calculate_grid_id(lat_index: usize, lng_index: usize) -> GridId {
@@ -129,11 +129,11 @@ fn grid_grid_bounds() {
 
     let grid_bounds: GridBounds = get_min_max(&nodes);
 
-    let error_margin = f32::EPSILON;
-    assert!(grid_bounds.lat_min - 10.0_f32 < error_margin);
-    assert!(grid_bounds.lat_max - 20.0_f32 < error_margin);
-    assert!(grid_bounds.lng_min - 30.0_f32 < error_margin);
-    assert!(grid_bounds.lng_max - 40.0_f32 < error_margin);
+    let error_margin = Angle::EPSILON;
+    assert!(grid_bounds.lat_min - 10.0_Angle < error_margin);
+    assert!(grid_bounds.lat_max - 20.0_Angle < error_margin);
+    assert!(grid_bounds.lng_min - 30.0_Angle < error_margin);
+    assert!(grid_bounds.lng_max - 40.0_Angle < error_margin);
 }
 
 #[test]
