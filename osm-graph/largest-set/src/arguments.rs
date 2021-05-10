@@ -1,7 +1,7 @@
 use clap::{App, Arg};
 
 pub fn get_arguments() -> clap::Result<(String, String)> {
-    let matches = App::new("fmi-disjoint-set")
+    let matches = App::new("fmi_largest_set")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about("extract largest disjoint set")

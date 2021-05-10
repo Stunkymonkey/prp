@@ -11,7 +11,6 @@ use constants::*;
 use structs::*;
 
 use rayon::prelude::*;
-use std::collections::BTreeMap;
 
 fn main() {
     // check/get arguments
@@ -42,7 +41,7 @@ fn main() {
     let bi_edges = bidirect_graph::create_bidirect(&edges);
 
     // extract all node-ids wanted
-    let keeping_nodes = disjoint_set::get_disjoint_nodes(&nodes, &bi_edges);
+    let keeping_nodes = disjoint_set::get_largest_disjoint_set(&nodes, &bi_edges);
 
     println!(
         "largest_set contains {:?} nodes of original {:?} nodes -> keeping {:.3}%",
@@ -51,31 +50,9 @@ fn main() {
         (keeping_nodes.len() as f64 / nodes.len() as f64) * 100.0
     );
 
-    // get new ids
-    let mut new_node_ids = BTreeMap::new();
-    for (new_node_id, old_node_id) in keeping_nodes.iter().enumerate() {
-        new_node_ids.insert(old_node_id, new_node_id);
-    }
-
-    let mut resulting_edges = Vec::with_capacity(edges.len());
-
-    for edge in &edges {
-        if new_node_ids.contains_key(&edge.from) {
-            let from = *new_node_ids.get(&edge.from).unwrap();
-            let to = *new_node_ids.get(&edge.to).unwrap();
-            resulting_edges.push(Edge::new(
-                from,
-                to,
-                edge.cost.clone(),
-                edge.contracted_edges,
-            ));
-        }
-    }
-
-    let mut resulting_nodes = Vec::with_capacity(nodes.len());
-    for node_id in keeping_nodes {
-        resulting_nodes.push(nodes[node_id].clone());
-    }
+    // remove unwanted nodes/edges
+    let (resulting_nodes, resulting_edges) =
+        disjoint_set::keep_only_nodes_from_set(&keeping_nodes, &nodes, &edges);
 
     println!(
         "largest_set contains {:?} edges of original {:?} edges -> keeping {:.3}%",

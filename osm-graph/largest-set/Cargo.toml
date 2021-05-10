@@ -1,5 +1,5 @@
 [package]
-name = "fmi-disjoint-set"
+name = "fmi_largest_set"
 version = "0.1.0"
 authors = ["Felix Buehler <account@buehler.rocks>"]
 edition = "2018"
