@@ -35,7 +35,7 @@ def main():
         next(fmireader)  # amount_edges
         for i in range(amount_nodes_fmi):
             tmp = next(fmireader)
-            nodes.append([float(tmp[2]), float(tmp[3])])
+            nodes.append({"latitude": float(tmp[2]), "longitude": float(tmp[3])})
     # generate random
     rand_nodes = np.random.randint(amount_nodes_fmi, size=(args.count, 2))
     rand_pos = list()
@@ -44,10 +44,10 @@ def main():
         rand_pos.append([nodes[points[0]], nodes[points[1]]])
         rand_alphas.append(np.random.dirichlet(np.ones(amount_dims), size=1))
     # export data to json
-    data = dict()
+    data = list()
     for index, (node, pos, alpha) in enumerate(zip(rand_nodes, rand_pos, rand_alphas)):
-        data[index] = {"orig_start_id": node[0], "orig_end_id": node[1],
-                       "start_pos": pos[0], "end_pos": pos[1], "alpha": alpha[0]}
+        data.append({"index": index, "orig_start_id": node[0], "orig_end_id": node[1],
+                     "start_pos": pos[0], "end_pos": pos[1], "alpha": alpha[0]})
 
     with open(args.output, 'w') as outfile:
         json.dump(data, outfile, ensure_ascii=False, indent=4, default=convert)

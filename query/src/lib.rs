@@ -3,7 +3,6 @@ pub mod constants;
 pub mod geojson;
 pub mod graph;
 pub mod grid;
-pub mod json_import;
 pub mod min_heap;
 pub mod nbichdijkstra;
 pub mod structs;
