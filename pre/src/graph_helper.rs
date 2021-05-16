@@ -3,7 +3,7 @@ use super::*;
 /// get all up edges from one node
 #[allow(dead_code)]
 pub fn get_edges_from_id(ids: Vec<EdgeId>, edges: &[Edge]) -> Vec<Edge> {
-    ids.par_iter().map(|x| edges[*x].clone()).collect()
+    ids.iter().map(|x| edges[*x].clone()).collect()
 }
 
 /// get all up edge-ids from one node
@@ -20,7 +20,7 @@ pub fn get_down_edge_ids(
     down_index: &[EdgeId],
 ) -> Vec<EdgeId> {
     let prev: Vec<EdgeId> = (down_offset[node]..down_offset[node + 1]).collect();
-    prev.par_iter().map(|x| down_index[*x]).collect()
+    prev.iter().map(|x| down_index[*x]).collect()
 }
 
 /// get all edge-ids from one node
@@ -54,7 +54,7 @@ pub fn get_all_edge_ids(
 #[allow(dead_code)]
 pub fn get_up_neighbors(node: NodeId, edges: &[Edge], up_offset: &[EdgeId]) -> Vec<EdgeId> {
     let next = get_up_edge_ids(node, &up_offset);
-    let mut tmp: Vec<EdgeId> = next.par_iter().map(|x| edges[*x].to).collect();
+    let mut tmp: Vec<EdgeId> = next.iter().map(|x| edges[*x].to).collect();
     tmp.dedup();
     tmp
 }
@@ -68,7 +68,7 @@ pub fn get_down_neighbors(
     down_index: &[EdgeId],
 ) -> Vec<EdgeId> {
     let prev = get_down_edge_ids(node, &down_offset, &down_index);
-    let mut tmp: Vec<EdgeId> = prev.par_iter().map(|x| edges[*x].from).collect();
+    let mut tmp: Vec<EdgeId> = prev.iter().map(|x| edges[*x].from).collect();
     tmp.par_sort_unstable();
     tmp.dedup();
     tmp
