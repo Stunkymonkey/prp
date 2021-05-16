@@ -6,8 +6,7 @@ use mch::same_array;
 use std::cmp::Reverse;
 use std::collections::BTreeSet;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::RwLock;
-// use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 fn sort_edges_ranked(
     edges: &mut Vec<Edge>,
@@ -119,8 +118,8 @@ fn layer_contraction(
         );
 
         // E ← necessary shortcuts
-        let parallel_shortcuts: RwLock<Vec<Edge>> =
-            RwLock::new(Vec::with_capacity(dim * minimas.len()));
+        let parallel_shortcuts: Mutex<Vec<Edge>> =
+            Mutex::new(Vec::with_capacity(dim * minimas.len()));
 
         let chunk_size = (minimas.len() + thread_count - 1) / thread_count;
         if chunk_size > 0 {
@@ -200,7 +199,7 @@ fn layer_contraction(
                                     shortcut.replaced_edges,
                                 ));
                             }
-                            let mut tmp = parallel_shortcuts.write().unwrap();
+                            let mut tmp = parallel_shortcuts.lock().unwrap();
                             tmp.extend(node_shortcuts);
                         }
                     });
