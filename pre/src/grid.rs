@@ -130,10 +130,10 @@ fn grid_grid_bounds() {
     let grid_bounds: GridBounds = get_min_max(&nodes);
 
     let error_margin = Angle::EPSILON;
-    assert!(grid_bounds.lat_min - 10.0_Angle < error_margin);
-    assert!(grid_bounds.lat_max - 20.0_Angle < error_margin);
-    assert!(grid_bounds.lng_min - 30.0_Angle < error_margin);
-    assert!(grid_bounds.lng_max - 40.0_Angle < error_margin);
+    assert!(grid_bounds.lat_min - 10.0_f64 < error_margin);
+    assert!(grid_bounds.lat_max - 20.0_f64 < error_margin);
+    assert!(grid_bounds.lng_min - 30.0_f64 < error_margin);
+    assert!(grid_bounds.lng_max - 40.0_f64 < error_margin);
 }
 
 #[test]
