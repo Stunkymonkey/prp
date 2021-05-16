@@ -7,6 +7,7 @@ use std::cell::RefCell;
 use std::path::Path;
 use std::time::Instant;
 
+use prp_query::dijkstra_export::*;
 use prp_query::geojson::*;
 use prp_query::*;
 
@@ -14,7 +15,7 @@ use prp_query::*;
 async fn shortest_path(
     request: web::Json<GeoJsonRequest>,
     data: web::Data<WebData>,
-    dijkstra_cell: web::Data<RefCell<Dijkstra>>,
+    dijkstra_cell: web::Data<RefCell<Dijkstra<NoOp>>>,
 ) -> Result<web::Json<GeoJsonResponse>, geojson::Error> {
     let total_time = Instant::now();
 
@@ -121,7 +122,7 @@ async fn shortest_path(
 #[get("/metrics")]
 async fn metrics(
     data: web::Data<WebData>,
-    _dijkstra_cell: web::Data<RefCell<Dijkstra>>,
+    _dijkstra_cell: web::Data<RefCell<Dijkstra<NoOp>>>,
 ) -> web::Json<Vec<String>> {
     return web::Json(data.metrics.clone());
 }
@@ -173,7 +174,8 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: http://localhost:{}", port);
     HttpServer::new(move || {
         // initialize thread-local dijkstra
-        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, dim));
+        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, dim, NoOp::new()));
+        // let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, dim));
         App::new()
             .wrap(middleware::Logger::default())
             .data(web::JsonConfig::default().limit(1024))
