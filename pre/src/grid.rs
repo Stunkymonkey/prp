@@ -98,7 +98,7 @@ fn grid_grid_bounds() {
         latitude: 10.0,
         longitude: 30.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -106,7 +106,7 @@ fn grid_grid_bounds() {
         latitude: 20.0,
         longitude: 30.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -114,7 +114,7 @@ fn grid_grid_bounds() {
         latitude: 10.0,
         longitude: 40.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -122,7 +122,7 @@ fn grid_grid_bounds() {
         latitude: 20.0,
         longitude: 40.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -143,7 +143,7 @@ fn grid_id() {
         latitude: 10.0,
         longitude: 10.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -151,7 +151,7 @@ fn grid_id() {
         latitude: 20.0,
         longitude: 10.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -159,7 +159,7 @@ fn grid_id() {
         latitude: 10.0,
         longitude: 20.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -167,7 +167,7 @@ fn grid_id() {
         latitude: 20.0,
         longitude: 20.0,
         rank: 0,
-        partition: None,
+        partition: INVALID_PARTITION,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -179,7 +179,7 @@ fn grid_id() {
             latitude: 10.1,
             longitude: 10.1,
             rank: 0,
-            partition: None,
+            partition: INVALID_PARTITION,
             layer_height: INVALID_LAYER_HEIGHT,
             old_id: None,
         },
@@ -192,7 +192,7 @@ fn grid_id() {
             latitude: 10.4,
             longitude: 10.4,
             rank: 0,
-            partition: None,
+            partition: INVALID_PARTITION,
             layer_height: INVALID_LAYER_HEIGHT,
             old_id: None,
         },
@@ -205,7 +205,7 @@ fn grid_id() {
             latitude: 17.3,
             longitude: 12.7,
             rank: 0,
-            partition: None,
+            partition: INVALID_PARTITION,
             layer_height: INVALID_LAYER_HEIGHT,
             old_id: None,
         },

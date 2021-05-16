@@ -99,7 +99,6 @@ fn layer_partition_ids() {
     assert_eq!(get_highest_differing_level(0, 35, &nodes, &partitions), 3);
 }
 
-// TODO
 #[test]
 fn node_height() {
     // 0-->1-->2-->3-->4-->5<--12

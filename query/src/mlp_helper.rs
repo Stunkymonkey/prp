@@ -63,7 +63,6 @@ fn layer_partition_ids() {
             rank: 0,
             partition: partition,
             layer_height: INVALID_LAYER_HEIGHT,
-            old_id: None,
         });
     }
     nodes.push(Node {
@@ -72,7 +71,6 @@ fn layer_partition_ids() {
         rank: 0,
         partition: 27,
         layer_height: INVALID_LAYER_HEIGHT,
-        old_id: None,
     });
 
     assert_eq!(get_partition_id_on_level(7, 0, &nodes, &partitions), 7);
@@ -90,89 +88,4 @@ fn layer_partition_ids() {
     assert_eq!(get_highest_differing_level(26, 35, &nodes, &partitions), 2);
     assert_eq!(get_highest_differing_level(17, 29, &nodes, &partitions), 3);
     assert_eq!(get_highest_differing_level(0, 35, &nodes, &partitions), 3);
-}
-
-// TODO
-#[test]
-fn node_height() {
-    // 0-->1-->2-->3-->4-->5<--12
-    // |       |            |
-    // V       V            V
-    // 6-->7-->8-->9-->10-->11-->13
-
-    let mlp_layers = vec![3, 2];
-
-    let mut nodes = Vec::<Node>::new();
-    for partition in 0..12 {
-        nodes.push(Node {
-            latitude: 0.0,
-            longitude: 0.0,
-            rank: 0,
-            partition: partition % 6,
-            layer_height: INVALID_LAYER_HEIGHT,
-            old_id: None,
-        });
-    }
-    nodes.push(Node {
-        latitude: 0.0,
-        longitude: 0.0,
-        rank: 0,
-        partition: 5,
-        layer_height: INVALID_LAYER_HEIGHT,
-        old_id: None,
-    });
-
-    nodes.push(Node {
-        latitude: 0.0,
-        longitude: 0.0,
-        rank: 0,
-        partition: 5,
-        layer_height: INVALID_LAYER_HEIGHT,
-        old_id: None,
-    });
-
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(0, 6, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
-    edges.push(Edge::new(2, 3, vec![1.0]));
-    edges.push(Edge::new(3, 4, vec![1.0]));
-    edges.push(Edge::new(4, 5, vec![1.0]));
-    edges.push(Edge::new(5, 11, vec![1.0]));
-    edges.push(Edge::new(6, 7, vec![1.0]));
-    edges.push(Edge::new(7, 8, vec![1.0]));
-    edges.push(Edge::new(8, 9, vec![1.0]));
-    edges.push(Edge::new(9, 10, vec![1.0]));
-    edges.push(Edge::new(10, 11, vec![1.0]));
-    edges.push(Edge::new(11, 13, vec![1.0]));
-    edges.push(Edge::new(12, 5, vec![1.0]));
-
-    let mut up_offset = Vec::<EdgeId>::new();
-    let mut down_offset = Vec::<EdgeId>::new();
-    let down_index =
-        offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
-
-    calculate_node_layer_heights(
-        &mut nodes,
-        &edges,
-        &up_offset,
-        &down_offset,
-        &down_index,
-        &mlp_layers,
-    );
-
-    assert_eq!(nodes[0].layer_height, 1);
-    assert_eq!(nodes[1].layer_height, 1);
-    assert_eq!(nodes[2].layer_height, 2);
-    assert_eq!(nodes[3].layer_height, 2);
-    assert_eq!(nodes[4].layer_height, 1);
-    assert_eq!(nodes[5].layer_height, 1);
-    assert_eq!(nodes[6].layer_height, 1);
-    assert_eq!(nodes[7].layer_height, 1);
-    assert_eq!(nodes[8].layer_height, 2);
-    assert_eq!(nodes[9].layer_height, 2);
-    assert_eq!(nodes[10].layer_height, 1);
-    assert_eq!(nodes[11].layer_height, 1);
-    assert_eq!(nodes[12].layer_height, 0);
-    assert_eq!(nodes[13].layer_height, 0);
 }
