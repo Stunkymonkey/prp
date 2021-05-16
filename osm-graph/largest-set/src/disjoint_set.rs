@@ -31,10 +31,13 @@ pub fn get_largest_disjoint_set(nodes: &[Node], edges: &[Edge]) -> Vec<NodeId> {
                 tmp.insert(next_node);
 
                 // add not visited neigbors to queue
-                for edge_id in up_offset[next_node]..up_offset[next_node + 1] {
-                    let neighbor = edges[edge_id].to;
-                    if !visited[neighbor] {
-                        queue.push(neighbor);
+                for edge in edges
+                    .iter()
+                    .take(up_offset[next_node + 1])
+                    .skip(up_offset[next_node])
+                {
+                    if !visited[edge.to] {
+                        queue.push(edge.to);
                     }
                 }
             }
