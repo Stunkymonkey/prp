@@ -1,13 +1,15 @@
 // based on https://rosettacode.org/wiki/Dijkstra%27s_algorithm#Rust
 
 use super::*;
-use mch::costs_by_alpha;
+use dijkstra_export::*;
 use min_heap::*;
-use std::collections::BinaryHeap;
 use valid_flag::*;
 
+use mch::costs_by_alpha;
+use std::collections::BinaryHeap;
+
 #[derive(Clone)]
-pub struct Dijkstra {
+pub struct Dijkstra<E: Export> {
     dist_up: Vec<(Cost, Option<NodeId>)>,
     dist_down: Vec<(Cost, Option<NodeId>)>,
     visited_up: ValidFlag,
@@ -15,11 +17,12 @@ pub struct Dijkstra {
     heap_up: BinaryHeap<MinHeapItem>,
     heap_down: BinaryHeap<MinHeapItem>,
     dim: usize,
+    pub exporter: E,
 }
 
-impl Dijkstra {
+impl<E: Export> Dijkstra<E> {
     /// general constructor
-    pub fn new(amount_nodes: usize, dim: usize) -> Self {
+    pub fn new(amount_nodes: usize, dim: usize, exporter: E) -> Self {
         let dist_up = vec![(COST_MAX, None); amount_nodes];
         let dist_down = vec![(COST_MAX, None); amount_nodes];
         let visited_up = ValidFlag::new(amount_nodes);
@@ -34,6 +37,7 @@ impl Dijkstra {
             heap_up,
             heap_down,
             dim,
+            exporter,
         }
     }
 
@@ -43,6 +47,7 @@ impl Dijkstra {
         self.visited_down.invalidate_all();
         self.heap_up.clear();
         self.heap_down.clear();
+        self.exporter.reset();
     }
 
     /// return shortest path of nodes
@@ -71,6 +76,9 @@ impl Dijkstra {
         let mut best_cost = COST_MAX;
         let mut meeting_node = INVALID_NODE;
 
+        // TODO get highest differing level
+        // mlp_helper::get_highest_differing_level()
+
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
         let get_down_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_down_edge_ids;
@@ -90,6 +98,7 @@ impl Dijkstra {
             get_edges,
             visited_,
             dist_,
+            exporter,
         )) = {
             if self.heap_up.is_empty() && self.heap_down.is_empty() {
                 return None;
@@ -105,6 +114,7 @@ impl Dijkstra {
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
             // TODO check if this is valid (might be that the cost of before has to be compared)
+            // without this the dijkstra does not work... but should run the whole overlay-graph
             if next_up + next_down >= best_cost {
                 None
             } else if next_up <= next_down {
@@ -118,6 +128,7 @@ impl Dijkstra {
                         get_up_edge_ids,
                         &mut self.visited_down,
                         &mut self.dist_down,
+                        &mut self.exporter,
                     )
                 })
             } else {
@@ -131,10 +142,12 @@ impl Dijkstra {
                         get_down_edge_ids,
                         &mut self.visited_up,
                         &mut self.dist_up,
+                        &mut self.exporter,
                     )
                 })
             }
         } {
+            exporter.heap_pop();
             // node has already been visited and can be skipped
             // replacement for decrease key operation
             if visited.is_valid(node) && cost > dist[node].0 {
@@ -144,8 +157,13 @@ impl Dijkstra {
             visited.set_valid(node);
             dist[node] = (cost, prev_edge);
 
+            exporter.visited_node(node);
+            exporter.visited_edge(prev_edge);
+
             for edge in get_edges(&graph, node) {
                 let next = walk(&graph.get_edge(edge));
+
+                exporter.relaxed_edge();
 
                 // skip pch ranks & top-layer nodes have maximum layer number so no equal test
                 if nodes[node].rank > nodes[next].rank {
@@ -162,6 +180,7 @@ impl Dijkstra {
                         let combined = dist_[node].0 + alt;
                         if combined < best_cost {
                             meeting_node = node;
+                            exporter.current_meeting_point(node);
                             best_cost = combined;
                         }
                     }
