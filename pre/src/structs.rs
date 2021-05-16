@@ -8,8 +8,7 @@ pub struct Node {
     pub latitude: Angle,
     pub longitude: Angle,
     pub rank: Rank,
-    #[serde(skip_serializing)]
-    pub partition: Option<PartitionId>,
+    pub partition: PartitionId,
     pub layer_height: LayerHeight,
     #[serde(skip_serializing)]
     pub old_id: Option<NodeId>,

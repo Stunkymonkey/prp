@@ -8,14 +8,11 @@ pub fn get_partition_id_on_level(
     mlp_layers: &[usize],
 ) -> PartitionId {
     let divisor = mlp_layers.iter().take(layer).product::<usize>();
-    if let Some(partition) = nodes[node_id].partition {
-        if divisor == 0 {
-            partition
-        } else {
-            partition / divisor
-        }
+    let partition = nodes[node_id].partition;
+    if divisor == 0 {
+        partition
     } else {
-        panic!("partition was not supplied for node");
+        partition / divisor
     }
 }
 
@@ -71,7 +68,7 @@ fn layer_partition_ids() {
             latitude: 0.0,
             longitude: 0.0,
             rank: 0,
-            partition: Some(partition),
+            partition: partition,
             layer_height: INVALID_LAYER_HEIGHT,
             old_id: None,
         });
@@ -80,7 +77,7 @@ fn layer_partition_ids() {
         latitude: 0.0,
         longitude: 0.0,
         rank: 0,
-        partition: Some(27),
+        partition: 27,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -118,7 +115,7 @@ fn node_height() {
             latitude: 0.0,
             longitude: 0.0,
             rank: 0,
-            partition: Some(partition % 6),
+            partition: partition % 6,
             layer_height: INVALID_LAYER_HEIGHT,
             old_id: None,
         });
@@ -127,7 +124,7 @@ fn node_height() {
         latitude: 0.0,
         longitude: 0.0,
         rank: 0,
-        partition: Some(5),
+        partition: 5,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });
@@ -136,7 +133,7 @@ fn node_height() {
         latitude: 0.0,
         longitude: 0.0,
         rank: 0,
-        partition: Some(5),
+        partition: 5,
         layer_height: INVALID_LAYER_HEIGHT,
         old_id: None,
     });

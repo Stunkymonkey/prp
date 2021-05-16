@@ -55,7 +55,7 @@ pub fn read_file(
                 latitude: v[2].parse().unwrap(),
                 longitude: v[3].parse().unwrap(),
                 rank: INVALID_RANK,
-                partition: None,
+                partition: INVALID_PARTITION,
                 layer_height: INVALID_LAYER_HEIGHT,
                 old_id: None,
             });

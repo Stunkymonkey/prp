@@ -32,7 +32,7 @@ pub fn read_file(
         if let Some(line) = reader.read_line(&mut buffer) {
             let partition = line?.trim().parse().unwrap();
             assert!(partition < max_partition);
-            node.partition = Some(partition);
+            node.partition = partition;
         }
     }
 
