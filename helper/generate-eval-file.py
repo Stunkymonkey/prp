@@ -46,7 +46,7 @@ def main():
     # export data to json
     data = list()
     for index, (node, pos, alpha) in enumerate(zip(rand_nodes, rand_pos, rand_alphas)):
-        data.append({"index": index, "orig_start_id": node[0], "orig_end_id": node[1],
+        data.append({"id": index, "orig_start_id": node[0], "orig_end_id": node[1],
                      "start_pos": pos[0], "end_pos": pos[1], "alpha": alpha[0]})
 
     with open(args.output, 'w') as outfile:

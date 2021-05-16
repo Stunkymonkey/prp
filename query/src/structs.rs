@@ -71,7 +71,7 @@ pub struct Location {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct EvalPoint {
-    pub index: usize,
+    pub id: usize,
     pub orig_start_id: Option<NodeId>,
     pub orig_end_id: Option<NodeId>,
     pub start_id: Option<NodeId>,
