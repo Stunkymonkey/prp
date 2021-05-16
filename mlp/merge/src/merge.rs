@@ -18,7 +18,7 @@ pub fn merge(
     // create offsets
     let mut up_offset = Vec::<EdgeId>::new();
     up_offset.resize(nodes.len() + 1, 0);
-    let sources: Vec<EdgeId> = edges.par_iter().map(|x| x.from).rev().collect();
+    let sources: Vec<EdgeId> = edges.iter().map(|x| x.from).rev().collect();
     offset::fill_offset(sources, &mut up_offset);
 
     // vector of optional Heaps to store what nodes are in each partition
@@ -121,7 +121,7 @@ pub fn merge(
 
         // collect all neighbors
         let mut neighbors: Vec<NodeId> = sets[set_a]
-            .par_iter()
+            .iter()
             .map(|node| graph_helper::get_up_neighbors(*node, &edges, &up_offset))
             .flatten()
             .collect();
@@ -130,7 +130,7 @@ pub fn merge(
 
         // collect all neighbor sets
         let mut neighbor_sets: Vec<PartitionId> = neighbors
-            .par_iter()
+            .iter()
             .map(|neighbor| current_partition[*neighbor])
             .collect();
         neighbor_sets.par_sort_unstable();
@@ -211,6 +211,7 @@ pub fn merge(
                 .take(i + 1)
                 .product::<usize>();
         // lazy work to keep track how far each interval has been assigned (bigger then needed)
+        // TODO make just the right size
         let mut set_amount = vec![0; maximum_id];
         for set in sets {
             // skip empty sets
