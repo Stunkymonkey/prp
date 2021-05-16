@@ -8,6 +8,7 @@ pub struct Node {
     pub latitude: Angle,
     pub longitude: Angle,
     pub rank: Rank,
+    pub partition: PartitionId,
     pub layer_height: LayerHeight,
 }
 

@@ -2,6 +2,7 @@ pub type NodeId = usize;
 pub type EdgeId = usize;
 pub type Cost = f64;
 pub type Rank = usize;
+pub type PartitionId = usize;
 pub type LayerHeight = usize;
 pub type GridId = usize;
 pub type Angle = f64;
