@@ -2,10 +2,8 @@ use super::*;
 use max_heap::MaxHeapItem;
 
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::collections::{BTreeSet, BinaryHeap};
+use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 use std::time::Instant;
-
-// TODO: test if edge removal of inner edges is good
 
 pub fn merge(
     partition_amounts: &mut Vec<usize>,
@@ -196,23 +194,28 @@ pub fn merge(
         .map(|(_, partition_amount)| *partition_amount)
         .collect();
 
-    // to check if all ids are correct
-    let maximum_id = partition_amounts.iter().product::<usize>();
-
+    // for checking if all ids are not exceeding the maximum (product)
+    let mut maximum_id: usize = 1;
+    for partition_amount in partition_amounts.into_iter() {
+        maximum_id = match maximum_id.checked_mul(*partition_amount) {
+            Some(value) => value,
+            None => {
+                panic!("overflow occured: maximum id exceeds 64bit");
+            }
+        }
+    }
     for node in nodes.iter_mut() {
         node.partition = 0;
     }
     // assign ids
     for (i, (sets, _)) in results.iter().rev().enumerate() {
-        let offset = maximum_id
-            / partition_amounts
-                .iter()
-                .rev()
-                .take(i + 1)
-                .product::<usize>();
-        // lazy work to keep track how far each interval has been assigned (bigger then needed)
-        // TODO make just the right size
-        let mut set_amount = vec![0; maximum_id];
+        let new_offset = partition_amounts
+            .iter()
+            .take(partition_amounts.len() - 1 - i)
+            .product::<usize>();
+
+        // to keep track how often each interval has been assigned
+        let mut set_amount_counter: BTreeMap<usize, usize> = BTreeMap::new();
         for set in sets {
             // skip empty sets
             if set.is_empty() {
@@ -220,8 +223,19 @@ pub fn merge(
             }
             // get the id of the set previously assigned
             let previous_id = nodes[*set.iter().next().unwrap()].partition;
-            // calculate the new id
-            let new_set_id = previous_id + (offset * set_amount[previous_id]);
+
+            if !set_amount_counter.contains_key(&previous_id) {
+                set_amount_counter.insert(previous_id, 0);
+            }
+            // calculate the new id and check for overflow
+            let new_set_id = match previous_id
+                .checked_add(new_offset * set_amount_counter.get(&previous_id).unwrap())
+            {
+                Some(value) => value,
+                None => {
+                    panic!("overflow occured, while assinging partition-ids");
+                }
+            };
 
             // check if ids are not exceeting the maximum
             assert!(new_set_id <= maximum_id, "export-partition-id is too big");
@@ -230,7 +244,10 @@ pub fn merge(
             for node in set {
                 nodes[*node].partition = new_set_id;
             }
-            set_amount[previous_id] += 1;
+            // increase counter
+            if let Some(counter) = set_amount_counter.get_mut(&previous_id) {
+                *counter += 1;
+            }
         }
     }
 
