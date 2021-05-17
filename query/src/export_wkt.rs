@@ -7,7 +7,7 @@ pub fn write_file(
     file_path: &str,
     from: NodeId,
     to: NodeId,
-    meeting: NodeId,
+    meeting: Option<NodeId>,
     visited_nodes: &[NodeId],
     path: &[NodeId],
     visited_edges: &[EdgeId],
@@ -28,11 +28,13 @@ pub fn write_file(
         nodes[to].longitude, nodes[to].latitude
     );
     f.write_all(line.as_bytes())?;
-    let line = format!(
-        "POINT ({:?} {:?}); 1\n",
-        nodes[meeting].longitude, nodes[meeting].latitude
-    );
-    f.write_all(line.as_bytes())?;
+    if let Some(meeting_node) = meeting {
+        let line = format!(
+            "POINT ({:?} {:?}); 1\n",
+            nodes[meeting_node].longitude, nodes[meeting_node].latitude
+        );
+        f.write_all(line.as_bytes())?;
+    }
 
     let f = File::create(file_path.replace(".wkt", "-nodes.wkt"))?;
     let mut f = BufWriter::new(f);

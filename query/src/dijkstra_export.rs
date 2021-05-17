@@ -70,7 +70,7 @@ pub struct RealExport {
     pub visited_edges: Vec<EdgeId>,
     pub relaxed_edges: usize,
     pub visited_partitions: BTreeSet<(LayerHeight, PartitionId)>,
-    pub meeting_node: NodeId,
+    pub meeting_node: Option<NodeId>,
 }
 impl Export for RealExport {
     fn new() -> Self
@@ -83,7 +83,7 @@ impl Export for RealExport {
             visited_edges: Vec::new(),
             relaxed_edges: 0,
             visited_partitions: BTreeSet::new(),
-            meeting_node: INVALID_NODE,
+            meeting_node: None,
         }
     }
     fn reset(&mut self) {
@@ -92,7 +92,7 @@ impl Export for RealExport {
         self.visited_edges.clear();
         self.relaxed_edges = 0;
         self.visited_partitions.clear();
-        self.meeting_node = INVALID_NODE;
+        self.meeting_node = None;
     }
     fn heap_pop(&mut self) {
         self.heap_pops += 1;
@@ -113,6 +113,6 @@ impl Export for RealExport {
     }
 
     fn current_meeting_point(&mut self, node_id: NodeId) {
-        self.meeting_node = node_id;
+        self.meeting_node = Some(node_id);
     }
 }
