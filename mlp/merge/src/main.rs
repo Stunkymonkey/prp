@@ -36,10 +36,17 @@ fn main() {
     };
 
     // check that the amount of nodes is not smaller, then then amount of partitions
-    assert!(
-        nodes.len() > partition_amount.iter().product::<usize>(),
-        "amount of partitions to high or nodes to small"
-    );
+    if partition_amount.len() > partition_sizes.len() {
+        assert!(
+            nodes.len() > *partition_amount.iter().max().unwrap_or(&0),
+            "amount of partitions to high or nodes to small"
+        );
+    } else {
+        assert!(
+            nodes.len() > *partition_sizes.iter().max().unwrap_or(&0),
+            "size of partitions to high or nodes to small"
+        );
+    }
 
     // make graph bidirect
     bidirect_graph::create_bidirect(&mut edges);

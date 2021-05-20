@@ -30,7 +30,8 @@ pub fn merge(
     // keep track whats main of partition
     let mut current_partition = Vec::with_capacity(nodes.len());
     // keep track if heuristics are up-to-date
-    let mut amount_merges = Vec::with_capacity(nodes.len());
+    let mut amount_merges = vec![0; nodes.len()];
+    let mut amount_merges_per_layer = vec![0; nodes.len()];
 
     // counting the amount of partitions
     let mut partition_amount = nodes.len();
@@ -39,10 +40,9 @@ pub fn merge(
     let mut amount_layer: usize = 0;
 
     // save current_partition and amount of partitions
-    let mut results: Vec<(Vec<BTreeSet<NodeId>>, usize)> = Vec::with_capacity(std::cmp::max(
-        partition_amounts.len(),
-        partition_sizes.len(),
-    ));
+    let mut results: Vec<(Vec<BTreeSet<NodeId>>, usize, usize)> = Vec::with_capacity(
+        std::cmp::max(partition_amounts.len(), partition_sizes.len()),
+    );
 
     for node_id in 0..nodes.len() {
         let mut new_partiton = BTreeSet::new();
@@ -51,7 +51,6 @@ pub fn merge(
 
         // set each node as its own partition
         current_partition.push(node_id);
-        amount_merges.push(0);
     }
 
     // calculate heuristics of all neighbor partitions and insert them in the heap
@@ -108,6 +107,9 @@ pub fn merge(
         }
         amount_merges[set_a] += 1;
         amount_merges[set_b] += 1;
+        let new_value = amount_merges_per_layer[set_a] + amount_merges_per_layer[set_b] + 1;
+        amount_merges_per_layer[set_a] = new_value;
+        amount_merges_per_layer[set_b] = new_value;
         // combine both sets and switch so the small get merged into the bigger
         let mut merge_set = std::mem::take(&mut sets[set_b]);
         if merge_set.len() > sets[set_a].len() {
@@ -161,18 +163,23 @@ pub fn merge(
         // check if saving of one layer is needed
         if (!partition_sizes.is_empty() && partition_sizes[amount_layer] <= partition_size)
             || (!partition_amounts.is_empty()
-                && partition_amounts
-                    .iter()
-                    .take(partition_amounts.len() - amount_layer)
-                    .product::<usize>()
+                && partition_amounts[amount_layer]
+                    // .iter()
+                    // .take(partition_amounts.len() - amount_layer)
+                    // .product::<usize>()
                     >= partition_amount)
         {
             println!(
                 "one layer finished with {:?} partitions and a maximum partition-size of {:?}",
-                partition_amount, partition_sizes[amount_layer]
+                partition_amount, partition_size
             );
             amount_layer += 1;
-            results.push((sets.clone(), partition_amount));
+            results.push((
+                sets.clone(),
+                partition_amount,
+                amount_merges_per_layer.iter().max().unwrap_or(&0) + 1,
+            ));
+            amount_merges_per_layer = vec![0; nodes.len()];
         }
         // now the layers are all finished
         if amount_layer >= std::cmp::max(partition_sizes.len(), partition_amounts.len()) {
@@ -188,15 +195,23 @@ pub fn merge(
     drop(sets);
     drop(current_partition);
 
-    *partition_amounts = results
+    // get last partition amount number
+    *partition_amounts = vec![results
         .iter()
+        .map(|(_, partition_amount, _)| *partition_amount)
+        .last()
+        .unwrap_or(1)];
+
+    // append amount of merges in each layer and ignore first merges
+    results
+        .iter()
+        .skip(1)
         .rev()
-        .map(|(_, partition_amount)| *partition_amount)
-        .collect();
+        .for_each(|(_, _, merge_amount)| partition_amounts.push(*merge_amount));
 
     // for checking if all ids are not exceeding the maximum (product)
     let mut maximum_id: usize = 1;
-    for partition_amount in partition_amounts.into_iter() {
+    for partition_amount in partition_amounts.iter_mut() {
         maximum_id = match maximum_id.checked_mul(*partition_amount) {
             Some(value) => value,
             None => {
@@ -204,11 +219,13 @@ pub fn merge(
             }
         }
     }
+
     for node in nodes.iter_mut() {
         node.partition = 0;
     }
     // assign ids
-    for (i, (sets, _)) in results.iter().rev().enumerate() {
+    for (i, (sets, _, _)) in results.iter().rev().enumerate() {
+        // calculate new offset
         let new_offset = partition_amounts
             .iter()
             .take(partition_amounts.len() - 1 - i)
@@ -224,9 +241,8 @@ pub fn merge(
             // get the id of the set previously assigned
             let previous_id = nodes[*set.iter().next().unwrap()].partition;
 
-            if !set_amount_counter.contains_key(&previous_id) {
-                set_amount_counter.insert(previous_id, 0);
-            }
+            set_amount_counter.entry(previous_id).or_insert(0);
+
             // calculate the new id and check for overflow
             let new_set_id = match previous_id
                 .checked_add(new_offset * set_amount_counter.get(&previous_id).unwrap())
@@ -237,8 +253,17 @@ pub fn merge(
                 }
             };
 
-            // check if ids are not exceeting the maximum
-            assert!(new_set_id <= maximum_id, "export-partition-id is too big");
+            // check if ids are exceeting the maximum
+            assert!(
+                *set_amount_counter.get(&previous_id).unwrap() < partition_amounts[i],
+                "more sub partitions as expected"
+            );
+            assert!(
+                new_set_id <= maximum_id,
+                "export-partition-id is too big: max {:?} value {:?}",
+                maximum_id,
+                new_set_id
+            );
 
             // set all nodes
             for node in set {
