@@ -67,7 +67,6 @@ fn make_cluster(
         data.push(Euclid([nodes[*node].latitude, nodes[*node].longitude]))
     }
 
-    // TODO: check; maybe this needs to be higher
     let kmeans = KmeansBuilder::new().max_iter(10_000).kmeans(&data, k);
 
     kmeans.converged()?;
