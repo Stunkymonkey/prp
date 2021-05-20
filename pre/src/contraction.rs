@@ -218,7 +218,12 @@ fn layer_contraction(
             .collect();
 
         // dedup shortcuts; preventing shortcuts in diamond-shapes
-        shortcuts.par_sort_unstable();
+        shortcuts.par_sort_unstable_by(|a, b| {
+            a.from
+                .cmp(&b.from)
+                .then(a.to.cmp(&b.to))
+                .then(a.cost.partial_cmp(&(b.cost)).unwrap())
+        });
         // only dedup exakt duplicates
         shortcuts.dedup_by(|a, b| a.from == b.from && a.to == b.to && same_array(&a.cost, &b.cost));
 
@@ -273,7 +278,7 @@ fn layer_contraction(
         }
 
         println!(
-            "rank {:?}  \tremaining_nodes {:?} \tindependent_set {:?} \tedges {:?} \tshortcuts {:?}    \tremoving_edges {:?} \tresulting_edges {:?}",
+            "rank {:?}  \tremaining_nodes {:?} \tindependent_set {:?} \tedges {:?} \tshortcuts {:?}     \tremoving_edges {:?} \tresulting_edges {:?}",
             rank,
             remaining_nodes.len(),
             minimas.len(),
