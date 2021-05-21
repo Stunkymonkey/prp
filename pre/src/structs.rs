@@ -78,8 +78,10 @@ impl Edge {
 
 #[derive(Serialize)]
 pub struct GridBounds {
+    pub lat_amount: usize,
     pub lat_min: Angle,
     pub lat_max: Angle,
+    pub lng_amount: usize,
     pub lng_min: Angle,
     pub lng_max: Angle,
 }

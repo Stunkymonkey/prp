@@ -23,8 +23,10 @@ fn get_min_max(nodes: &[Node]) -> GridBounds {
         .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
         .unwrap();
     GridBounds {
+        lat_amount: LAT_GRID_AMOUNT,
         lat_min,
         lat_max,
+        lng_amount: LNG_GRID_AMOUNT,
         lng_min,
         lng_max,
     }
