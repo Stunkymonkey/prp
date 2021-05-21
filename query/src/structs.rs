@@ -33,10 +33,12 @@ impl Edge {
 
 #[derive(Deserialize, Clone)]
 pub struct GridBounds {
-    pub lat_min: f64,
-    pub lat_max: f64,
-    pub lng_min: f64,
-    pub lng_max: f64,
+    pub lat_amount: usize,
+    pub lat_min: Angle,
+    pub lat_max: Angle,
+    pub lng_amount: usize,
+    pub lng_min: Angle,
+    pub lng_max: Angle,
 }
 
 #[derive(Deserialize, Clone)]
