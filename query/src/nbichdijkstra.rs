@@ -42,7 +42,7 @@ impl<E: Export> Dijkstra<E> {
     }
 
     /// reseting its internal state
-    fn reset_state(&mut self) {
+    pub fn reset_state(&mut self) {
         self.visited_up.invalidate_all();
         self.visited_down.invalidate_all();
         self.heap_up.clear();
@@ -58,6 +58,7 @@ impl<E: Export> Dijkstra<E> {
         alpha: Vec<f64>,
         graph: &Graph,
         nodes: &[Node],
+        mlp_layers: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 
@@ -76,8 +77,15 @@ impl<E: Export> Dijkstra<E> {
         let mut best_cost = COST_MAX;
         let mut meeting_node = INVALID_NODE;
 
-        // TODO get highest differing level
-        // mlp_helper::get_highest_differing_level()
+        // get maximum crp-layer partition
+        let highes_diff_layer =
+            mlp_helper::get_highest_differing_level(from, to, &nodes, &mlp_layers);
+        let common_partition =
+            mlp_helper::get_partition_id_on_level(from, highes_diff_layer, &nodes, &mlp_layers);
+        // println!(
+        //     "highes_diff_layer {:?} common_partition {:?}",
+        //     highes_diff_layer, common_partition
+        // );
 
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
@@ -103,18 +111,17 @@ impl<E: Export> Dijkstra<E> {
             if self.heap_up.is_empty() && self.heap_down.is_empty() {
                 return None;
             }
-            let next_up = self
+            let next_up: Cost = self
                 .heap_up
                 .peek()
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
-            let next_down = self
+            let next_down: Cost = self
                 .heap_down
                 .peek()
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
-            // TODO check if this is valid (might be that the cost of before has to be compared)
-            // without this the dijkstra does not work... but should run the whole overlay-graph
+            // TODO maybe also look what node is on lower layer and pick that one
             if next_up + next_down >= best_cost {
                 None
             } else if next_up <= next_down {
@@ -165,9 +172,33 @@ impl<E: Export> Dijkstra<E> {
 
                 exporter.relaxed_edge();
 
-                // skip pch ranks & top-layer nodes have maximum layer number so no equal test
-                if nodes[node].rank > nodes[next].rank {
-                    break;
+                // in lowest layer
+                if nodes[node].layer_height == 0 {
+                    // skip pch ranks
+                    // top-layer nodes have maximum layer number so no equal test
+                    if nodes[node].rank > nodes[next].rank {
+                        break;
+                    }
+                // in top layer
+                } else {
+                    // walk only in layers above
+                    if nodes[node].layer_height > nodes[next].layer_height {
+                        break;
+                    }
+                    // do not walk in partitons, that are excluded
+                    if mlp_helper::get_partition_id_on_level(
+                        next,
+                        highes_diff_layer,
+                        &nodes,
+                        &mlp_layers,
+                    ) != common_partition
+                    {
+                        continue;
+                    }
+                    // do not walk in partitons higher then the common one
+                    if graph.get_edge(edge).layer > highes_diff_layer {
+                        continue;
+                    }
                 }
 
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
