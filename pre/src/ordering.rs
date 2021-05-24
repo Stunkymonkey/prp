@@ -75,7 +75,7 @@ pub fn get_independent_set(
         // sort remaining_nodes via heuristic
         remaining_nodes_vector.par_sort_unstable_by_key(|&node| heuristics[node]);
 
-        // take lower 1/8
+        // take lower 1/10
         // TODO maybe do this more adaptive
         subset = (&remaining_nodes_vector[0..remaining_nodes_vector.len() / 10]).to_vec();
     } else {

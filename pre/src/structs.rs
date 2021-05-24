@@ -22,6 +22,7 @@ pub struct Edge {
     pub id: Option<EdgeId>,
     #[serde(skip_serializing)]
     pub cost: Vec<Cost>,
+    pub layer: LayerHeight,
     pub contracted_edges: Option<(EdgeId, EdgeId)>,
 }
 
@@ -45,6 +46,7 @@ impl Edge {
             to,
             id: None,
             cost,
+            layer: INVALID_LAYER_HEIGHT,
             contracted_edges: None,
         }
     }
@@ -53,8 +55,9 @@ impl Edge {
         Edge {
             from,
             to,
-            cost,
             id: Some(id),
+            cost,
+            layer: INVALID_LAYER_HEIGHT,
             contracted_edges: None,
         }
     }
@@ -69,8 +72,9 @@ impl Edge {
         Edge {
             from,
             to,
-            cost,
             id: Some(id),
+            cost,
+            layer: INVALID_LAYER_HEIGHT,
             contracted_edges: Some(contracted_edges),
         }
     }

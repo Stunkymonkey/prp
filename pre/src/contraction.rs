@@ -368,16 +368,34 @@ pub fn prp_contraction(
             &mut up_offset,
             &mut down_offset,
             &mut down_index,
-        )
+        );
+
+        // assign each edge to a layer, so they can be skipped
+        for mut edge in resulting_edges.iter_mut() {
+            if edge.layer == INVALID_LAYER_HEIGHT {
+                edge.layer = layer_height;
+            }
+        }
     }
 
     // testing uniqueness of ids
     let unique_set: BTreeSet<usize> = edges.iter().cloned().map(|e| e.id.unwrap()).collect();
     assert_eq!(unique_set.len(), edges.len());
 
+    // assign each top edge to top layer
+    for mut edge in edges.iter_mut() {
+        edge.layer = mlp_layers.len();
+    }
+
     // merging both graphs back together to have a single one
     edges.par_extend(resulting_edges);
 
+    // check that no edge has invalid height
+    for edge in edges.into_iter() {
+        assert!(INVALID_LAYER_HEIGHT != edge.layer);
+    }
+    let unique_height_set: BTreeSet<usize> = edges.iter().cloned().map(|e| e.layer).collect();
+    assert!(unique_height_set.len() - 1 == mlp_layers.len());
 
     sort_nodes_ranked(&mut edges, &up_offset, &down_offset, &mut nodes);
 
