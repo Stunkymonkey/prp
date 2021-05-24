@@ -129,8 +129,6 @@ fn layer_contraction(
 
     let thread_count = num_cpus::get();
 
-    let to_rank_50_time = Instant::now();
-
     while !remaining_nodes.is_empty() {
         // I ← independent node set
         let mut minimas = ordering::get_independent_set(
@@ -314,9 +312,6 @@ fn layer_contraction(
             resulting_edges.len()
         );
         *rank += 1;
-        if *rank == 100 {
-            println!("to_rank_100 in: {:?}", to_rank_50_time.elapsed());
-        }
     }
 }
 

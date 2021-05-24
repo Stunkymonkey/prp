@@ -80,7 +80,14 @@ async fn shortest_path(
     let mut dijkstra = dijkstra_cell.borrow_mut();
 
     let dijkstra_time = Instant::now();
-    let tmp = dijkstra.find_path(start_id, end_id, alpha, &data.graph, &data.nodes);
+    let tmp = dijkstra.find_path(
+        start_id,
+        end_id,
+        alpha,
+        &data.graph,
+        &data.nodes,
+        &data.mlp_layers,
+    );
     info!("    Dijkstra in: {:?}", dijkstra_time.elapsed());
 
     let (result_path, cost): (Vec<(Angle, Angle)>, String) = match tmp {
