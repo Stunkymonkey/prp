@@ -8,6 +8,7 @@ pub mod grid;
 pub mod min_heap;
 pub mod mlp_helper;
 pub mod nbichdijkstra;
+pub mod ndijkstra;
 pub mod structs;
 pub mod valid_flag;
 
