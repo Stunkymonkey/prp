@@ -78,6 +78,7 @@ fn main() {
 
     let result = BinFile {
         nodes,
+        mlp_layers,
         edges,
         up_offset,
         down_index,

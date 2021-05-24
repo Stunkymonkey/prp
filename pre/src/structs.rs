@@ -89,6 +89,7 @@ pub struct GridBounds {
 #[derive(Serialize)]
 pub struct BinFile {
     pub nodes: Vec<Node>,
+    pub mlp_layers: Vec<usize>,
     pub edges: Vec<Edge>,
     pub edge_costs: Vec<Cost>,
     pub up_offset: Vec<EdgeId>,
