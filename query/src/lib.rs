@@ -1,7 +1,7 @@
 pub mod bin_import;
 pub mod constants;
 pub mod dijkstra_export;
-pub mod export_wkt;
+pub mod export;
 pub mod geojson;
 pub mod graph;
 pub mod grid;

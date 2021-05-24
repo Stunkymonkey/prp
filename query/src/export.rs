@@ -3,7 +3,13 @@ use super::*;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
-pub fn write_file(
+pub fn write_file(file_path: &str, output: &str) -> std::io::Result<()> {
+    let mut file = File::create(file_path)?;
+    file.write_all(output.as_bytes())?;
+    Ok(())
+}
+
+pub fn write_wkt_file(
     file_path: &str,
     from: NodeId,
     to: NodeId,
