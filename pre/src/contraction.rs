@@ -8,6 +8,41 @@ use std::collections::BTreeSet;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
+fn sort_nodes_ranked(
+    edges: &mut Vec<Edge>,
+    up_offset: &[EdgeId],
+    down_offset: &[EdgeId],
+    nodes: &mut [Node],
+) {
+    // sort nodes based on layerheight & rank & edge-degree so hopefully only forward walking is done in dijkstra
+    nodes
+        .par_iter_mut()
+        .enumerate()
+        .for_each(|(i, node)| node.old_id = Some(i));
+    nodes.par_sort_unstable_by(|a, b| {
+        a.layer_height
+            .cmp(&b.layer_height)
+            .then(a.rank.cmp(&b.rank))
+            .then(
+                graph_helper::node_degree(a.old_id.unwrap(), &up_offset, &down_offset).cmp(
+                    &graph_helper::node_degree(b.old_id.unwrap(), &up_offset, &down_offset),
+                ),
+            )
+    });
+    // create new index
+    let mut new_node_index = vec![INVALID_NODE; nodes.len()];
+    nodes
+        .iter()
+        .enumerate()
+        .for_each(|(i, node)| new_node_index[node.old_id.unwrap()] = i);
+
+    // iterate over edges and fix all from/to ids
+    edges.par_iter_mut().for_each(|edge| {
+        edge.to = new_node_index[edge.to];
+        edge.from = new_node_index[edge.from];
+    });
+}
+
 fn sort_edges_ranked(
     edges: &mut Vec<Edge>,
     down_offset: &[EdgeId],
@@ -71,15 +106,6 @@ fn revert_indices(edges: &mut Vec<Edge>) {
         }
     }
 }
-
-// fn worker_contractor(
-//     input: Arc<Mutex<Vec<NodeId>>>,
-//     shortcut_id: &AtomicUsize,
-//     output: Arc<Mutex<Vec<Edge>>>,
-//     amount_nodes: usize,
-//     edges: Arc<Mutex<Vec<Edge>>>,
-// ) {
-// }
 
 // contract one layer until end
 #[allow(clippy::too_many_arguments)]
@@ -325,6 +351,7 @@ pub fn prp_contraction(
                 remaining_nodes.insert(node_id);
             }
         }
+
         let mut heuristics = ordering::calculate_heuristics(
             layer_height,
             &nodes,
@@ -356,33 +383,8 @@ pub fn prp_contraction(
     // merging both graphs back together to have a single one
     edges.par_extend(resulting_edges);
 
-    // sort nodes based on layerheight & rank & edge-degree so hopefully forward walking is done in dijkstra
-    nodes
-        .par_iter_mut()
-        .enumerate()
-        .for_each(|(i, node)| node.old_id = Some(i));
-    nodes.par_sort_unstable_by(|a, b| {
-        a.layer_height
-            .cmp(&b.layer_height)
-            .then(a.rank.cmp(&b.rank))
-            .then(
-                graph_helper::node_degree(a.old_id.unwrap(), &up_offset, &down_offset).cmp(
-                    &graph_helper::node_degree(b.old_id.unwrap(), &up_offset, &down_offset),
-                ),
-            )
-    });
-    // create new index
-    let mut new_node_index = vec![INVALID_NODE; nodes.len()];
-    nodes
-        .iter()
-        .enumerate()
-        .for_each(|(i, node)| new_node_index[node.old_id.unwrap()] = i);
 
-    // iterate over edges and fix all from/to ids
-    edges.par_iter_mut().for_each(|edge| {
-        edge.to = new_node_index[edge.to];
-        edge.from = new_node_index[edge.from];
-    });
+    sort_nodes_ranked(&mut edges, &up_offset, &down_offset, &mut nodes);
 
     // and calculate the offsets
     *down_index =
@@ -391,7 +393,7 @@ pub fn prp_contraction(
     // sort edges from top to down ranks for bidijkstra
     sort_edges_ranked(&mut edges, &down_offset, &mut down_index, &nodes);
 
-    // revert the ids back to usual ids
+    // revert the edge-ids back to usual ids
     revert_indices(&mut edges);
 }
 
