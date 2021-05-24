@@ -152,6 +152,7 @@ async fn main() -> std::io::Result<()> {
     );
     let data_ref = web::Data::new(WebData {
         nodes: data.nodes,
+        mlp_layers: data.mlp_layers,
         graph,
         grid_offset: data.grid_offset,
         grid: data.grid,
