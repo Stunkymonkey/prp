@@ -37,9 +37,9 @@ impl Graph {
 
     /// get single edge costs
     #[allow(dead_code)]
-    pub fn get_edge_costs(&self, id: EdgeId) -> Vec<Cost> {
+    pub fn get_edge_costs(&self, id: EdgeId) -> &[Cost] {
         let offset = self.dim * id;
-        self.edge_costs[offset..offset + self.dim].to_vec()
+        &self.edge_costs[offset..offset + self.dim]
     }
 
     /// get all up edges from one node
