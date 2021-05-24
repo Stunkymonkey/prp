@@ -1,12 +1,47 @@
 // use rayon::prelude::*;
+use serde::Serialize;
+use serde_json::json;
 use std::fs::File;
-use std::time::Instant;
+use std::str::FromStr;
+use std::time::{Duration, Instant};
 
 use prp_query::dijkstra_export::*;
 use prp_query::*;
 
+enum Vals {
+    Time,
+    Count,
+    Export,
+    Check,
+}
+
+impl FromStr for Vals {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "time" => Ok(Vals::Time),
+            "count" => Ok(Vals::Count),
+            "export" => Ok(Vals::Export),
+            "check" => Ok(Vals::Check),
+            _ => Err("no match"),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct TimeExport {
+    id: usize,
+    time: Duration,
+}
+#[derive(Debug, Serialize)]
+struct CounterExport {
+    id: usize,
+    heap_pops: usize,
+    relaxed_edges: usize,
+}
+
 fn main() {
-    let (fmi_file, eval_file, export, export_path) = get_arguments();
+    let (fmi_file, eval_file, eval_type, export_path) = get_arguments();
     // read binfile
     let data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
@@ -72,61 +107,185 @@ fn main() {
 
     println!("calculated all closest-point node_ids");
 
-    if !export {
-        let mut dijkstra = Dijkstra::new(amount_nodes, dim, NoOp::new());
+    match eval_type {
+        Vals::Time => {
+            let mut dijkstra = Dijkstra::new(amount_nodes, dim, NoOp::new());
+            let mut export_list: Vec<TimeExport> = Vec::with_capacity(eval.len());
 
-        let dijkstra_time = Instant::now();
+            for query in &eval {
+                // TODO not sure if allowed
+                // dijkstra.reset_state();
+                let dijkstra_time = Instant::now();
+                dijkstra.find_path(
+                    query.start_id.unwrap(),
+                    query.end_id.unwrap(),
+                    query.alpha.clone(),
+                    &data.graph,
+                    &data.nodes,
+                    &data.mlp_layers,
+                );
+                export_list.push(TimeExport {
+                    id: query.id,
+                    time: dijkstra_time.elapsed(),
+                });
+            }
 
-        for query in &eval {
-            dijkstra.find_path(
-                query.start_id.unwrap(),
-                query.end_id.unwrap(),
-                query.alpha.clone(),
-                &data.graph,
-                &data.nodes,
-            );
-        }
+            //export
+            let output = serde_json::to_string_pretty(&json!({
+                "total_time": export_list.iter().map(|e| e.time).sum::<Duration>(),
+                "average_time": export_list.iter().map(|e| e.time).sum::<Duration>().div_f64(eval.len() as f64),
+                "querys": export_list
+            }))
+            .unwrap();
 
-        println!(
-            "Dijkstra in: {:?} on average {:?}",
-            dijkstra_time.elapsed(),
-            dijkstra_time.elapsed().div_f64(eval.len() as f64)
-        );
-    } else {
-        let mut dijkstra = Dijkstra::new(amount_nodes, dim, RealExport::new());
-
-        for query in &eval {
-            let result = dijkstra.find_path(
-                query.start_id.unwrap(),
-                query.end_id.unwrap(),
-                query.alpha.clone(),
-                &data.graph,
-                &data.nodes,
-            );
-            let path = result.unwrap_or((vec![], 0.0));
-
-            // collect
-            match export_wkt::write_file(
-                &format!("{}/{}.wkt", export_path, query.id),
-                query.start_id.unwrap(),
-                query.end_id.unwrap(),
-                dijkstra.exporter.meeting_node,
-                &dijkstra.exporter.visited_nodes,
-                &path.0,
-                &dijkstra.exporter.visited_edges,
-                &data.nodes,
-                &data.graph.edges,
-            ) {
-                Ok(_result) => (),
-                Err(error) => panic!("error exporting wkt-file: {:?}", error),
+            match export_path {
+                Some(path) => match export::write_file(&path, &output) {
+                    Ok(_) => println!("exported succesfully"),
+                    Err(err) => println!("error while exporting {:?}", err),
+                },
+                None => println!("{}", output),
             }
         }
+        Vals::Count => {
+            let mut dijkstra = Dijkstra::new(amount_nodes, dim, Counter::new());
+            let mut export_list: Vec<CounterExport> = Vec::with_capacity(eval.len());
 
-        println!("exported successfully at {}", export_path);
+            for query in &eval {
+                let _result = dijkstra.find_path(
+                    query.start_id.unwrap(),
+                    query.end_id.unwrap(),
+                    query.alpha.clone(),
+                    &data.graph,
+                    &data.nodes,
+                    &data.mlp_layers,
+                );
+                export_list.push(CounterExport {
+                    id: query.id,
+                    heap_pops: dijkstra.exporter.heap_pops,
+                    relaxed_edges: dijkstra.exporter.relaxed_edges,
+                });
+            }
+
+            //export
+            let output = serde_json::to_string_pretty(&json!({
+                "heap_pop_sum": export_list.iter().map(|e| e.heap_pops).sum::<usize>(),
+                "relaxed_edge_sum": export_list.iter().map(|e| e.relaxed_edges).sum::<usize>(),
+                "querys": export_list,
+            }))
+            .unwrap();
+
+            match export_path {
+                Some(path) => match export::write_file(&path, &output) {
+                    Ok(_) => println!("exported succesfully"),
+                    Err(err) => println!("error while exporting {:?}", err),
+                },
+                None => println!("{}", output),
+            }
+        }
+        Vals::Export => {
+            let mut dijkstra = Dijkstra::new(amount_nodes, dim, RealExport::new());
+
+            for query in &eval {
+                let result = dijkstra.find_path(
+                    query.start_id.unwrap(),
+                    query.end_id.unwrap(),
+                    query.alpha.clone(),
+                    &data.graph,
+                    &data.nodes,
+                    &data.mlp_layers,
+                );
+                let path = result.unwrap_or((vec![], 0.0));
+
+                //export
+                match export_path {
+                    Some(ref export_path) => {
+                        match export::write_wkt_file(
+                            &format!("{}/{}.wkt", export_path, query.id),
+                            query.start_id.unwrap(),
+                            query.end_id.unwrap(),
+                            dijkstra.exporter.meeting_node,
+                            &dijkstra.exporter.visited_nodes,
+                            &path.0,
+                            &dijkstra.exporter.visited_edges,
+                            &data.nodes,
+                            &data.graph.edges,
+                        ) {
+                            Ok(_result) => println!("exported successfully at {}", export_path),
+                            Err(error) => println!("error exporting wkt-file: {:?}", error),
+                        }
+                    }
+                    None => println!("unable to export: no export-path given"),
+                }
+            }
+        }
+        Vals::Check => {
+            let mut dijkstra = ndijkstra::NDijkstra::new(amount_nodes, dim);
+            let mut prp_dijkstra = Dijkstra::new(amount_nodes, dim, NoOp::new());
+            let mut correct = 0;
+            let mut not_correct = 0;
+            let mut no_path_found = 0;
+            for query in &eval {
+                let result = dijkstra.find_path(
+                    query.start_id.unwrap(),
+                    query.end_id.unwrap(),
+                    query.alpha.clone(),
+                    &data.graph,
+                );
+                let prp_result = prp_dijkstra.find_path(
+                    query.start_id.unwrap(),
+                    query.end_id.unwrap(),
+                    query.alpha.clone(),
+                    &data.graph,
+                    &data.nodes,
+                    &data.mlp_layers,
+                );
+                // only check for paths, not costs
+                if result.is_some() && prp_result.is_some() {
+                    let result = result.unwrap();
+                    let prp_result = prp_result.unwrap();
+                    if result.0 == prp_result.0 {
+                        correct += 1;
+                    } else {
+                        not_correct += 1;
+                        // println!(
+                        //     "some querys deliver different results: from {:?} to {:?} alpha {:?} cost dij {:?} prp {:?}",
+                        //     query.start_id.unwrap(),
+                        //     query.end_id.unwrap(),
+                        //     query.alpha.clone(),
+                        //     result.1,
+                        //     prp_result.1
+                        // );
+                    }
+                } else if result.is_none() && prp_result.is_none() {
+                    correct += 1;
+                    no_path_found += 1;
+                } else {
+                    not_correct += 1;
+                }
+            }
+
+            //export
+            let output = serde_json::to_string_pretty(&json!({
+                "correct": {
+                    "with path": correct-no_path_found,
+                    "no_path": no_path_found
+                },
+                "not correct": not_correct,
+            }))
+            .unwrap();
+
+            match export_path {
+                Some(path) => match export::write_file(&path, &output) {
+                    Ok(_) => println!("exported succesfully"),
+                    Err(err) => println!("error while exporting {:?}", err),
+                },
+                None => println!("{}", output),
+            }
+        }
     }
 }
 
-fn get_arguments() -> (String, String, bool, String) {
+fn get_arguments() -> (String, String, Vals, Option<String>) {
     let matches = clap::App::new("prp_eval")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -148,23 +307,29 @@ fn get_arguments() -> (String, String, bool, String) {
                 .required(true),
         )
         .arg(
-            clap::Arg::with_name("export")
-                .help("the query should get exported")
+            clap::Arg::with_name("type")
+                .help("What kind of evaluation will be done")
+                .takes_value(true)
+                .short("t")
+                .long("type")
+                .required(true)
+                .possible_values(&["time", "count", "export", "check"]),
+        )
+        .arg(
+            clap::Arg::with_name("export-path")
+                .help("where to export to")
                 .takes_value(true)
                 .short("x")
                 .long("export"),
         )
         .get_matches();
 
-    let mut export_path = "";
-    if matches.is_present("export") {
-        export_path = matches.value_of("export").unwrap();
-    }
+    let eval_type = clap::value_t!(matches.value_of("type"), Vals).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
         matches.value_of("eval-file").unwrap().to_string(),
-        matches.is_present("export"),
-        export_path.to_string(),
+        eval_type,
+        matches.value_of("export-path").map(String::from),
     )
 }
