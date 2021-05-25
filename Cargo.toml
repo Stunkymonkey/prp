@@ -4,7 +4,7 @@ members = [
     "mlp/merge",
     "mlp/kmeans",
     "osm-graph/largest-set",
-    #"osm-graph/pbfextractor",
+    "osm-graph/pbfextractor",
     "pre",
     "pre/mch",
     "query",
