@@ -5,7 +5,12 @@ use std::fs::File;
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
-use prp_query::dijkstra_export::*;
+// changing the import changes the dijkstra query method
+// use prp_query::dijkstra::prp::Dijkstra;
+// use prp_query::dijkstra::pch::Dijkstra;
+// use prp_query::dijkstra::crp::Dijkstra;
+use prp_query::dijkstra::bidirectional::Dijkstra;
+use prp_query::query_export::*;
 use prp_query::*;
 
 enum Vals {
@@ -109,12 +114,10 @@ fn main() {
 
     match eval_type {
         Vals::Time => {
-            let mut dijkstra = Dijkstra::new(amount_nodes, dim, NoOp::new());
+            let mut dijkstra = Dijkstra::new(amount_nodes, NoOp::new());
             let mut export_list: Vec<TimeExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
-                // TODO not sure if allowed
-                // dijkstra.reset_state();
                 let dijkstra_time = Instant::now();
                 dijkstra.find_path(
                     query.start_id.unwrap(),
@@ -147,7 +150,7 @@ fn main() {
             }
         }
         Vals::Count => {
-            let mut dijkstra = Dijkstra::new(amount_nodes, dim, Counter::new());
+            let mut dijkstra = Dijkstra::new(amount_nodes, Counter::new());
             let mut export_list: Vec<CounterExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -183,7 +186,7 @@ fn main() {
             }
         }
         Vals::Export => {
-            let mut dijkstra = Dijkstra::new(amount_nodes, dim, RealExport::new());
+            let mut dijkstra = Dijkstra::new(amount_nodes, RealExport::new());
 
             for query in &eval {
                 let result = dijkstra.find_path(
@@ -219,8 +222,8 @@ fn main() {
             }
         }
         Vals::Check => {
-            let mut dijkstra = ndijkstra::NDijkstra::new(amount_nodes, dim);
-            let mut prp_dijkstra = Dijkstra::new(amount_nodes, dim, NoOp::new());
+            let mut dijkstra = dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
+            let mut prp_dijkstra = Dijkstra::new(amount_nodes, NoOp::new());
             let mut correct = 0;
             let mut not_correct = 0;
             let mut no_path_found = 0;
@@ -230,6 +233,8 @@ fn main() {
                     query.end_id.unwrap(),
                     query.alpha.clone(),
                     &data.graph,
+                    &data.nodes,
+                    &data.mlp_layers,
                 );
                 let prp_result = prp_dijkstra.find_path(
                     query.start_id.unwrap(),
@@ -239,28 +244,31 @@ fn main() {
                     &data.nodes,
                     &data.mlp_layers,
                 );
-                // only check for paths, not costs
-                if result.is_some() && prp_result.is_some() {
-                    let result = result.unwrap();
-                    let prp_result = prp_result.unwrap();
-                    if result.0 == prp_result.0 {
-                        correct += 1;
-                    } else {
-                        not_correct += 1;
-                        // println!(
-                        //     "some querys deliver different results: from {:?} to {:?} alpha {:?} cost dij {:?} prp {:?}",
-                        //     query.start_id.unwrap(),
-                        //     query.end_id.unwrap(),
-                        //     query.alpha.clone(),
-                        //     result.1,
-                        //     prp_result.1
-                        // );
+                match (result, prp_result) {
+                    (Some(result), Some(prp_result)) => {
+                        // only check costs of paths, because there can be multiple paths with same value
+                        if (cost_of_path(&query.alpha, &result.0, &data.graph)
+                            - cost_of_path(&query.alpha, &prp_result.0, &data.graph))
+                        .abs()
+                            < 1.0
+                        {
+                            correct += 1;
+                        } else {
+                            not_correct += 1;
+                            println!(
+                                "dij: {:?}/{:?} \tpch: {:?}/{:?}",
+                                result.1,
+                                cost_of_path(&query.alpha, &result.0, &data.graph),
+                                prp_result.1,
+                                cost_of_path(&query.alpha, &prp_result.0, &data.graph),
+                            );
+                        }
                     }
-                } else if result.is_none() && prp_result.is_none() {
-                    correct += 1;
-                    no_path_found += 1;
-                } else {
-                    not_correct += 1;
+                    (None, None) => {
+                        correct += 1;
+                        no_path_found += 1;
+                    }
+                    _ => not_correct += 1,
                 }
             }
 
@@ -270,7 +278,7 @@ fn main() {
                     "with path": correct-no_path_found,
                     "no_path": no_path_found
                 },
-                "not correct": not_correct,
+                "incorrect": not_correct,
             }))
             .unwrap();
 
@@ -283,6 +291,14 @@ fn main() {
             }
         }
     }
+}
+
+fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
+    let mut cost: f64 = 0.0;
+    for edge in path {
+        cost += mch::costs_by_alpha(&graph.get_edge_costs(*edge), &alpha);
+    }
+    cost
 }
 
 fn get_arguments() -> (String, String, Vals, Option<String>) {
