@@ -53,7 +53,7 @@ function setSlider(metrics) {
     var slide_container = "";
     metrics.forEach(function (item, index) {
         // console.log(item, index);
-        slide_container += item + "<input type=\"range\" min=\"0\" max=\"1\" value=\"0\" class=\"slider\" step=\"0.01\" onchange=\"query()\" id=\"slider-" + index +"\"> <br>";
+        slide_container += item + "<input type=\"range\" min=\"0\" max=\"1\" value=\"0.25\" class=\"slider\" step=\"0.01\" onchange=\"query()\" id=\"slider-" + index +"\"> <br>";
     });
     document.getElementById("slidercontainer").innerHTML = slide_container;
 }
