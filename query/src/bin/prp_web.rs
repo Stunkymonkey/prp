@@ -7,8 +7,13 @@ use std::cell::RefCell;
 use std::path::Path;
 use std::time::Instant;
 
-use prp_query::dijkstra_export::*;
+// changing the import changes the dijkstra query method
+// use prp_query::dijkstra::prp::Dijkstra;
+use prp_query::dijkstra::pch::Dijkstra;
+// use prp_query::dijkstra::crp::Dijkstra;
+// use prp_query::dijkstra::bidirectional::Dijkstra;
 use prp_query::geojson::*;
+use prp_query::query_export::*;
 use prp_query::*;
 
 #[post("/dijkstra")]
@@ -92,7 +97,10 @@ async fn shortest_path(
 
     let (result_path, cost): (Vec<(Angle, Angle)>, String) = match tmp {
         Some((path, path_cost)) => {
-            let nodes = grid::get_coordinates(path, &data.nodes);
+            let nodes = grid::get_coordinates(
+                convert_edge_ids_to_node_ids(&path, &data.graph),
+                &data.nodes,
+            );
             (
                 nodes
                     .par_iter()
@@ -132,6 +140,18 @@ async fn metrics(
     _dijkstra_cell: web::Data<RefCell<Dijkstra<NoOp>>>,
 ) -> web::Json<Vec<String>> {
     return web::Json(data.metrics.clone());
+}
+
+fn convert_edge_ids_to_node_ids(edges: &[EdgeId], graph: &Graph) -> Vec<NodeId> {
+    if edges.is_empty() {
+        return vec![];
+    }
+    let mut path: Vec<NodeId> = edges
+        .iter()
+        .map(|edge_id| graph.edges[*edge_id].from)
+        .collect();
+    path.push(graph.edges[*edges.last().unwrap()].to);
+    path
 }
 
 #[actix_web::main]
@@ -182,8 +202,7 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: http://localhost:{}", port);
     HttpServer::new(move || {
         // initialize thread-local dijkstra
-        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, dim, NoOp::new()));
-        // let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, dim));
+        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, NoOp::new()));
         App::new()
             .wrap(middleware::Logger::default())
             .data(web::JsonConfig::default().limit(1024))
