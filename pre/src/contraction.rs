@@ -391,7 +391,7 @@ pub fn prp_contraction(
     edges.par_extend(resulting_edges);
 
     // check that no edge has invalid height
-    for edge in edges.into_iter() {
+    for edge in edges.iter_mut() {
         assert!(INVALID_LAYER_HEIGHT != edge.layer);
     }
     let unique_height_set: BTreeSet<usize> = edges.iter().cloned().map(|e| e.layer).collect();
