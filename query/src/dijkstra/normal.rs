@@ -1,62 +1,52 @@
 // based on https://rosettacode.org/wiki/Dijkstra%27s_algorithm#Rust
 
 use super::*;
-use mch::{costs_by_alpha, equal_weights, same_array};
+use mch::costs_by_alpha;
 use min_heap::*;
 use std::collections::BinaryHeap;
 use valid_flag::*;
 
 #[derive(Clone)]
-pub struct NDijkstra {
+pub struct Dijkstra<E: Export> {
     dist: Vec<(Cost, Option<NodeId>)>,
     heap: BinaryHeap<MinHeapItem>,
     visited: ValidFlag,
-    last_from: NodeId,
-    last_pref: Vec<Cost>,
+    pub exporter: E,
 }
 
-impl NDijkstra {
+impl<E: Export> FindPath<E> for Dijkstra<E> {
     /// general constructor
-    pub fn new(amount_nodes: usize, dim: usize) -> Self {
+    fn new(amount_nodes: usize, exporter: E) -> Self {
         let dist = vec![(COST_MAX, None); amount_nodes];
         let heap = BinaryHeap::new();
         let visited = ValidFlag::new(amount_nodes);
-        NDijkstra {
+        Dijkstra {
             dist,
             heap,
             visited,
-            last_from: INVALID_NODE,
-            last_pref: equal_weights(dim),
+            exporter,
         }
     }
 
     /// reseting its internal state
-    pub fn reset_state(&mut self) {
-        self.last_from = INVALID_NODE;
+    fn reset_state(&mut self) {
         self.heap.clear();
         self.visited.invalidate_all();
     }
 
     /// return path of edges(!) from source to target not path of nodes!
-    pub fn find_path(
+    fn find_path(
         &mut self,
         from: NodeId,
         to: NodeId,
         alpha: Vec<f64>,
         graph: &Graph,
+        _nodes: &[Node],
+        _mlp_layers: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
-        if self.last_from == from && same_array(&self.last_pref, &alpha) {
-            if self.visited.is_valid(to) {
-                return Some(self.resolve_path(to, &graph.edges));
-            }
-        } else {
-            // If something changed, we initialize it normally
-            self.reset_state();
-            self.last_from = from;
-            self.last_pref = alpha.clone();
+        self.reset_state();
 
-            self.heap.push(MinHeapItem::new(from, 0.0, None));
-        }
+        self.heap.push(MinHeapItem::new(from, 0.0, None));
 
         while let Some(MinHeapItem {
             node,
@@ -64,6 +54,7 @@ impl NDijkstra {
             prev_edge,
         }) = self.heap.pop()
         {
+            self.exporter.heap_pop();
             // node has already been visited and can be skipped
             // replacement for decrease key operation
             if self.visited.is_valid(node) && cost > self.dist[node].0 {
@@ -73,6 +64,14 @@ impl NDijkstra {
             self.visited.set_valid(node);
             self.dist[node] = (cost, prev_edge);
 
+            self.exporter.visited_node(node);
+            self.exporter.visited_edge(prev_edge);
+
+            // found end
+            if node == to {
+                return Some(self.resolve_path(to, &graph.edges));
+            }
+
             for edge in graph.get_up_edge_ids(node) {
                 let new_edge = graph.get_edge(edge);
 
@@ -81,21 +80,19 @@ impl NDijkstra {
                     continue;
                 }
 
+                self.exporter.relaxed_edge();
+
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
                     self.heap
                         .push(MinHeapItem::new(new_edge.to, alt, Some(edge)));
                 }
             }
-
-            // found end
-            if node == to {
-                return Some(self.resolve_path(to, &graph.edges));
-            }
         }
         None
     }
-
+}
+impl<E: Export> Dijkstra<E> {
     /// recreate path backwards
     fn resolve_path(&self, end: NodeId, edges: &[Edge]) -> (Vec<NodeId>, Cost) {
         let weight = self.dist[end].0;

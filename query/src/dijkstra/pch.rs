@@ -1,7 +1,6 @@
 // based on https://rosettacode.org/wiki/Dijkstra%27s_algorithm#Rust
 
 use super::*;
-use dijkstra_export::*;
 use min_heap::*;
 use valid_flag::*;
 
@@ -16,13 +15,12 @@ pub struct Dijkstra<E: Export> {
     visited_down: ValidFlag,
     heap_up: BinaryHeap<MinHeapItem>,
     heap_down: BinaryHeap<MinHeapItem>,
-    dim: usize,
     pub exporter: E,
 }
 
-impl<E: Export> Dijkstra<E> {
+impl<E: Export> FindPath<E> for Dijkstra<E> {
     /// general constructor
-    pub fn new(amount_nodes: usize, dim: usize, exporter: E) -> Self {
+    fn new(amount_nodes: usize, exporter: E) -> Self {
         let dist_up = vec![(COST_MAX, None); amount_nodes];
         let dist_down = vec![(COST_MAX, None); amount_nodes];
         let visited_up = ValidFlag::new(amount_nodes);
@@ -36,13 +34,12 @@ impl<E: Export> Dijkstra<E> {
             visited_down,
             heap_up,
             heap_down,
-            dim,
             exporter,
         }
     }
 
     /// reseting its internal state
-    pub fn reset_state(&mut self) {
+    fn reset_state(&mut self) {
         self.visited_up.invalidate_all();
         self.visited_down.invalidate_all();
         self.heap_up.clear();
@@ -51,14 +48,14 @@ impl<E: Export> Dijkstra<E> {
     }
 
     /// return shortest path of nodes
-    pub fn find_path(
+    fn find_path(
         &mut self,
         from: NodeId,
         to: NodeId,
         alpha: Vec<f64>,
         graph: &Graph,
         nodes: &[Node],
-        mlp_layers: &[usize],
+        _mlp_layers: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 
@@ -75,17 +72,7 @@ impl<E: Export> Dijkstra<E> {
         self.heap_down.push(MinHeapItem::new(to, 0.0, None));
 
         let mut best_cost = COST_MAX;
-        let mut meeting_node = INVALID_NODE;
-
-        // get maximum crp-layer partition
-        let highes_diff_layer =
-            mlp_helper::get_highest_differing_level(from, to, &nodes, &mlp_layers);
-        let common_partition =
-            mlp_helper::get_partition_id_on_level(from, highes_diff_layer, &nodes, &mlp_layers);
-        // println!(
-        //     "highes_diff_layer {:?} common_partition {:?}",
-        //     highes_diff_layer, common_partition
-        // );
+        let mut meeting_node = None;
 
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
@@ -93,7 +80,7 @@ impl<E: Export> Dijkstra<E> {
         let get_to: fn(&Edge) -> NodeId = Edge::get_to;
         let get_from: fn(&Edge) -> NodeId = Edge::get_from;
 
-        while let Some((
+        'outer: while let Some((
             MinHeapItem {
                 node,
                 cost,
@@ -109,7 +96,7 @@ impl<E: Export> Dijkstra<E> {
             exporter,
         )) = {
             if self.heap_up.is_empty() && self.heap_down.is_empty() {
-                return None;
+                break 'outer;
             }
             let next_up: Cost = self
                 .heap_up
@@ -121,10 +108,7 @@ impl<E: Export> Dijkstra<E> {
                 .peek()
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
-            // TODO maybe also look what node is on lower layer and pick that one
-            if next_up + next_down >= best_cost {
-                None
-            } else if next_up <= next_down {
+            if next_up <= next_down {
                 self.heap_up.pop().map(|x| {
                     (
                         x,
@@ -160,6 +144,9 @@ impl<E: Export> Dijkstra<E> {
             if visited.is_valid(node) && cost > dist[node].0 {
                 continue;
             }
+            // if cost > best_cost {
+            //     continue;
+            // }
 
             visited.set_valid(node);
             dist[node] = (cost, prev_edge);
@@ -172,45 +159,24 @@ impl<E: Export> Dijkstra<E> {
 
                 exporter.relaxed_edge();
 
-                // in lowest layer
-                if nodes[node].layer_height == 0 {
-                    // skip pch ranks
-                    // top-layer nodes have maximum layer number so no equal test
-                    if nodes[node].rank > nodes[next].rank {
-                        break;
-                    }
-                // in top layer
-                } else {
-                    // walk only in layers above
-                    if nodes[node].layer_height > nodes[next].layer_height {
-                        break;
-                    }
-                    // do not walk in partitons, that are excluded
-                    if mlp_helper::get_partition_id_on_level(
-                        next,
-                        highes_diff_layer,
-                        &nodes,
-                        &mlp_layers,
-                    ) != common_partition
-                    {
-                        continue;
-                    }
-                    // do not walk in partitons higher then the common one
-                    if graph.get_edge(edge).layer > highes_diff_layer {
-                        continue;
-                    }
+                // skip pch ranks
+                // top-layer nodes have maximum layer number so no equal test
+                if nodes[node].rank > nodes[next].rank {
+                    continue;
+                    // break;
                 }
 
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
+                    // println!("insert new node",);
                     heap.push(MinHeapItem::new(next, alt, Some(edge)));
 
                     // check if other dijkstra has visited this point before
                     if visited_.is_valid(node) {
                         let combined = dist_[node].0 + alt;
                         if combined < best_cost {
-                            meeting_node = node;
+                            meeting_node = Some(node);
                             exporter.current_meeting_point(node);
                             best_cost = combined;
                         }
@@ -218,18 +184,15 @@ impl<E: Export> Dijkstra<E> {
                 }
             }
         }
-        if meeting_node == INVALID_NODE {
-            None
-        } else {
-            Some(self.resolve_path(
-                meeting_node,
-                best_cost,
-                nodes[meeting_node].rank,
-                &graph.edges,
-            ))
+        match meeting_node {
+            Some(meet_node) => {
+                Some(self.resolve_path(meet_node, best_cost, nodes[meet_node].rank, &graph.edges))
+            }
+            None => None,
         }
     }
-
+}
+impl<E: Export> Dijkstra<E> {
     /// recreate path backwards
     fn resolve_path(
         &self,
@@ -246,7 +209,6 @@ impl<E: Export> Dijkstra<E> {
         let up_edge = self.dist_up[meeting_node];
         let down_edge = self.dist_down[meeting_node];
 
-        path.push(meeting_node);
         if let Some(prev_edge) = up_edge.1 {
             self.walk_down(prev_edge, true, &mut path, &edges);
             path.reverse();
@@ -300,7 +262,7 @@ impl<E: Export> Dijkstra<E> {
             if let Some(previous) = current_edge.contrated_edges {
                 self.resolve_edge(previous.0, &mut path, is_upwards, &edges);
             } else {
-                path.push(current_edge.from);
+                path.push(edge);
             }
         } else {
             if let Some(previous) = current_edge.contrated_edges {
@@ -309,7 +271,7 @@ impl<E: Export> Dijkstra<E> {
             if let Some(next) = current_edge.contrated_edges {
                 self.resolve_edge(next.1, &mut path, is_upwards, &edges);
             } else {
-                path.push(current_edge.to);
+                path.push(edge);
             }
         }
     }
