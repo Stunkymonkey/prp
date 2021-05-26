@@ -9,6 +9,7 @@ pub fn write_file(file_path: &str, output: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn write_wkt_file(
     file_path: &str,
     from: NodeId,
