@@ -227,6 +227,7 @@ fn main() {
             let mut correct = 0;
             let mut not_correct = 0;
             let mut no_path_found = 0;
+            let mut not_no_path_found = 0;
             for query in &eval {
                 let result = dijkstra.find_path(
                     query.start_id.unwrap(),
@@ -256,7 +257,9 @@ fn main() {
                         } else {
                             not_correct += 1;
                             println!(
-                                "dij: {:?}/{:?} \tpch: {:?}/{:?}",
+                                "from: {:?} to {:?} \tdij: {:?}/{:?} \talt: {:?}/{:?}",
+                                query.start_id.unwrap(),
+                                query.end_id.unwrap(),
                                 result.1,
                                 cost_of_path(&query.alpha, &result.0, &data.graph),
                                 prp_result.1,
@@ -265,20 +268,25 @@ fn main() {
                         }
                     }
                     (None, None) => {
-                        correct += 1;
                         no_path_found += 1;
                     }
-                    _ => not_correct += 1,
+                    (None, Some(_prp_result)) => {
+                        not_no_path_found += 1;
+                    }
+                    (Some(_result), None) => not_correct += 1,
                 }
             }
 
             //export
             let output = serde_json::to_string_pretty(&json!({
                 "correct": {
-                    "with path": correct-no_path_found,
+                    "with path": correct,
                     "no_path": no_path_found
                 },
-                "incorrect": not_correct,
+                "incorrect": {
+                    "with_path": not_correct,
+                    "no_path": not_no_path_found,
+                },
             }))
             .unwrap();
 
