@@ -95,19 +95,16 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             dist_,
             exporter,
         )) = {
-            if self.heap_up.is_empty() && self.heap_down.is_empty() {
-                return None;
-            }
             let next_up: Cost = self
                 .heap_up
                 .peek()
-                .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
-                .cost;
+                .map(|min_item| min_item.cost)
+                .unwrap_or(COST_MAX);
             let next_down: Cost = self
                 .heap_down
                 .peek()
-                .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
-                .cost;
+                .map(|min_item| min_item.cost)
+                .unwrap_or(COST_MAX);
             if next_up + next_down >= best_cost {
                 None
             } else if next_up <= next_down {
@@ -147,12 +144,6 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 continue;
             }
 
-            visited.set_valid(node);
-            dist[node] = (cost, prev_edge);
-
-            exporter.visited_node(node);
-            exporter.visited_edge(prev_edge);
-
             for edge in get_edges(&graph, node) {
                 let next = walk(&graph.get_edge(edge));
 
@@ -167,22 +158,26 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
                     heap.push(MinHeapItem::new(next, alt, Some(edge)));
-                }
-            }
-            // check if other dijkstra has visited this point before
-            if visited_.is_valid(node) {
-                let combined = dist_[node].0 + cost;
-                if combined < best_cost {
-                    meeting_node = Some(node);
-                    exporter.current_meeting_point(node);
-                    best_cost = combined;
+                    visited.set_valid(next);
+                    dist[next] = (alt, Some(edge));
+
+                    exporter.visited_node(next);
+                    exporter.visited_edge(Some(edge));
+                    // check if other dijkstra has visited this point before
+                    if visited_.is_valid(next) {
+                        let combined = dist_[next].0 + alt;
+                        if combined < best_cost {
+                            meeting_node = Some(next);
+                            exporter.current_meeting_point(next);
+                            best_cost = combined;
+                        }
+                    }
                 }
             }
         }
         match meeting_node {
             Some(meet_node) => {
                 Some(self.resolve_path(meet_node, best_cost, nodes[meet_node].rank, &graph.edges))
-                // Some((vec![from, meet_node, to], best_cost))
             }
             None => None,
         }
