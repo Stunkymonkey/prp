@@ -79,10 +79,10 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             mlp_helper::get_highest_differing_level(from, to, &nodes, &mlp_layers);
         let common_partition =
             mlp_helper::get_partition_id_on_level(from, highes_diff_layer, &nodes, &mlp_layers);
-        println!(
-            "highes_diff_layer {:?} common_partition {:?}",
-            highes_diff_layer, common_partition
-        );
+        // println!(
+        //     "highes_diff_layer {:?} common_partition {:?}",
+        //     highes_diff_layer, common_partition
+        // );
 
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
@@ -105,19 +105,16 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             dist_,
             exporter,
         )) = {
-            if self.heap_up.is_empty() && self.heap_down.is_empty() {
-                return None;
-            }
             let next_up: Cost = self
                 .heap_up
                 .peek()
-                .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
-                .cost;
+                .map(|min_item| min_item.cost)
+                .unwrap_or(COST_MAX);
             let next_down: Cost = self
                 .heap_down
                 .peek()
-                .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
-                .cost;
+                .map(|min_item| min_item.cost)
+                .unwrap_or(COST_MAX);
             if next_up + next_down >= best_cost {
                 None
             } else if next_up <= next_down {
@@ -157,49 +154,37 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 continue;
             }
 
-            visited.set_valid(node);
-            dist[node] = (cost, prev_edge);
-
-            exporter.visited_node(node);
-            exporter.visited_edge(prev_edge);
-
             for edge in get_edges(&graph, node) {
                 let next = walk(&graph.get_edge(edge));
 
-                exporter.relaxed_edge();
-
                 // never walk down in layers
-                // if nodes[node].layer_height > nodes[next].layer_height {
-                //     // break;
-                //     continue;
-                // }
-                // do not walk in partitons, that are excluded
-                // if mlp_helper::get_partition_id_on_level(
-                //     next,
-                //     highes_diff_layer,
-                //     &nodes,
-                //     &mlp_layers,
-                // ) != common_partition
-                // {
-                //     continue;
-                // }
-                // do not walk in partitons higher then the common one
-                // if graph.get_edge(edge).layer > highes_diff_layer {
-                //     continue;
-                // }
+                if nodes[node].layer_height > nodes[next].layer_height {
+                    break;
+                }
+                // skip edges, that are shortcuts from upper layers
+                if !graph.get_edge(edge).core {
+                    continue;
+                }
+
+                exporter.relaxed_edge();
 
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
 
-                if meeting_node.is_none() && (!visited.is_valid(next) || alt < dist[next].0) {
+                if !visited.is_valid(next) || alt < dist[next].0 {
                     heap.push(MinHeapItem::new(next, alt, Some(edge)));
-                }
-                // check if other dijkstra has visited this point before
-                if visited_.is_valid(next) {
-                    let combined = dist_[next].0 + dist[next].0;
-                    if combined < best_cost {
-                        meeting_node = Some(next);
-                        exporter.current_meeting_point(next);
-                        best_cost = combined;
+                    visited.set_valid(next);
+                    dist[next] = (alt, Some(edge));
+
+                    exporter.visited_node(next);
+                    exporter.visited_edge(Some(edge));
+                    // check if other dijkstra has visited this point before
+                    if visited_.is_valid(next) {
+                        let combined = dist_[next].0 + alt;
+                        if combined < best_cost {
+                            meeting_node = Some(next);
+                            exporter.current_meeting_point(next);
+                            best_cost = combined;
+                        }
                     }
                 }
             }
@@ -212,6 +197,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         }
     }
 }
+
 impl<E: Export> Dijkstra<E> {
     /// recreate path backwards
     fn resolve_path(
@@ -231,8 +217,8 @@ impl<E: Export> Dijkstra<E> {
 
         if let Some(prev_edge) = up_edge.1 {
             self.walk_down(prev_edge, true, &mut path, &edges);
-            path.reverse();
         }
+        path.reverse();
         if let Some(prev_edge) = down_edge.1 {
             self.walk_down(prev_edge, false, &mut path, &edges);
         }
@@ -273,26 +259,17 @@ impl<E: Export> Dijkstra<E> {
         is_upwards: bool,
         edges: &[Edge],
     ) {
-        let current_edge = &edges[edge];
-
-        if is_upwards {
-            if let Some(next) = current_edge.contrated_edges {
-                self.resolve_edge(next.1, &mut path, is_upwards, &edges);
+        match &edges[edge].contrated_edges {
+            Some(shortcut) => {
+                if is_upwards {
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
+                } else {
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
+                }
             }
-            if let Some(previous) = current_edge.contrated_edges {
-                self.resolve_edge(previous.0, &mut path, is_upwards, &edges);
-            } else {
-                path.push(edge);
-            }
-        } else {
-            if let Some(previous) = current_edge.contrated_edges {
-                self.resolve_edge(previous.0, &mut path, is_upwards, &edges);
-            }
-            if let Some(next) = current_edge.contrated_edges {
-                self.resolve_edge(next.1, &mut path, is_upwards, &edges);
-            } else {
-                path.push(edge);
-            }
+            None => path.push(edge),
         }
     }
 }
