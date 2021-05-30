@@ -226,10 +226,7 @@ pub fn merge(
     // assign ids
     for (i, (sets, _, _)) in results.iter().rev().enumerate() {
         // calculate new offset
-        let new_offset = partition_amounts
-            .iter()
-            .take(partition_amounts.len() - 1 - i)
-            .product::<usize>();
+        let new_offset = partition_amounts.iter().skip(i + 1).product::<usize>();
 
         // to keep track how often each interval has been assigned
         let mut set_amount_counter: BTreeMap<usize, usize> = BTreeMap::new();
@@ -275,6 +272,8 @@ pub fn merge(
             }
         }
     }
+
+    partition_amounts.reverse();
 
     println!(
         "merge_time time in: {:?} with value {:?}",
