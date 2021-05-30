@@ -4,3 +4,4 @@
 [submodule "osm-graph/pbfextractor"]
 	path = osm-graph/pbfextractor
 	url = https://github.com/Lesstat/pbfextractor.git
+	ignore = dirty
