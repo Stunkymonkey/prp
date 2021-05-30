@@ -57,6 +57,12 @@ async fn shortest_path(
         });
     }
     let alpha = alpha_option.unwrap();
+    if alpha.len() != data.graph.dim {
+        return Err(geojson::Error {
+            msg: "alpha vector-size does not match".to_string(),
+            status: 400,
+        });
+    }
 
     debug!("Start: {},{}", start.latitude, start.longitude);
     debug!("End: {},{}", end.latitude, end.longitude);

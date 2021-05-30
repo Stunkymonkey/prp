@@ -7,7 +7,7 @@ pub struct Graph {
     pub up_offset: Vec<EdgeId>,
     pub down_offset: Vec<EdgeId>,
     pub down_index: Vec<EdgeId>,
-    dim: usize,
+    pub dim: usize,
 }
 
 impl Graph {
