@@ -94,7 +94,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             MinHeapItem {
                 node,
                 cost,
-                prev_edge,
+                prev_edge: _,
             },
             heap,
             visited,
