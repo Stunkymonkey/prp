@@ -347,6 +347,11 @@ pub fn prp_contraction(
             }
         }
 
+        // assign core-edge
+        for mut edge in edges.iter_mut() {
+            edge.core = true;
+        }
+
         let mut heuristics = ordering::calculate_heuristics(
             layer_height,
             &nodes,
@@ -384,6 +389,7 @@ pub fn prp_contraction(
 
     // assign each top edge to top layer
     for mut edge in edges.iter_mut() {
+        edge.core = true;
         edge.layer = mlp_layers.len();
     }
 
