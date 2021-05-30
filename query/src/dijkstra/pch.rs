@@ -84,7 +84,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             MinHeapItem {
                 node,
                 cost,
-                prev_edge,
+                prev_edge: _,
             },
             heap,
             visited,
@@ -108,7 +108,10 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 .peek()
                 .unwrap_or(&MinHeapItem::new(INVALID_NODE, COST_MAX, None))
                 .cost;
-            if next_up <= next_down {
+            // if no improvement can be found by one of the edges
+            if next_up >= best_cost && next_down >= best_cost {
+                None
+            } else if next_up <= next_down {
                 self.heap_up.pop().map(|x| {
                     (
                         x,
@@ -144,15 +147,12 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             if visited.is_valid(node) && cost > dist[node].0 {
                 continue;
             }
-            // if cost > best_cost {
-            //     continue;
-            // }
 
-            visited.set_valid(node);
-            dist[node] = (cost, prev_edge);
+            // visited.set_valid(node);
+            // dist[node] = (cost, prev_edge);
 
-            exporter.visited_node(node);
-            exporter.visited_edge(prev_edge);
+            // exporter.visited_node(node);
+            // exporter.visited_edge(prev_edge);
 
             for edge in get_edges(&graph, node) {
                 let next = walk(&graph.get_edge(edge));
@@ -162,22 +162,24 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 // skip pch ranks
                 // top-layer nodes have maximum layer number so no equal test
                 if nodes[node].rank > nodes[next].rank {
-                    continue;
-                    // break;
+                    break;
                 }
 
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
-                    // println!("insert new node",);
                     heap.push(MinHeapItem::new(next, alt, Some(edge)));
+                    visited.set_valid(next);
+                    dist[next] = (alt, Some(edge));
 
+                    exporter.visited_node(next);
+                    exporter.visited_edge(Some(edge));
                     // check if other dijkstra has visited this point before
-                    if visited_.is_valid(node) {
-                        let combined = dist_[node].0 + alt;
+                    if visited_.is_valid(next) {
+                        let combined = dist_[next].0 + alt;
                         if combined < best_cost {
-                            meeting_node = Some(node);
-                            exporter.current_meeting_point(node);
+                            meeting_node = Some(next);
+                            exporter.current_meeting_point(next);
                             best_cost = combined;
                         }
                     }
@@ -211,8 +213,8 @@ impl<E: Export> Dijkstra<E> {
 
         if let Some(prev_edge) = up_edge.1 {
             self.walk_down(prev_edge, true, &mut path, &edges);
-            path.reverse();
         }
+        path.reverse();
         if let Some(prev_edge) = down_edge.1 {
             self.walk_down(prev_edge, false, &mut path, &edges);
         }
@@ -228,17 +230,15 @@ impl<E: Export> Dijkstra<E> {
         edges: &[Edge],
     ) {
         self.resolve_edge(edge, &mut path, is_upwards, &edges);
+        // path.push(edge);
 
         let current_edge = &edges[edge];
-        let next;
         let prev;
 
         if is_upwards {
-            next = current_edge.from;
-            prev = self.dist_up[next];
+            prev = self.dist_up[current_edge.from];
         } else {
-            next = current_edge.to;
-            prev = self.dist_down[next];
+            prev = self.dist_down[current_edge.to];
         }
         if let Some(child) = prev.1 {
             self.walk_down(child, is_upwards, &mut path, &edges);
@@ -253,26 +253,17 @@ impl<E: Export> Dijkstra<E> {
         is_upwards: bool,
         edges: &[Edge],
     ) {
-        let current_edge = &edges[edge];
-
-        if is_upwards {
-            if let Some(next) = current_edge.contrated_edges {
-                self.resolve_edge(next.1, &mut path, is_upwards, &edges);
+        match &edges[edge].contrated_edges {
+            Some(shortcut) => {
+                if is_upwards {
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
+                } else {
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
+                }
             }
-            if let Some(previous) = current_edge.contrated_edges {
-                self.resolve_edge(previous.0, &mut path, is_upwards, &edges);
-            } else {
-                path.push(edge);
-            }
-        } else {
-            if let Some(previous) = current_edge.contrated_edges {
-                self.resolve_edge(previous.0, &mut path, is_upwards, &edges);
-            }
-            if let Some(next) = current_edge.contrated_edges {
-                self.resolve_edge(next.1, &mut path, is_upwards, &edges);
-            } else {
-                path.push(edge);
-            }
+            None => path.push(edge),
         }
     }
 }
