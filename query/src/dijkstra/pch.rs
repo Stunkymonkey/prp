@@ -148,22 +148,16 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 continue;
             }
 
-            // visited.set_valid(node);
-            // dist[node] = (cost, prev_edge);
-
-            // exporter.visited_node(node);
-            // exporter.visited_edge(prev_edge);
-
             for edge in get_edges(&graph, node) {
                 let next = walk(&graph.get_edge(edge));
-
-                exporter.relaxed_edge();
 
                 // skip pch ranks
                 // top-layer nodes have maximum layer number so no equal test
                 if nodes[node].rank > nodes[next].rank {
                     break;
                 }
+
+                exporter.relaxed_edge();
 
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
 
@@ -230,7 +224,6 @@ impl<E: Export> Dijkstra<E> {
         edges: &[Edge],
     ) {
         self.resolve_edge(edge, &mut path, is_upwards, &edges);
-        // path.push(edge);
 
         let current_edge = &edges[edge];
         let prev;
