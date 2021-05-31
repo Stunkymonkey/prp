@@ -9,9 +9,10 @@ use std::time::Instant;
 
 // changing the import changes the dijkstra query method
 // use prp_query::dijkstra::prp::Dijkstra;
-use prp_query::dijkstra::pch::Dijkstra;
 // use prp_query::dijkstra::crp::Dijkstra;
+use prp_query::dijkstra::pch::Dijkstra;
 // use prp_query::dijkstra::bidirectional::Dijkstra;
+// use prp_query::dijkstra::normal::Dijkstra;
 use prp_query::geojson::*;
 use prp_query::query_export::*;
 use prp_query::*;
