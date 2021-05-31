@@ -161,7 +161,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 if nodes[node].layer_height > nodes[next].layer_height {
                     break;
                 }
-                // skip edges, that are shortcuts from upper layers
+                // skip edges, that are shortcuts-resultions from upper layers
                 if !graph.get_edge(edge).core {
                     continue;
                 }
@@ -236,15 +236,12 @@ impl<E: Export> Dijkstra<E> {
         self.resolve_edge(edge, &mut path, is_upwards, &edges);
 
         let current_edge = &edges[edge];
-        let next;
         let prev;
 
         if is_upwards {
-            next = current_edge.from;
-            prev = self.dist_up[next];
+            prev = self.dist_up[current_edge.from];
         } else {
-            next = current_edge.to;
-            prev = self.dist_down[next];
+            prev = self.dist_down[current_edge.to];
         }
         if let Some(child) = prev.1 {
             self.walk_down(child, is_upwards, &mut path, &edges);
