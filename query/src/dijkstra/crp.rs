@@ -75,10 +75,10 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         let mut meeting_node = None;
 
         // get maximum crp-layer partition
-        let highes_diff_layer =
-            mlp_helper::get_highest_differing_level(from, to, &nodes, &mlp_layers);
-        let common_partition =
-            mlp_helper::get_partition_id_on_level(from, highes_diff_layer, &nodes, &mlp_layers);
+        // let highes_diff_layer =
+        //     mlp_helper::get_highest_differing_level(from, node, &nodes, &mlp_layers);
+        // let common_partition =
+        //     mlp_helper::get_partition_id_on_level(from, highes_diff_layer, &nodes, &mlp_layers);
         // println!(
         //     "highes_diff_layer {:?} common_partition {:?}",
         //     highes_diff_layer, common_partition
@@ -115,7 +115,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 .peek()
                 .map(|min_item| min_item.cost)
                 .unwrap_or(COST_MAX);
-            if next_up + next_down >= best_cost {
+            if next_up + next_down > best_cost {
                 None
             } else if next_up <= next_down {
                 self.heap_up.pop().map(|x| {
@@ -154,29 +154,36 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 continue;
             }
 
-            for edge in get_edges(&graph, node) {
-                let next = walk(&graph.get_edge(edge));
+            // get query level on which to walk
+            let query_layer = std::cmp::min(
+                mlp_helper::get_highest_differing_level(from, node, &nodes, &mlp_layers),
+                mlp_helper::get_highest_differing_level(node, to, &nodes, &mlp_layers),
+            );
 
-                // never walk down in layers
-                if nodes[node].layer_height > nodes[next].layer_height {
-                    break;
-                }
+            for edge_id in get_edges(&graph, node) {
+                let edge = graph.get_edge(edge_id);
+
                 // skip edges, that are shortcuts-resultions from upper layers
-                if !graph.get_edge(edge).core {
+                if !edge.core {
+                    continue;
+                }
+                // only walk on query layers and never below
+                if query_layer > edge.layer {
                     continue;
                 }
 
+                let next = walk(&edge);
                 exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
+                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
-                    heap.push(MinHeapItem::new(next, alt, Some(edge)));
+                    heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
                     visited.set_valid(next);
-                    dist[next] = (alt, Some(edge));
+                    dist[next] = (alt, Some(edge_id));
 
                     exporter.visited_node(next);
-                    exporter.visited_edge(Some(edge));
+                    exporter.visited_edge(Some(edge_id));
                     // check if other dijkstra has visited this point before
                     if visited_.is_valid(next) {
                         let combined = dist_[next].0 + alt;
