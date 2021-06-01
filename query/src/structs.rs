@@ -16,8 +16,7 @@ pub struct Node {
 pub struct Edge {
     pub from: NodeId,
     pub to: NodeId,
-    pub layer: LayerHeight,
-    pub core: bool,
+    pub layer: Option<LayerHeight>,
     pub contrated_edges: Option<(EdgeId, EdgeId)>,
 }
 

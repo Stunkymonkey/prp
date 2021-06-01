@@ -164,11 +164,11 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 let edge = graph.get_edge(edge_id);
 
                 // skip edges, that are shortcuts-resultions from upper layers
-                if !edge.core {
+                if edge.layer.is_none() {
                     continue;
                 }
                 // only walk on query layers and never below
-                if query_layer > edge.layer {
+                if query_layer > edge.layer.unwrap() {
                     continue;
                 }
 
