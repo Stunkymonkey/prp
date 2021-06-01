@@ -258,7 +258,8 @@ fn main() {
                         } else {
                             not_correct += 1;
                             println!(
-                                "from: {:?} to {:?} \tdij: {:?}/{:?} \talt: {:?}/{:?}",
+                                "{:?} from: {:?} to {:?} \tdij: {:?}/{:?} \talt: {:?}/{:?}",
+                                query.id,
                                 query.start_id.unwrap(),
                                 query.end_id.unwrap(),
                                 result.1,

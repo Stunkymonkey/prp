@@ -59,6 +59,8 @@ pub fn write_wkt_file(
     let mut f = BufWriter::new(f);
     f.write_all("WKT-LINESTRINGS\n".as_bytes())?;
 
+    let path = convert_edge_ids_to_node_ids(&path, &edges);
+
     for (prev, next) in path.iter().zip(path.iter().skip(1)) {
         let line = format!(
             "LINESTRING ({:?} {:?}, {:?} {:?})\n",
@@ -86,4 +88,16 @@ pub fn write_wkt_file(
     }
 
     Ok(())
+}
+
+fn convert_edge_ids_to_node_ids(edge_path: &[EdgeId], edges: &[Edge]) -> Vec<NodeId> {
+    if edge_path.is_empty() {
+        return vec![];
+    }
+    let mut path: Vec<NodeId> = edge_path
+        .iter()
+        .map(|edge_id| edges[*edge_id].from)
+        .collect();
+    path.push(edges[*edge_path.last().unwrap()].to);
+    path
 }
