@@ -349,7 +349,7 @@ pub fn prp_contraction(
 
         // assign core-edge
         for mut edge in edges.iter_mut() {
-            edge.core = true;
+            edge.layer = Some(layer_height);
         }
 
         let mut heuristics = ordering::calculate_heuristics(
@@ -374,13 +374,6 @@ pub fn prp_contraction(
             &mut down_offset,
             &mut down_index,
         );
-
-        // assign each edge to a layer, so they can be skipped
-        for mut edge in resulting_edges.iter_mut() {
-            if edge.layer == INVALID_LAYER_HEIGHT {
-                edge.layer = layer_height;
-            }
-        }
     }
 
     // testing uniqueness of ids
@@ -389,8 +382,7 @@ pub fn prp_contraction(
 
     // assign each top edge to top layer
     for mut edge in edges.iter_mut() {
-        edge.core = true;
-        edge.layer = mlp_layers.len();
+        edge.layer = Some(mlp_layers.len());
     }
 
     // merging both graphs back together to have a single one
@@ -398,9 +390,12 @@ pub fn prp_contraction(
 
     // check that no edge has invalid height
     for edge in edges.iter_mut() {
-        assert!(INVALID_LAYER_HEIGHT != edge.layer);
+        if let Some(layer) = edge.layer {
+            assert!(INVALID_LAYER_HEIGHT != layer);
+        }
     }
-    let unique_height_set: BTreeSet<usize> = edges.iter().cloned().map(|e| e.layer).collect();
+    let unique_height_set: BTreeSet<usize> =
+        edges.iter().cloned().filter_map(|e| e.layer).collect();
     assert!(unique_height_set.len() - 1 == mlp_layers.len());
 
     sort_nodes_ranked(&mut edges, &up_offset, &down_offset, &mut nodes);
