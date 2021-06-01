@@ -6,8 +6,8 @@ use std::str::FromStr;
 use std::time::{Duration, Instant};
 
 // changing the import changes the dijkstra query method
-// use prp_query::dijkstra::prp::Dijkstra;
-use prp_query::dijkstra::crp::Dijkstra;
+use prp_query::dijkstra::prp::Dijkstra;
+// use prp_query::dijkstra::crp::Dijkstra;
 // use prp_query::dijkstra::pch::Dijkstra;
 // use prp_query::dijkstra::bidirectional::Dijkstra;
 // use prp_query::dijkstra::normal::Dijkstra;
