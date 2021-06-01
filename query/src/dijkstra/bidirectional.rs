@@ -105,7 +105,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 .peek()
                 .map(|min_item| min_item.cost)
                 .unwrap_or(COST_MAX);
-            if next_up + next_down >= best_cost {
+            if next_up + next_down > best_cost {
                 None
             } else if next_up <= next_down {
                 self.heap_up.pop().map(|x| {
