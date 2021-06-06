@@ -172,6 +172,10 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                     continue;
                 }
 
+                // if query_layer <= edge.layer.unwrap() && edge.contrated_edges.is_some() {
+                //     continue;
+                // }
+
                 let next = walk(&edge);
                 exporter.relaxed_edge();
 
