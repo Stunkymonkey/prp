@@ -151,6 +151,7 @@ fn layer_contraction(
                 for datachunk_items in minimas.chunks_mut(chunk_size) {
                     s.spawn(|_| {
                         let mut dijkstra = NDijkstra::new(amount_nodes, dim);
+                        // TODO check process-fork slow down
                         let mut mch = match mch::Contractor::new(
                             // dijkstra
                             |start, end, alpha| -> Vec<Cost> {
