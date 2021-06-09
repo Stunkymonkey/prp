@@ -46,6 +46,9 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         self.heap_down.clear();
         self.exporter.reset();
     }
+    fn get_query_export(&self) -> &E {
+        &self.exporter
+    }
 
     /// return shortest path of edges
     fn find_path(

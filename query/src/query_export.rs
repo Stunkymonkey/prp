@@ -15,6 +15,7 @@ pub trait Export {
     fn current_meeting_point(&mut self, _node_id: NodeId);
 }
 
+#[derive(Debug)]
 pub struct NoOp;
 impl Export for NoOp {
     fn new() -> Self

@@ -12,6 +12,7 @@ pub trait FindPath<E: Export> {
     where
         Self: Sized;
     fn reset_state(&mut self);
+    fn get_query_export(&self) -> &E;
     fn find_path(
         &mut self,
         from: NodeId,

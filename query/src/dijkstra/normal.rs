@@ -33,6 +33,9 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         self.heap.clear();
         self.visited.invalidate_all();
     }
+    fn get_query_export(&self) -> &E {
+        &self.exporter
+    }
 
     /// return path of edges(!) from source to target not path of nodes!
     fn find_path(

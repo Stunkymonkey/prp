@@ -5,12 +5,6 @@ use std::fs::File;
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
-// changing the import changes the dijkstra query method
-use prp_query::dijkstra::prp::Dijkstra;
-// use prp_query::dijkstra::crp::Dijkstra;
-// use prp_query::dijkstra::pch::Dijkstra;
-// use prp_query::dijkstra::bidirectional::Dijkstra;
-// use prp_query::dijkstra::normal::Dijkstra;
 use prp_query::query_export::*;
 use prp_query::*;
 
@@ -33,6 +27,25 @@ impl FromStr for Vals {
         }
     }
 }
+enum Methods {
+    Bi,
+    Pch,
+    Crp,
+    Prp,
+}
+
+impl FromStr for Methods {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bi" => Ok(Methods::Bi),
+            "pch" => Ok(Methods::Pch),
+            "crp" => Ok(Methods::Crp),
+            "prp" => Ok(Methods::Prp),
+            _ => Err("no match"),
+        }
+    }
+}
 
 #[derive(Debug, Serialize)]
 struct TimeExport {
@@ -47,7 +60,7 @@ struct CounterExport {
 }
 
 fn main() {
-    let (fmi_file, eval_file, eval_type, export_path) = get_arguments();
+    let (fmi_file, eval_file, eval_type, method, export_path) = get_arguments();
     // read binfile
     let data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
@@ -115,7 +128,7 @@ fn main() {
 
     match eval_type {
         Vals::Time => {
-            let mut dijkstra = Dijkstra::new(amount_nodes, NoOp::new());
+            let mut dijkstra = get_dijkstra(method, amount_nodes, NoOp::new());
             let mut export_list: Vec<TimeExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -151,7 +164,7 @@ fn main() {
             }
         }
         Vals::Count => {
-            let mut dijkstra = Dijkstra::new(amount_nodes, Counter::new());
+            let mut dijkstra = get_dijkstra(method, amount_nodes, Counter::new());
             let mut export_list: Vec<CounterExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -165,8 +178,8 @@ fn main() {
                 );
                 export_list.push(CounterExport {
                     id: query.id,
-                    heap_pops: dijkstra.exporter.heap_pops,
-                    relaxed_edges: dijkstra.exporter.relaxed_edges,
+                    heap_pops: dijkstra.get_query_export().heap_pops,
+                    relaxed_edges: dijkstra.get_query_export().relaxed_edges,
                 });
             }
 
@@ -187,7 +200,7 @@ fn main() {
             }
         }
         Vals::Export => {
-            let mut dijkstra = Dijkstra::new(amount_nodes, RealExport::new());
+            let mut dijkstra = get_dijkstra(method, amount_nodes, RealExport::new());
 
             for query in &eval {
                 let result = dijkstra.find_path(
@@ -207,10 +220,10 @@ fn main() {
                             &format!("{}/{}.wkt", export_path, query.id),
                             query.start_id.unwrap(),
                             query.end_id.unwrap(),
-                            dijkstra.exporter.meeting_node,
-                            &dijkstra.exporter.visited_nodes,
+                            dijkstra.get_query_export().meeting_node,
+                            &dijkstra.get_query_export().visited_nodes,
                             &path.0,
-                            &dijkstra.exporter.visited_edges,
+                            &(*dijkstra).get_query_export().visited_edges,
                             &data.nodes,
                             &data.graph.edges,
                         ) {
@@ -223,8 +236,9 @@ fn main() {
             }
         }
         Vals::Check => {
-            let mut dijkstra = dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
-            let mut prp_dijkstra = Dijkstra::new(amount_nodes, NoOp::new());
+            let mut dijkstra =
+                prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
+            let mut prp_dijkstra = get_dijkstra(method, amount_nodes, NoOp::new());
             let mut correct = 0;
             let mut not_correct = 0;
             let mut no_path_found = 0;
@@ -311,7 +325,32 @@ fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
     cost
 }
 
-fn get_arguments() -> (String, String, Vals, Option<String>) {
+fn get_dijkstra<E: 'static + Export>(
+    method: Methods,
+    amount_nodes: usize,
+    exporter: E,
+) -> Box<dyn FindPath<E>> {
+    return match method {
+        Methods::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Methods::Pch => Box::new(prp_query::dijkstra::pch::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Methods::Crp => Box::new(prp_query::dijkstra::crp::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Methods::Prp => Box::new(prp_query::dijkstra::prp::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+    };
+}
+
+fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
     let matches = clap::App::new("prp_eval")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -342,6 +381,15 @@ fn get_arguments() -> (String, String, Vals, Option<String>) {
                 .possible_values(&["time", "count", "export", "check"]),
         )
         .arg(
+            clap::Arg::with_name("method")
+                .help("What kind of evaluation will be done")
+                .takes_value(true)
+                .short("m")
+                .long("method")
+                .required(true)
+                .possible_values(&["bi", "pch", "crp", "prp"]),
+        )
+        .arg(
             clap::Arg::with_name("export-path")
                 .help("where to export to")
                 .takes_value(true)
@@ -351,11 +399,14 @@ fn get_arguments() -> (String, String, Vals, Option<String>) {
         .get_matches();
 
     let eval_type = clap::value_t!(matches.value_of("type"), Vals).unwrap_or_else(|e| e.exit());
+    let method_type =
+        clap::value_t!(matches.value_of("method"), Methods).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
         matches.value_of("eval-file").unwrap().to_string(),
         eval_type,
+        method_type,
         matches.value_of("export-path").map(String::from),
     )
 }
