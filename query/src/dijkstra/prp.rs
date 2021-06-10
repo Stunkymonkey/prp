@@ -85,6 +85,9 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         let mut best_cost = COST_MAX;
         let mut meeting_node = None;
 
+        let from_partitions = mlp_helper::get_node_partitions(from, &nodes, &mlp_layers);
+        let to_partitions = mlp_helper::get_node_partitions(to, &nodes, &mlp_layers);
+
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
         let get_down_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_down_edge_ids;
@@ -267,8 +270,18 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
             // get query level on which to walk
             let query_layer = std::cmp::min(
-                mlp_helper::get_highest_differing_level(from, node, &nodes, &mlp_layers),
-                mlp_helper::get_highest_differing_level(node, to, &nodes, &mlp_layers),
+                mlp_helper::get_highest_differing_level_partition(
+                    node,
+                    &from_partitions,
+                    &nodes,
+                    &mlp_layers,
+                ),
+                mlp_helper::get_highest_differing_level_partition(
+                    node,
+                    &to_partitions,
+                    &nodes,
+                    &mlp_layers,
+                ),
             );
 
             for edge_id in get_edges(&graph, node) {

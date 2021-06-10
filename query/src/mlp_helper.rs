@@ -16,6 +16,40 @@ pub fn get_partition_id_on_level(
     }
 }
 
+// get all partiton_ids of one node (including top layer)
+pub fn get_node_partitions(
+    node_id: NodeId,
+    nodes: &[Node],
+    mlp_layers: &[usize],
+) -> Vec<PartitionId> {
+    let mut partitions = Vec::with_capacity(mlp_layers.len() + 1);
+    for layer in 0..=mlp_layers.len() {
+        partitions.push(get_partition_id_on_level(
+            node_id,
+            layer,
+            &nodes,
+            &mlp_layers,
+        ));
+    }
+    partitions
+}
+
+// find most common layer height (0 = same partition, ...)
+pub fn get_highest_differing_level_partition(
+    node_a: NodeId,
+    partitions_b: &[PartitionId],
+    nodes: &[Node],
+    mlp_layers: &[usize],
+) -> usize {
+    assert_eq!(mlp_layers.len() + 1, partitions_b.len());
+    for layer in 0..=mlp_layers.len() {
+        if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers) == partitions_b[layer] {
+            return layer;
+        }
+    }
+    panic!("no common layer found")
+}
+
 // find most common layer height (0 = same partition, ...)
 pub fn get_highest_differing_level(
     node_a: NodeId,
