@@ -20,29 +20,29 @@ body {
 	background: rgba(255,255,255,0.9);
 	color: #282828;
 	border-radius: 5px;
-	width: 200px;
 	z-index: 1000;
+	border: 2px solid rgba(0,0,0,0.2);
 }
 
 #info h4 {
-	margin: 0 0 0;
+	margin: 0;
 }
-#slidecontainer{
+#slidecontainer {
 	width: 100%;
 }
 
 .toast {
 	min-width: 300px;
 	max-width: 300px;
-	margin-left: -158px;
 	background-color: #333;
 	color: #fff;
 	text-align: center;
-	border-radius: 2px;
+	border-radius: 5px;
 	padding: 16px;
 	position: fixed;
 	z-index: 1000;
 	left: 50%;
+	transform: translateX(-50%);
 	bottom: 30px;
 }
 
@@ -50,7 +50,7 @@ body {
 	color: white;
 	border-style: none;
 	border-radius: 3px;
-	padding: 5px 10px;
+	padding: 5px 10px 4px 10px;
 }
 
 .set-start {
@@ -74,13 +74,12 @@ body {
 }
 
 
-label{
-	display: inline-block;
-	width: 50px;
+label {
+	display: block;
 	font-size: 0.9rem;
+	margin-top: 0.5em;
 }
-label-big{
-	/*display: inline-block;*/
-	width: 50px;
+input[type="range"] {
+	width: 100%;
 }
 
