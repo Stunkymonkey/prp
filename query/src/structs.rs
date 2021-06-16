@@ -9,7 +9,6 @@ pub struct Node {
     pub longitude: Angle,
     pub rank: Rank,
     pub partition: PartitionId,
-    pub layer_height: LayerHeight,
 }
 
 #[derive(Deserialize, Debug, Copy, Clone, PartialEq)]

@@ -42,9 +42,17 @@ pub fn calculate_node_layer_heights(
     down_index: &[EdgeId],
     mlp_layers: &[usize],
 ) {
+    // only calculated via edges, that existed before contraction
     let highest_edge_diff: Vec<_> = edges
         .iter()
-        .map(|edge| get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers))
+        .filter(|edge| edge.contracted_edges.is_none())
+        .map(|edge| {
+            if edge.contracted_edges.is_some() {
+                0
+            } else {
+                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers)
+            }
+        })
         .collect();
 
     for (node_id, mut node) in nodes.iter_mut().enumerate() {

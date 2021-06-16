@@ -9,6 +9,7 @@ pub struct Node {
     pub longitude: Angle,
     pub rank: Rank,
     pub partition: PartitionId,
+    #[serde(skip_serializing)]
     pub layer_height: LayerHeight,
     #[serde(skip_serializing)]
     pub old_id: Option<NodeId>,

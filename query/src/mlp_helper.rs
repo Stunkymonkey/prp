@@ -42,8 +42,9 @@ pub fn get_highest_differing_level_partition(
     mlp_layers: &[usize],
 ) -> usize {
     assert_eq!(mlp_layers.len() + 1, partitions_b.len());
-    for layer in 0..=mlp_layers.len() {
-        if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers) == partitions_b[layer] {
+    // for layer in 0..=mlp_layers.len() {
+    for (layer, partition) in partitions_b.iter().enumerate().take(mlp_layers.len() + 1) {
+        if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers) == *partition {
             return layer;
         }
     }
@@ -68,21 +69,36 @@ pub fn get_highest_differing_level(
 }
 
 // convert the partition_id to the layer_height
-pub fn calculate_node_layer_heights(nodes: &mut [Node], graph: &Graph, mlp_layers: &[usize]) {
+pub fn calculate_node_layer_heights(
+    nodes: &[Node],
+    graph: &Graph,
+    mlp_layers: &[usize],
+) -> Vec<usize> {
+    // only calculated via edges, that existed before contraction
     let highest_edge_diff: Vec<_> = graph
         .edges
         .iter()
-        .map(|edge| get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers))
+        .map(|edge| {
+            if edge.contracted_edges.is_some() {
+                0
+            } else {
+                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers)
+            }
+        })
         .collect();
 
-    for (node_id, mut node) in nodes.iter_mut().enumerate() {
+    let mut layer_height = Vec::with_capacity(nodes.len());
+    for (node_id, _node) in nodes.iter().enumerate() {
         let node_edges = graph.get_all_edge_ids(node_id);
-        node.layer_height = node_edges
-            .iter()
-            .map(|edge_id| highest_edge_diff[*edge_id])
-            .max()
-            .unwrap_or(0);
+        layer_height.push(
+            node_edges
+                .iter()
+                .map(|edge_id| highest_edge_diff[*edge_id])
+                .max()
+                .unwrap_or(0),
+        );
     }
+    layer_height
 }
 
 #[test]
@@ -96,7 +112,6 @@ fn layer_partition_ids() {
             longitude: 0.0,
             rank: 0,
             partition: partition,
-            layer_height: INVALID_LAYER_HEIGHT,
         });
     }
     nodes.push(Node {
@@ -104,7 +119,6 @@ fn layer_partition_ids() {
         longitude: 0.0,
         rank: 0,
         partition: 27,
-        layer_height: INVALID_LAYER_HEIGHT,
     });
 
     assert_eq!(get_partition_id_on_level(7, 0, &nodes, &partitions), 7);

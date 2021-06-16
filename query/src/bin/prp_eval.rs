@@ -205,6 +205,12 @@ fn main() {
         Vals::Export => {
             let mut dijkstra = get_dijkstra(method, amount_nodes, RealExport::new());
 
+            let layer_heights = mlp_helper::calculate_node_layer_heights(
+                &data.nodes,
+                &data.graph,
+                &data.mlp_layers,
+            );
+
             for query in &eval {
                 let result = dijkstra.find_path(
                     query.start_id.unwrap(),
@@ -229,6 +235,7 @@ fn main() {
                             &(*dijkstra).get_query_export().visited_edges,
                             &data.nodes,
                             &data.graph.edges,
+                            &layer_heights,
                         ) {
                             Ok(_result) => println!("exported successfully at {}", export_path),
                             Err(error) => println!("error exporting wkt-file: {:?}", error),
