@@ -7,14 +7,11 @@ pub fn partition(clusters: &[usize], nodes: &mut Vec<Node>) -> Result<(), String
     // ids of all nodes
     let mut cluster_order: Vec<NodeId> = (0..nodes.len()).collect();
     // indices which divides the clusters (including all at the beginning)
-    let mut cluster_indices: Vec<usize> = Vec::new();
-    cluster_indices.push(0);
-    cluster_indices.push(nodes.len());
+    let mut cluster_indices: Vec<usize> = vec![0, nodes.len()];
 
     //(top to bottom iterrieren)
     for cluster in clusters {
-        let mut current_indices: Vec<usize> = Vec::new();
-        current_indices.push(0);
+        let mut current_indices: Vec<usize> = vec![0];
         for (start, end) in cluster_indices.iter().zip(cluster_indices.iter().skip(1)) {
             // get nodes
             let current_cluster = &cluster_order[*start..*end];
