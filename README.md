@@ -56,6 +56,6 @@ cargo run --bin prp_web --release -- -f [path/to/bin-file]
 - evaluation-tool via: (evaluation file can be generated with `helper/generate-eval-file.py`)
 
 ```shell
-cargo run --bin prp_eval --release -- -f [path/to/bin-file] -e [path/to/eval_file] -t check
+cargo run --bin prp_eval --release -- -f [path/to/bin-file] -e [path/to/eval_file] -t check -m prp
 ```
 

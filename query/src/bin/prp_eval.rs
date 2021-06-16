@@ -1,4 +1,5 @@
 // use rayon::prelude::*;
+use log::warn;
 use serde::Serialize;
 use serde_json::json;
 use std::fs::File;
@@ -28,6 +29,7 @@ impl FromStr for Vals {
     }
 }
 enum Methods {
+    Normal,
     Bi,
     Pch,
     Crp,
@@ -38,6 +40,7 @@ impl FromStr for Methods {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "normal" => Ok(Methods::Normal),
             "bi" => Ok(Methods::Bi),
             "pch" => Ok(Methods::Pch),
             "crp" => Ok(Methods::Crp),
@@ -236,8 +239,12 @@ fn main() {
             }
         }
         Vals::Check => {
+            if matches!(method, Methods::Normal) {
+                warn!("checking Dijkstra against itself. does not make much sense");
+            }
             let mut dijkstra =
-                prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
+            // prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
+                prp_query::dijkstra::pch::Dijkstra::new(amount_nodes, NoOp::new());
             let mut prp_dijkstra = get_dijkstra(method, amount_nodes, NoOp::new());
             let mut correct = 0;
             let mut not_correct = 0;
@@ -331,6 +338,10 @@ fn get_dijkstra<E: 'static + Export>(
     exporter: E,
 ) -> Box<dyn FindPath<E>> {
     return match method {
+        Methods::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
         Methods::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
             amount_nodes,
             exporter,
@@ -387,7 +398,7 @@ fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
                 .short("m")
                 .long("method")
                 .required(true)
-                .possible_values(&["bi", "pch", "crp", "prp"]),
+                .possible_values(&["normal", "bi", "pch", "crp", "prp"]),
         )
         .arg(
             clap::Arg::with_name("export-path")
