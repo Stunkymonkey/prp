@@ -179,7 +179,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
-                    if nodes[next].partition != nodes[next].partition {
+                    if nodes[node].partition != nodes[next].partition {
                         // if node is in other partition insert it into crp_heap
                         crp_heap.push(MinHeapItem::new(next, alt, Some(edge)));
                     } else {
