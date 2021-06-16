@@ -344,7 +344,7 @@ fn get_dijkstra<E: 'static + Export>(
     amount_nodes: usize,
     exporter: E,
 ) -> Box<dyn FindPath<E>> {
-    return match method {
+    match method {
         Methods::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
             amount_nodes,
             exporter,
@@ -365,7 +365,7 @@ fn get_dijkstra<E: 'static + Export>(
             amount_nodes,
             exporter,
         )),
-    };
+    }
 }
 
 fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
