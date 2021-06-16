@@ -56,7 +56,7 @@ pub fn read_file(
             for weight in v.iter().skip(2).take(file_edge_dimensions) {
                 edge_weights.push(weight.parse().unwrap());
             }
-            let contrated_edges: Vec<isize> = v
+            let contracted_edges: Vec<isize> = v
                 .iter()
                 .skip(2 + file_edge_dimensions)
                 .take(2)
@@ -67,7 +67,7 @@ pub fn read_file(
                 v[0].parse().unwrap(),
                 v[1].parse().unwrap(),
                 edge_weights,
-                (contrated_edges[0], contrated_edges[1]),
+                (contracted_edges[0], contracted_edges[1]),
             ));
         }
     }
