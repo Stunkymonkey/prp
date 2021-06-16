@@ -13,6 +13,7 @@ use constants::*;
 use structs::*;
 
 use rayon::prelude::*;
+use std::time::Instant;
 
 fn main() {
     // check/get arguments
@@ -52,10 +53,12 @@ fn main() {
     bidirect_graph::create_bidirect(&mut edges);
 
     // do partitioning
+    let partition_time = Instant::now();
     match merge::merge(&mut partition_amount, &partition_sizes, &mut nodes, &edges) {
         Ok(_result) => println!("creating partitions sucessfully"),
         Err(error) => panic!("error while creating partitions: {:?}", error),
     };
+    println!("MLP-Layer in: {:?}", partition_time.elapsed());
 
     // check if all nodes have a valid cluster
     for node in &nodes {

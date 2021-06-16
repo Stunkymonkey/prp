@@ -8,6 +8,8 @@ mod structs;
 use constants::*;
 use structs::*;
 
+use std::time::Instant;
+
 fn main() {
     // check/get arguments
     let (fmi_file, mlp_file, clusters): (String, String, Vec<usize>) =
@@ -32,10 +34,12 @@ fn main() {
     );
 
     // do partitioning
+    let partition_time = Instant::now();
     match partition::partition(&clusters, &mut nodes) {
         Ok(_result) => println!("creating partitions sucessfully"),
         Err(error) => panic!("error while creating partitions: {:?}", error),
     };
+    println!("MLP-Layer in: {:?}", partition_time.elapsed());
 
     // check if all nodes have a valid cluster
     for node in &nodes {
