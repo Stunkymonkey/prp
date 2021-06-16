@@ -22,10 +22,10 @@ def convert(o):
         raise TypeError
 
 
-def main():
+def main(input, count, output):
     nodes = list()
     # read files
-    with open(args.input) as csvfile:
+    with open(input) as csvfile:
         fmireader = csv.reader(csvfile, delimiter=' ')
         tmp = next(fmireader)
         while len(tmp) == 0 or tmp[0].startswith("#"):
@@ -37,7 +37,7 @@ def main():
             tmp = next(fmireader)
             nodes.append({"latitude": float(tmp[2]), "longitude": float(tmp[3])})
     # generate random
-    rand_nodes = np.random.randint(amount_nodes_fmi, size=(args.count, 2))
+    rand_nodes = np.random.randint(amount_nodes_fmi, size=(count, 2))
     rand_pos = list()
     rand_alphas = list()
     for points in rand_nodes:
@@ -49,9 +49,9 @@ def main():
         data.append({"id": index, "orig_start_id": node[0], "orig_end_id": node[1],
                      "start_pos": pos[0], "end_pos": pos[1], "alpha": alpha[0]})
 
-    with open(args.output, 'w') as outfile:
+    with open(output, 'w') as outfile:
         json.dump(data, outfile, ensure_ascii=False, indent=4, default=convert)
 
 
 if __name__ == '__main__':
-    main()
+    main(args.input, args.count, args.output)
