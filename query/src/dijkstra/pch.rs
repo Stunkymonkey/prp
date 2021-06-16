@@ -183,12 +183,9 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 }
             }
         }
-        match meeting_node {
-            Some(meet_node) => {
-                Some(self.resolve_path(meet_node, best_cost, nodes[meet_node].rank, &graph.edges))
-            }
-            None => None,
-        }
+        meeting_node.map(|meet_node| {
+            self.resolve_path(meet_node, best_cost, nodes[meet_node].rank, &graph.edges)
+        })
     }
 }
 impl<E: Export> Dijkstra<E> {
@@ -249,7 +246,7 @@ impl<E: Export> Dijkstra<E> {
         is_upwards: bool,
         edges: &[Edge],
     ) {
-        match &edges[edge].contrated_edges {
+        match &edges[edge].contracted_edges {
             Some(shortcut) => {
                 if is_upwards {
                     self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);

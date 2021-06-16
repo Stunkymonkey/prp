@@ -147,25 +147,27 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 continue;
             }
 
-            for edge in get_edges(&graph, node) {
-                let next = walk(&graph.get_edge(edge));
+            for edge_id in get_edges(&graph, node) {
+                let edge = graph.get_edge(edge_id);
 
                 // skip edges, that are shortcuts
-                if graph.get_edge(edge).contrated_edges.is_some() {
+                if edge.contracted_edges.is_some() {
                     continue;
                 }
 
+                let next = walk(&edge);
+
                 exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
+                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
-                    heap.push(MinHeapItem::new(next, alt, Some(edge)));
+                    heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
                     visited.set_valid(next);
-                    dist[next] = (alt, Some(edge));
+                    dist[next] = (alt, Some(edge_id));
 
                     exporter.visited_node(next);
-                    exporter.visited_edge(Some(edge));
+                    exporter.visited_edge(Some(edge_id));
                     // check if other dijkstra has visited this point before
                     if visited_.is_valid(next) {
                         let combined = dist_[next].0 + alt;
@@ -178,12 +180,9 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 }
             }
         }
-        match meeting_node {
-            Some(meet_node) => {
-                Some(self.resolve_path(meet_node, best_cost, nodes[meet_node].rank, &graph.edges))
-            }
-            None => None,
-        }
+        meeting_node.map(|meet_node| {
+            self.resolve_path(meet_node, best_cost, nodes[meet_node].rank, &graph.edges)
+        })
     }
 }
 impl<E: Export> Dijkstra<E> {

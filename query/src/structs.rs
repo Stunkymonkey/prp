@@ -16,7 +16,7 @@ pub struct Edge {
     pub from: NodeId,
     pub to: NodeId,
     pub layer: Option<LayerHeight>,
-    pub contrated_edges: Option<(EdgeId, EdgeId)>,
+    pub contracted_edges: Option<(EdgeId, EdgeId)>,
 }
 
 impl Edge {

@@ -79,7 +79,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 let new_edge = graph.get_edge(edge);
 
                 // skip edges, that are shortcuts
-                if new_edge.contrated_edges.is_some() {
+                if new_edge.contracted_edges.is_some() {
                     continue;
                 }
 
