@@ -90,7 +90,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             MinHeapItem {
                 node,
                 cost,
-                prev_edge: _,
+                prev_edge,
             },
             heap,
             visited,
@@ -150,6 +150,9 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 continue;
             }
 
+            exporter.visited_node(node);
+            exporter.visited_edge(prev_edge);
+
             // get query level on which to walk
             let query_layer = std::cmp::min(
                 mlp_helper::get_highest_differing_level_partition(
@@ -192,8 +195,6 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                     visited.set_valid(next);
                     dist[next] = (alt, Some(edge_id));
 
-                    exporter.visited_node(next);
-                    exporter.visited_edge(Some(edge_id));
                     // check if other dijkstra has visited this point before
                     if visited_.is_valid(next) {
                         let combined = dist_[next].0 + alt;
