@@ -21,7 +21,7 @@ use rayon::prelude::*;
 use std::time::Instant;
 
 fn main() {
-    let (fmi_file, mlp_file, output_file) = match arguments::get_arguments() {
+    let (fmi_file, mlp_file, contraction_stop, output_file) = match arguments::get_arguments() {
         Ok(result) => result,
         Err(error) => panic!("error while parsing arguments: {:?}", error),
     };
@@ -34,10 +34,19 @@ fn main() {
         Ok(_result) => println!("reading pbfextractor file finished"),
         Err(error) => panic!("error while reading pbfextractor file: {:?}", error),
     };
-    match mlp_import::read_file(&mlp_file, &mut nodes, &mut mlp_layers) {
-        Ok(_result) => println!("reading mlp file finished"),
-        Err(error) => panic!("error while reading mlp file: {:?}", error),
-    };
+    // if mlp-file is not provided all nodes will go into one partition
+    match mlp_file.as_str() {
+        "" => {
+            nodes.iter_mut().for_each(|node| node.partition = 0);
+            mlp_layers = vec![1];
+        }
+        _ => {
+            match mlp_import::read_file(&mlp_file, &mut nodes, &mut mlp_layers) {
+                Ok(_result) => println!("reading mlp file finished"),
+                Err(error) => panic!("error while reading mlp file: {:?}", error),
+            };
+        }
+    }
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
@@ -64,6 +73,7 @@ fn main() {
         &mut down_offset,
         &mut down_index,
         &mlp_layers,
+        contraction_stop,
     );
     println!("Contraction in: {:?}", contraction_time.elapsed());
 

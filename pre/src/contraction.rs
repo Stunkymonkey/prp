@@ -123,13 +123,17 @@ fn layer_contraction(
     mut up_offset: &mut Vec<EdgeId>,
     mut down_offset: &mut Vec<EdgeId>,
     down_index: &mut Vec<EdgeId>,
+    mut contracted_nodes_amount: usize,
+    contraction_stop: f64,
 ) {
     let dim = edges[0].cost.len();
     let amount_nodes = nodes.len();
 
     let thread_count = num_cpus::get();
 
-    while !remaining_nodes.is_empty() {
+    while !(remaining_nodes.is_empty()
+        || (contracted_nodes_amount as f64 / nodes.len() as f64) > contraction_stop)
+    {
         // I ← independent node set
         let mut minimas = ordering::get_independent_set(
             &remaining_nodes,
@@ -301,6 +305,7 @@ fn layer_contraction(
             nodes[*node].rank = *rank;
             remaining_nodes.remove(&node);
         }
+        contracted_nodes_amount += minimas.len();
 
         println!(
             "rank {:?}  \tremaining_nodes {:?} \tindependent_set {:?} \tedges {:?} \tshortcuts {:?}     \tremoving_edges {:?} \tresulting_edges {:?}",
@@ -323,6 +328,7 @@ pub fn prp_contraction(
     mut down_offset: &mut Vec<EdgeId>,
     mut down_index: &mut Vec<EdgeId>,
     mlp_layers: &[usize],
+    contraction_stop: f64,
 ) {
     let mut independent_set_flags = ValidFlag::new(nodes.len());
 
@@ -337,6 +343,8 @@ pub fn prp_contraction(
         .par_iter_mut()
         .enumerate()
         .for_each(|(i, x)| x.id = Some(i));
+
+    let contracted_nodes_amount = 0;
 
     let mut resulting_edges = Vec::<Edge>::with_capacity(edges.len() * mlp_layers.len());
 
@@ -374,6 +382,8 @@ pub fn prp_contraction(
             &mut up_offset,
             &mut down_offset,
             &mut down_index,
+            contracted_nodes_amount,
+            contraction_stop,
         );
     }
 
