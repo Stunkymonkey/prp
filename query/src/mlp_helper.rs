@@ -42,7 +42,6 @@ pub fn get_highest_differing_level_partition(
     mlp_layers: &[usize],
 ) -> usize {
     assert_eq!(mlp_layers.len() + 1, partitions_b.len());
-    // for layer in 0..=mlp_layers.len() {
     for (layer, partition) in partitions_b.iter().enumerate().take(mlp_layers.len() + 1) {
         if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers) == *partition {
             return layer;
