@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 use std::fs::File;
 use std::str::FromStr;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use prp_query::query_export::*;
 use prp_query::*;
@@ -53,7 +53,7 @@ impl FromStr for Methods {
 #[derive(Debug, Serialize)]
 struct TimeExport {
     id: usize,
-    time: Duration,
+    time: u128,
 }
 #[derive(Debug, Serialize)]
 struct CounterExport {
@@ -146,17 +146,13 @@ fn main() {
                 );
                 export_list.push(TimeExport {
                     id: query.id,
-                    time: dijkstra_time.elapsed(),
+                    time: dijkstra_time.elapsed().as_nanos(),
                 });
             }
 
             //export
-            let output = serde_json::to_string_pretty(&json!({
-                "total_time": export_list.iter().map(|e| e.time).sum::<Duration>(),
-                "average_time": export_list.iter().map(|e| e.time).sum::<Duration>().div_f64(eval.len() as f64),
-                "querys": export_list
-            }))
-            .unwrap();
+            let output =
+                serde_json::to_string_pretty(&serde_json::to_value(export_list).unwrap()).unwrap();
 
             match export_path {
                 Some(path) => match export::write_file(&path, &output) {
@@ -187,12 +183,8 @@ fn main() {
             }
 
             //export
-            let output = serde_json::to_string_pretty(&json!({
-                "heap_pop_sum": export_list.iter().map(|e| e.heap_pops).sum::<usize>(),
-                "relaxed_edge_sum": export_list.iter().map(|e| e.relaxed_edges).sum::<usize>(),
-                "querys": export_list,
-            }))
-            .unwrap();
+            let output =
+                serde_json::to_string_pretty(&serde_json::to_value(export_list).unwrap()).unwrap();
 
             match export_path {
                 Some(path) => match export::write_file(&path, &output) {
