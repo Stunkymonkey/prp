@@ -1,4 +1,6 @@
 /target
 .envrc
+.ipynb_checkpoints
+__pycache__
 *.mlp
 *.fmi
