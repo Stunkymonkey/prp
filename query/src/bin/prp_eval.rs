@@ -302,7 +302,7 @@ fn main() {
             //export
             let output = serde_json::to_string_pretty(&json!({
                 "correct": {
-                    "with path": correct,
+                    "with_path": correct,
                     "no_path": no_path_found
                 },
                 "incorrect": {
