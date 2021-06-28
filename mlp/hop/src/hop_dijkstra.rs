@@ -70,6 +70,9 @@ impl HopDijkstra {
                 if !current_set.contains(&new_edge.to) {
                     continue;
                 }
+                if distances[new_edge.to].0 < dist {
+                    continue;
+                }
 
                 let alt = dist + 1;
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
