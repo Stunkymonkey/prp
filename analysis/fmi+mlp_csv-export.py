@@ -26,7 +26,8 @@ def get_highest_differing_level(
     mlp_layers,
 ):
     for layer in range(len(mlp_layers) + 1):
-        if get_partition_id_on_level(node_id_a, layer, partitions, mlp_layers) == get_partition_id_on_level(node_id_b, layer, partitions, mlp_layers):
+        if get_partition_id_on_level(node_id_a, layer, partitions, mlp_layers) == \
+           get_partition_id_on_level(node_id_b, layer, partitions, mlp_layers):
             return layer
     raise Exception("no common layer found")
 
@@ -46,7 +47,7 @@ def main():
         amount_edges_fmi = int(next(fmireader)[0])
         for i in range(amount_nodes_fmi):
             tmp = next(fmireader)
-            result.append([tmp[2], tmp[3]])
+            result.append({"id": i, "lat": tmp[2], "lng": tmp[3]})
             neighbors.append(set())
         # add edges bidirectional
         for i in range(amount_edges_fmi):
@@ -62,18 +63,18 @@ def main():
         assert amount_nodes_fmi == amount_nodes_mlp
         for i in range(amount_nodes_mlp):
             tmp = next(mlpreader)
-            result[i].append(tmp[0])
+            result[i].update({"partition": tmp[0]})
     # write file
-    partitions = [int(row[2]) for row in result]
+    partitions = [int(row["partition"]) for row in result]
     with open(args.output, mode='w') as qgis_csv:
         qgis_writer = csv.writer(qgis_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        header = ["lat", "lon"]
+        header = ["lat", "lng"]
         for mlp_layer_index in range(len(mlp_layers)):
-            header.append("cluster" + str(mlp_layer_index))
-        header.append("diff")
+            header.append("partition" + str(mlp_layer_index))
+        header.append("highest_diff")
         qgis_writer.writerow(header)
-        for node_id, row in enumerate(result):
-            line = [row[0], row[1]]
+        for node_id, entry in enumerate(result):
+            line = [entry["lat"], entry["lng"]]
             for mlp_layer_index in range(len(mlp_layers)):
                 line.append(get_partition_id_on_level(node_id, mlp_layer_index, partitions, mlp_layers))
             highest_level = 0
