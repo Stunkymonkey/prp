@@ -8,7 +8,7 @@ pub fn write_mlp(mlp_file: &str, partitions: &[usize], nodes: &[Node]) -> std::i
     let mut f = BufWriter::new(f);
     // layers
     writeln!(f, "{}", partitions.len())?;
-    for partition in partitions {
+    for partition in partitions.iter().rev() {
         writeln!(f, "{}", partition)?;
     }
     // nodes
