@@ -1193,6 +1193,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlp_hop"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "rand 0.8.4",
+ "rayon",
+]
+
+[[package]]
 name = "mlp_kmeans"
 version = "0.1.0"
 dependencies = [
