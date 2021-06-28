@@ -68,6 +68,29 @@ pub fn get_highest_differing_level(
 }
 
 // convert the partition_id to the layer_height
+pub fn calculate_node_layer_height(
+    node_id: NodeId,
+    nodes: &[Node],
+    graph: &Graph,
+    mlp_layers: &[usize],
+) -> usize {
+    graph
+        .get_all_edge_ids(node_id)
+        .iter()
+        .map(|edge_id| {
+            let edge = graph.get_edge(*edge_id);
+            // only calculated via edges, that existed before contraction
+            if edge.contracted_edges.is_some() {
+                0
+            } else {
+                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers)
+            }
+        })
+        .max()
+        .unwrap_or(0)
+}
+
+// convert the partition_ids to the layer_height
 pub fn calculate_node_layer_heights(
     nodes: &[Node],
     graph: &Graph,
