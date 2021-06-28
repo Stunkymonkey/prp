@@ -12,7 +12,7 @@ use std::time::Instant;
 
 fn main() {
     // check/get arguments
-    let (fmi_file, mlp_file, clusters): (String, String, Vec<usize>) =
+    let (fmi_file, mlp_file, partitions): (String, String, Vec<usize>) =
         match arguments::get_arguments() {
             Ok(result) => result,
             Err(error) => panic!("error while parsing arguments: {:?}", error),
@@ -27,30 +27,30 @@ fn main() {
         Err(error) => panic!("error while reading file: {:?}", error),
     };
 
-    // check that the amount of nodes is not smaller, then then amount of clusters
+    // check that the amount of nodes is not smaller, then then amount of partitions
     assert!(
-        nodes.len() > clusters.iter().product::<usize>(),
-        "amount of clusters to high or nodes to small"
+        nodes.len() > partitions.iter().product::<usize>(),
+        "amount of partitions to high or nodes to small"
     );
 
     // do partitioning
     let partition_time = Instant::now();
-    match partition::partition(&clusters, &mut nodes) {
+    match partition::partition(&partitions, &mut nodes) {
         Ok(_result) => println!("creating partitions sucessfully"),
         Err(error) => panic!("error while creating partitions: {:?}", error),
     };
     println!("MLP-Layer in: {:?}", partition_time.elapsed());
 
-    // check if all nodes have a valid cluster
+    // check if all nodes have a valid partition
     for node in &nodes {
         assert!(
-            node.cluster != INVALID_CLUSTER,
-            "at least one node has not been assigned to any cluster"
+            node.partition != INVALID_PARTITION,
+            "at least one node has not been assigned to any partition"
         );
     }
 
     // write export file
-    match export::write_mlp(&mlp_file, &clusters, &nodes) {
+    match export::write_mlp(&mlp_file, &partitions, &nodes) {
         Ok(_result) => println!("mlp exported"),
         Err(error) => panic!("error while writing file: {:?}", error),
     };

@@ -3,58 +3,61 @@ use cogset::{Euclid, KmeansBuilder};
 use crate::constants::*;
 use crate::structs::*;
 
-pub fn partition(clusters: &[usize], nodes: &mut Vec<Node>) -> Result<(), String> {
+pub fn partition(partitions: &[usize], nodes: &mut Vec<Node>) -> Result<(), String> {
     // ids of all nodes
-    let mut cluster_order: Vec<NodeId> = (0..nodes.len()).collect();
-    // indices which divides the clusters (including all at the beginning)
-    let mut cluster_indices: Vec<usize> = vec![0, nodes.len()];
+    let mut partition_order: Vec<NodeId> = (0..nodes.len()).collect();
+    // indices which divides the partitions (including all at the beginning)
+    let mut partition_indices: Vec<usize> = vec![0, nodes.len()];
 
     //(top to bottom iterrieren)
-    for cluster in clusters {
+    for partition in partitions {
         let mut current_indices: Vec<usize> = vec![0];
-        for (start, end) in cluster_indices.iter().zip(cluster_indices.iter().skip(1)) {
+        for (start, end) in partition_indices
+            .iter()
+            .zip(partition_indices.iter().skip(1))
+        {
             // get nodes
-            let current_cluster = &cluster_order[*start..*end];
-            // do clustering using kmeans/...
-            println!("cluster {:?} size {:?}", cluster, end - start);
-            // let (mut new_indices, new_clusters) = make_cluster(*cluster, &current_cluster, &nodes);
+            let current_partition = &partition_order[*start..*end];
+            // do partitioning using kmeans/...
+            println!("partition {:?} size {:?}", partition, end - start);
+            // let (mut new_indices, new_partitions) = make_partition(*partition, &current_partition, &nodes);
 
-            let (mut new_indices, new_clusters) =
-                match make_cluster(*cluster, &current_cluster, &nodes) {
+            let (mut new_indices, new_partition) =
+                match make_partition(*partition, &current_partition, &nodes) {
                     Ok(result) => result,
                     Err(error) => {
                         return Err(format!(
-                            "clustering did not converge after rounds: {:?}",
+                            "partitioning did not converge after rounds: {:?}",
                             error
                         ))
                     }
                 };
             // store new order of nodes
-            for (index, &cluster) in (*start..*end).zip(new_clusters.iter()) {
-                cluster_order[index] = cluster;
+            for (index, &partition) in (*start..*end).zip(new_partition.iter()) {
+                partition_order[index] = partition;
             }
             // concat indices
             new_indices.iter_mut().for_each(|i| *i += start);
             current_indices.extend(&new_indices);
         }
-        cluster_indices = current_indices;
+        partition_indices = current_indices;
     }
 
-    // resolve partitions from clusters
-    for (i, (start, end)) in cluster_indices
+    // resolve partitions from partitions
+    for (i, (start, end)) in partition_indices
         .iter()
-        .zip(cluster_indices.iter().skip(1))
+        .zip(partition_indices.iter().skip(1))
         .enumerate()
     {
-        // assign same partition for nodes in one cluster
+        // assign same partition for nodes in one partition
         for index in *start..*end {
-            nodes[cluster_order[index]].cluster = i;
+            nodes[partition_order[index]].partition = i;
         }
     }
     Ok(())
 }
 
-fn make_cluster(
+fn make_partition(
     k: usize,
     node_ids: &[NodeId],
     nodes: &[Node],

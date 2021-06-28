@@ -38,7 +38,7 @@ pub fn read_file(
             nodes.push(Node {
                 latitude: v[2].parse().unwrap(),
                 longitude: v[3].parse().unwrap(),
-                cluster: INVALID_CLUSTER,
+                partition: INVALID_PARTITION,
             });
         }
     }

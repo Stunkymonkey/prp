@@ -4,7 +4,7 @@ use crate::constants::*;
 pub struct Node {
     pub latitude: f64,
     pub longitude: f64,
-    pub cluster: usize,
+    pub partition: PartitionId,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
