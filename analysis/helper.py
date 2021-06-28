@@ -22,7 +22,7 @@ def shell_execute(command, EVAL_DIR):
                 data = json.load(file)
         data.update({time.ctime(): new_command})
         with open(EVAL_DIR + "/log.json", 'w+') as file:
-            json.dump(data, file)
+            json.dump(data, file, indent=4, sort_keys=True)
 
 
 def find_files_ending(ending_with, EVAL_DIR):
