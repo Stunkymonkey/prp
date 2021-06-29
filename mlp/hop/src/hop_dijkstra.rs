@@ -70,6 +70,7 @@ impl HopDijkstra {
                 if !current_set.contains(&new_edge.to) {
                     continue;
                 }
+                // skip edges, that are further away then current distance
                 if distances[new_edge.to].0 < dist {
                     continue;
                 }
