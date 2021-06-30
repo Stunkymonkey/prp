@@ -1,24 +1,21 @@
-// based on https://rosettacode.org/wiki/Dijkstra%27s_algorithm#Rust
-
 use super::*;
-use min_heap::*;
-use std::collections::{BTreeSet, BinaryHeap};
+use std::collections::{BTreeSet, VecDeque};
 use valid_flag::*;
 
 #[derive(Clone)]
-pub struct HopDijkstra {
+pub struct HopBFS {
     dist: Vec<(Cost, Option<NodeId>)>,
-    heap: BinaryHeap<MinHeapItem>,
+    heap: VecDeque<(NodeId, Cost, Option<EdgeId>)>,
     visited: ValidFlag,
 }
 
-impl HopDijkstra {
+impl HopBFS {
     /// general constructor
     pub fn new(amount_nodes: usize) -> Self {
         let dist = vec![(COST_MAX, None); amount_nodes];
-        let heap = BinaryHeap::new();
+        let heap = VecDeque::new();
         let visited = ValidFlag::new(amount_nodes);
-        HopDijkstra {
+        HopBFS {
             dist,
             heap,
             visited,
@@ -42,14 +39,9 @@ impl HopDijkstra {
     ) {
         self.reset_state();
 
-        self.heap.push(MinHeapItem::new(from, 0, None));
+        self.heap.push_front((from, 0, None));
 
-        while let Some(MinHeapItem {
-            node,
-            dist,
-            prev_edge,
-        }) = self.heap.pop()
-        {
+        while let Some((node, dist, prev_edge)) = self.heap.pop_front() {
             // node has already been visited and can be skipped
             // replacement for decrease key operation
             if self.visited.is_valid(node) && dist > self.dist[node].0 {
@@ -77,8 +69,7 @@ impl HopDijkstra {
 
                 let alt = dist + 1;
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
-                    self.heap
-                        .push(MinHeapItem::new(new_edge.to, alt, Some(edge)));
+                    self.heap.push_back((new_edge.to, alt, Some(edge)));
                 }
             }
         }

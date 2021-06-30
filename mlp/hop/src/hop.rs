@@ -1,5 +1,5 @@
 use super::*;
-use hop_dijkstra::HopDijkstra;
+use hop_bfs::HopBFS;
 use rand::seq::SliceRandom;
 use rand::{rngs::StdRng, SeedableRng};
 use std::collections::BTreeSet;
@@ -84,7 +84,7 @@ fn make_partition(
 
     // get random start
     let start = node_ids.choose(rng).unwrap();
-    let mut dijkstra = HopDijkstra::new(nodes.len());
+    let mut dijkstra = HopBFS::new(nodes.len());
 
     let mut core_nodes: Vec<NodeId> = Vec::with_capacity(k + 1);
 
