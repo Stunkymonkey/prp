@@ -23,7 +23,7 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)>
         )
         .arg(
             Arg::with_name("partitions")
-                .help("how much (size of parameters) and often (amount of parameters) the graph is divided (from bottom to up)")
+                .help("how many partitions (size of parameters) and often (amount of parameters) the graph is stored (from top to bottom)")
                 .takes_value(true)
                 .multiple(true)
                 .short("p")
