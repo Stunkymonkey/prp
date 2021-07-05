@@ -47,7 +47,7 @@ def main():
         amount_edges_fmi = int(next(fmireader)[0])
         for i in range(amount_nodes_fmi):
             tmp = next(fmireader)
-            result.append({"id": i, "lat": tmp[2], "lng": tmp[3]})
+            result.append({"id": i, "lat": tmp[2], "lon": tmp[3]})
             neighbors.append(set())
         # add edges bidirectional
         for i in range(amount_edges_fmi):
@@ -68,13 +68,13 @@ def main():
     partitions = [int(row["partition"]) for row in result]
     with open(args.output, mode='w') as qgis_csv:
         qgis_writer = csv.writer(qgis_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        header = ["lat", "lng"]
+        header = ["lat", "lon"]
         for mlp_layer_index in range(len(mlp_layers)):
             header.append("partition" + str(mlp_layer_index))
         header.append("highest_diff")
         qgis_writer.writerow(header)
         for node_id, entry in enumerate(result):
-            line = [entry["lat"], entry["lng"]]
+            line = [entry["lat"], entry["lon"]]
             for mlp_layer_index in range(len(mlp_layers)):
                 line.append(get_partition_id_on_level(node_id, mlp_layer_index, partitions, mlp_layers))
             highest_level = 0
