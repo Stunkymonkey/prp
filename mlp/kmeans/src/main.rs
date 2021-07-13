@@ -12,7 +12,7 @@ use std::time::Instant;
 
 fn main() {
     // check/get arguments
-    let (fmi_file, mlp_file, partitions): (String, String, Vec<usize>) =
+    let (fmi_file, mlp_file, mut partitions): (String, String, Vec<usize>) =
         match arguments::get_arguments() {
             Ok(result) => result,
             Err(error) => panic!("error while parsing arguments: {:?}", error),
@@ -48,6 +48,9 @@ fn main() {
             "at least one node has not been assigned to any partition"
         );
     }
+
+    // reverse the partitions to be bottom to up
+    partitions.reverse();
 
     // write export file
     match export::write_mlp(&mlp_file, &partitions, &nodes) {

@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 clap = "2.33"
-cogset = "0.2"
+rkm = "0.8"
+ndarray = "0.12"

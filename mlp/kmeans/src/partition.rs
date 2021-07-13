@@ -1,4 +1,4 @@
-use cogset::{Euclid, KmeansBuilder};
+use ndarray::Array2;
 
 use crate::constants::*;
 use crate::structs::*;
@@ -64,20 +64,23 @@ fn make_partition(
 ) -> Result<(Vec<usize>, Vec<NodeId>), usize> {
     let mut data = Vec::with_capacity(node_ids.len());
     for node in node_ids {
-        data.push(Euclid([nodes[*node].latitude, nodes[*node].longitude]))
+        data.push(nodes[*node].latitude);
+        data.push(nodes[*node].longitude);
     }
 
-    let kmeans = KmeansBuilder::new().max_iter(10_000).kmeans(&data, k);
-
-    kmeans.converged()?;
+    let ndata: Array2<f64> = Array2::from_shape_vec((data.len() / 2, 2), data).unwrap();
+    let config = rkm::Config::from(Some((42 as u128).to_le_bytes()), Some(10_000), None);
+    let (_means, clusters) = rkm::kmeans_lloyd_with_config(&ndata.view(), k, &config);
 
     let mut order = Vec::with_capacity(node_ids.len());
     let mut offsets = Vec::with_capacity(k);
 
     // convert kmeans-id back to pbfextractor-id
-    for cluster in kmeans.clusters() {
-        for id in cluster.1 {
-            order.push(node_ids[id]);
+    for cluster in 0..k {
+        for (id, node_id) in node_ids.iter().enumerate() {
+            if clusters[id] == cluster {
+                order.push(*node_id);
+            }
         }
         // save end index as end of cluster
         offsets.push(order.len());
