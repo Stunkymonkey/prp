@@ -81,7 +81,7 @@ pub fn merge(
     }
     drop(already_inserted);
 
-    println!("initial heuristic time in: {:?}", heuristic_time.elapsed());
+    println!("initial heuristic in: {:?}", heuristic_time.elapsed());
 
     let merge_time = Instant::now();
 
@@ -163,11 +163,7 @@ pub fn merge(
         // check if saving of one layer is needed
         if (!partition_sizes.is_empty() && partition_sizes[amount_layer] <= partition_size)
             || (!partition_amounts.is_empty()
-                && partition_amounts[amount_layer]
-                    // .iter()
-                    // .take(partition_amounts.len() - amount_layer)
-                    // .product::<usize>()
-                    >= partition_amount)
+                && partition_amounts[amount_layer] >= partition_amount)
         {
             println!(
                 "one layer finished with {:?} partitions and a maximum partition-size of {:?}",

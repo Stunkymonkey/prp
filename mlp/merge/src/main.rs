@@ -17,7 +17,7 @@ use std::time::Instant;
 
 fn main() {
     // check/get arguments
-    let (fmi_file, mlp_file, mut partition_amount, partition_sizes): (
+    let (fmi_file, mlp_file, mut partition_amount, mut partition_sizes): (
         String,
         String,
         Vec<usize>,
@@ -51,6 +51,10 @@ fn main() {
 
     // make graph bidirect
     bidirect_graph::create_bidirect(&mut edges);
+
+    // reverse the partitions to be bottom to up
+    partition_amount.reverse();
+    partition_sizes.reverse();
 
     // do partitioning
     let partition_time = Instant::now();
