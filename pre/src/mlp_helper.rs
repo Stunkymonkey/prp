@@ -165,7 +165,7 @@ fn node_height() {
     let down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
-    calculate_node_levels(
+    calculate_levels(
         &mut nodes,
         &edges,
         &up_offset,
