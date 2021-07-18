@@ -7,12 +7,11 @@ pub fn get_partition_id_on_level(
     nodes: &[Node],
     mlp_layers: &[usize],
 ) -> PartitionId {
-    let divisor = mlp_layers.iter().take(layer).product::<usize>();
     let partition = nodes[node_id].partition;
-    if divisor == 0 {
+    if layer == 0 {
         partition
     } else {
-        partition / divisor
+        partition / mlp_layers.iter().take(layer).product::<usize>()
     }
 }
 
