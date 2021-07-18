@@ -1,77 +1,77 @@
 use super::*;
 
-/// get in what PartitionId it is on a specific layer
+/// get in what PartitionId it is on a specific level
 pub fn get_partition_id_on_level(
     node_id: NodeId,
-    layer: usize,
+    level: usize,
     nodes: &[Node],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> PartitionId {
     let partition = nodes[node_id].partition;
-    if layer == 0 {
+    if level == 0 {
         partition
     } else {
-        partition / mlp_layers.iter().take(layer).product::<usize>()
+        partition / mlp_levels.iter().take(level).product::<usize>()
     }
 }
 
-// get all partiton_ids of one node (including top layer)
+// get all partiton_ids of one node (including top level)
 pub fn get_node_partitions(
     node_id: NodeId,
     nodes: &[Node],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> Vec<PartitionId> {
-    let mut partitions = Vec::with_capacity(mlp_layers.len() + 1);
-    for layer in 0..=mlp_layers.len() {
+    let mut partitions = Vec::with_capacity(mlp_levels.len() + 1);
+    for level in 0..=mlp_levels.len() {
         partitions.push(get_partition_id_on_level(
             node_id,
-            layer,
+            level,
             &nodes,
-            &mlp_layers,
+            &mlp_levels,
         ));
     }
     partitions
 }
 
-// find most common layer height (0 = same partition, ...)
+// find most common level height (0 = same partition, ...)
 pub fn get_highest_differing_level_partition(
     node_a: NodeId,
     partitions_b: &[PartitionId],
     nodes: &[Node],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> usize {
-    assert_eq!(mlp_layers.len() + 1, partitions_b.len());
-    for (layer, partition) in partitions_b.iter().enumerate().take(mlp_layers.len() + 1) {
-        if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers) == *partition {
-            return layer;
+    assert_eq!(mlp_levels.len() + 1, partitions_b.len());
+    for (level, partition) in partitions_b.iter().enumerate().take(mlp_levels.len() + 1) {
+        if get_partition_id_on_level(node_a, level, &nodes, &mlp_levels) == *partition {
+            return level;
         }
     }
-    panic!("no common layer found")
+    panic!("no common level found")
 }
 
-// find most common layer height (0 = same partition, ...)
+// find most common level height (0 = same partition, ...)
 pub fn get_highest_differing_level(
     node_a: NodeId,
     node_b: NodeId,
     nodes: &[Node],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> usize {
-    for layer in 0..=mlp_layers.len() {
-        if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers)
-            == get_partition_id_on_level(node_b, layer, &nodes, &mlp_layers)
+    for level in 0..=mlp_levels.len() {
+        if get_partition_id_on_level(node_a, level, &nodes, &mlp_levels)
+            == get_partition_id_on_level(node_b, level, &nodes, &mlp_levels)
         {
-            return layer;
+            return level;
         }
     }
-    panic!("no common layer found")
+    panic!("no common level found")
 }
 
-// convert the partition_id to the layer_height
-pub fn calculate_node_layer_height(
+// convert the partition_id to the level
+pub fn calculate_node_levels(
     node_id: NodeId,
     nodes: &[Node],
     graph: &Graph,
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> usize {
     graph
         .get_all_edge_ids(node_id)
@@ -82,19 +82,15 @@ pub fn calculate_node_layer_height(
             if edge.contracted_edges.is_some() {
                 0
             } else {
-                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers)
+                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_levels)
             }
         })
         .max()
         .unwrap_or(0)
 }
 
-// convert the partition_ids to the layer_height
-pub fn calculate_node_layer_heights(
-    nodes: &[Node],
-    graph: &Graph,
-    mlp_layers: &[usize],
-) -> Vec<usize> {
+// convert the partition_ids to the level_height
+pub fn calculate_levels(nodes: &[Node], graph: &Graph, mlp_levels: &[usize]) -> Vec<usize> {
     // only calculated via edges, that existed before contraction
     let highest_edge_diff: Vec<_> = graph
         .edges
@@ -103,15 +99,15 @@ pub fn calculate_node_layer_heights(
             if edge.contracted_edges.is_some() {
                 0
             } else {
-                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers)
+                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_levels)
             }
         })
         .collect();
 
-    let mut layer_height = Vec::with_capacity(nodes.len());
+    let mut level_height = Vec::with_capacity(nodes.len());
     for (node_id, _node) in nodes.iter().enumerate() {
         let node_edges = graph.get_all_edge_ids(node_id);
-        layer_height.push(
+        level_height.push(
             node_edges
                 .iter()
                 .map(|edge_id| highest_edge_diff[*edge_id])
@@ -119,11 +115,11 @@ pub fn calculate_node_layer_heights(
                 .unwrap_or(0),
         );
     }
-    layer_height
+    level_height
 }
 
 #[test]
-fn layer_partition_ids() {
+fn level_partition_ids() {
     let partitions = vec![4, 3, 3];
 
     let mut nodes = Vec::<Node>::new();

@@ -18,7 +18,7 @@ pub fn calculate_single_heuristic(
 /// calculate heuristic in parallel
 #[allow(clippy::too_many_arguments)]
 pub fn calculate_heuristics(
-    layer_height: LayerHeight,
+    level_height: Level,
     nodes: &[Node],
     deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
@@ -26,7 +26,7 @@ pub fn calculate_heuristics(
 ) -> Vec<usize> {
     let mut heuristics: Vec<usize> = Vec::with_capacity(nodes.len());
     for (node_id, node) in nodes.iter().enumerate() {
-        if node.layer_height != layer_height {
+        if node.level != level_height {
             heuristics.push(std::usize::MAX);
         } else {
             heuristics.push(calculate_single_heuristic(
@@ -44,7 +44,7 @@ pub fn calculate_heuristics(
 #[allow(clippy::too_many_arguments)]
 pub fn update_neighbor_heuristics(
     neighbors: Vec<NodeId>,
-    layer_height: LayerHeight,
+    level_height: Level,
     heuristics: &mut Vec<usize>,
     nodes: &[Node],
     deleted_neighbors: &[NodeId],
@@ -52,7 +52,7 @@ pub fn update_neighbor_heuristics(
     down_offset: &[EdgeId],
 ) {
     for neighbor in neighbors {
-        if nodes[neighbor].layer_height == layer_height {
+        if nodes[neighbor].level == level_height {
             heuristics[neighbor] =
                 calculate_single_heuristic(neighbor, deleted_neighbors, &up_offset, &down_offset);
         }

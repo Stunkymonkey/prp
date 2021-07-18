@@ -45,7 +45,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         alpha: Vec<f64>,
         graph: &Graph,
         _nodes: &[Node],
-        _mlp_layers: &[usize],
+        _mlp_levels: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 
@@ -75,8 +75,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 return Some(self.resolve_path(to, &graph.edges));
             }
 
-            for edge in graph.get_up_edge_ids(node) {
-                let new_edge = graph.get_edge(edge);
+            for edge_id in graph.get_up_edge_ids(node) {
+                let new_edge = graph.get_edge(edge_id);
 
                 // skip edges, that are shortcuts
                 if new_edge.contracted_edges.is_some() {
@@ -85,10 +85,10 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 self.exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
+                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
                     self.heap
-                        .push(MinHeapItem::new(new_edge.to, alt, Some(edge)));
+                        .push(MinHeapItem::new(new_edge.to, alt, Some(edge_id)));
                 }
             }
         }

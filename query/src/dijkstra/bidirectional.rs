@@ -58,7 +58,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         alpha: Vec<f64>,
         graph: &Graph,
         nodes: &[Node],
-        _mlp_layers: &[usize],
+        _mlp_levels: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 

@@ -4,7 +4,7 @@ use crate::fmi_import::file_reader;
 pub fn read_file(
     file_path: &str,
     nodes: &mut Vec<Node>,
-    mlp_layers: &mut Vec<usize>,
+    mlp_levels: &mut Vec<usize>,
 ) -> std::io::Result<()> {
     let mut mlp_amount = 0;
     let mut node_amount = 0;
@@ -15,14 +15,14 @@ pub fn read_file(
     if let Some(line) = reader.read_line(&mut buffer) {
         mlp_amount = line?.trim().parse().unwrap();
     }
-    mlp_layers.reserve_exact(mlp_amount);
+    mlp_levels.reserve_exact(mlp_amount);
     for _ in 0..mlp_amount {
         if let Some(line) = reader.read_line(&mut buffer) {
-            mlp_layers.push(line?.trim().parse().unwrap());
+            mlp_levels.push(line?.trim().parse().unwrap());
         }
     }
 
-    let max_partition = mlp_layers.iter().product::<usize>();
+    let max_partition = mlp_levels.iter().product::<usize>();
 
     if let Some(line) = reader.read_line(&mut buffer) {
         node_amount = line?.trim().parse().unwrap();

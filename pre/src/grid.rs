@@ -101,7 +101,7 @@ fn grid_grid_bounds() {
         longitude: 30.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
     nodes.push(Node {
@@ -109,7 +109,7 @@ fn grid_grid_bounds() {
         longitude: 30.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
     nodes.push(Node {
@@ -117,7 +117,7 @@ fn grid_grid_bounds() {
         longitude: 40.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
     nodes.push(Node {
@@ -125,7 +125,7 @@ fn grid_grid_bounds() {
         longitude: 40.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
 
@@ -146,7 +146,7 @@ fn grid_id() {
         longitude: 10.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
     nodes.push(Node {
@@ -154,7 +154,7 @@ fn grid_id() {
         longitude: 10.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
     nodes.push(Node {
@@ -162,7 +162,7 @@ fn grid_id() {
         longitude: 20.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
     nodes.push(Node {
@@ -170,7 +170,7 @@ fn grid_id() {
         longitude: 20.0,
         rank: 0,
         partition: INVALID_PARTITION,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level_height: INVALID_LEVEL,
         old_id: None,
     });
 
@@ -182,7 +182,7 @@ fn grid_id() {
             longitude: 10.1,
             rank: 0,
             partition: INVALID_PARTITION,
-            layer_height: INVALID_LAYER_HEIGHT,
+            level_height: INVALID_LEVEL,
             old_id: None,
         },
         &grid_bounds,
@@ -195,7 +195,7 @@ fn grid_id() {
             longitude: 10.4,
             rank: 0,
             partition: INVALID_PARTITION,
-            layer_height: INVALID_LAYER_HEIGHT,
+            level_height: INVALID_LEVEL,
             old_id: None,
         },
         &grid_bounds,
@@ -208,7 +208,7 @@ fn grid_id() {
             longitude: 12.7,
             rank: 0,
             partition: INVALID_PARTITION,
-            layer_height: INVALID_LAYER_HEIGHT,
+            level_height: INVALID_LEVEL,
             old_id: None,
         },
         &grid_bounds,

@@ -6,7 +6,7 @@ use crate::structs::*;
 pub fn write_mlp(mlp_file: &str, partitions: &[usize], nodes: &[Node]) -> std::io::Result<()> {
     let f = File::create(mlp_file)?;
     let mut f = BufWriter::new(f);
-    // layers
+    // levels
     writeln!(f, "{}", partitions.len())?;
     for partition in partitions.iter().rev() {
         writeln!(f, "{}", partition)?;

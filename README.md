@@ -21,7 +21,7 @@ extracting largest connected set of node: (specially needed for merge-partitioni
 cargo run --bin fmi_largest_set --release -- -i [path/to/fmi-file] -o [path/to/fmi-file(output)]
 ```
 
-## [MLP (multi-layer-partitioning)](https://en.wikipedia.org/wiki/Graph_partition#Multi-level_methods)
+## [MLP (multi-level-partitioning)](https://en.wikipedia.org/wiki/Graph_partition#Multi-level_methods)
 
 two methods possible:
 

@@ -39,7 +39,7 @@ fn main() {
         Ok(_result) => println!("creating partitions sucessfully"),
         Err(error) => panic!("error while creating partitions: {:?}", error),
     };
-    println!("MLP-Layer in: {:?}", partition_time.elapsed());
+    println!("MLP in: {:?}", partition_time.elapsed());
 
     // check if all nodes have a valid partition
     for node in &nodes {

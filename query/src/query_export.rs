@@ -11,7 +11,7 @@ pub trait Export {
     fn visited_node(&mut self, _node_id: NodeId);
     fn visited_edge(&mut self, _edge_id: Option<EdgeId>);
     fn relaxed_edge(&mut self);
-    fn visited_partition(&mut self, _layer_height: LayerHeight, _partition_id: PartitionId);
+    fn visited_partition(&mut self, _level_height: Level, _partition_id: PartitionId);
     fn current_meeting_point(&mut self, _node_id: NodeId);
 }
 
@@ -29,7 +29,7 @@ impl Export for NoOp {
     fn visited_node(&mut self, _node_id: NodeId) {}
     fn visited_edge(&mut self, _edge_id: Option<EdgeId>) {}
     fn relaxed_edge(&mut self) {}
-    fn visited_partition(&mut self, _layer_height: LayerHeight, _partition_id: PartitionId) {}
+    fn visited_partition(&mut self, _level_height: Level, _partition_id: PartitionId) {}
     fn current_meeting_point(&mut self, _node_id: NodeId) {}
 }
 
@@ -60,7 +60,7 @@ impl Export for Counter {
     fn relaxed_edge(&mut self) {
         self.relaxed_edges += 1;
     }
-    fn visited_partition(&mut self, _layer_height: LayerHeight, _partition_id: PartitionId) {}
+    fn visited_partition(&mut self, _level_height: Level, _partition_id: PartitionId) {}
     fn current_meeting_point(&mut self, _node_id: NodeId) {}
 }
 
@@ -70,7 +70,7 @@ pub struct RealExport {
     pub visited_nodes: Vec<NodeId>,
     pub visited_edges: Vec<EdgeId>,
     pub relaxed_edges: usize,
-    pub visited_partitions: BTreeSet<(LayerHeight, PartitionId)>,
+    pub visited_partitions: BTreeSet<(Level, PartitionId)>,
     pub meeting_node: Option<NodeId>,
 }
 impl Export for RealExport {
@@ -109,8 +109,8 @@ impl Export for RealExport {
     fn relaxed_edge(&mut self) {
         self.relaxed_edges += 1;
     }
-    fn visited_partition(&mut self, layer_height: LayerHeight, partition_id: PartitionId) {
-        self.visited_partitions.insert((layer_height, partition_id));
+    fn visited_partition(&mut self, level_height: Level, partition_id: PartitionId) {
+        self.visited_partitions.insert((level_height, partition_id));
     }
 
     fn current_meeting_point(&mut self, node_id: NodeId) {

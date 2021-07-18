@@ -20,6 +20,6 @@ pub trait FindPath<E: Export> {
         alpha: Vec<f64>,
         graph: &Graph,
         nodes: &[Node],
-        _mlp_layers: &[usize],
+        _mlp_levels: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)>;
 }

@@ -25,7 +25,7 @@ fn main() {
         Ok(result) => result,
         Err(error) => panic!("error while parsing arguments: {:?}", error),
     };
-    let mut mlp_layers = Vec::<usize>::new();
+    let mut mlp_levels = Vec::<usize>::new();
     let mut nodes = Vec::<Node>::new();
     let mut edges = Vec::<Edge>::new();
     let mut metrics = Vec::<String>::new();
@@ -38,10 +38,10 @@ fn main() {
     match mlp_file.as_str() {
         "" => {
             nodes.iter_mut().for_each(|node| node.partition = 0);
-            mlp_layers = vec![1];
+            mlp_levels = vec![1];
         }
         _ => {
-            match mlp_import::read_file(&mlp_file, &mut nodes, &mut mlp_layers) {
+            match mlp_import::read_file(&mlp_file, &mut nodes, &mut mlp_levels) {
                 Ok(_result) => println!("reading mlp file finished"),
                 Err(error) => panic!("error while reading mlp file: {:?}", error),
             };
@@ -55,15 +55,15 @@ fn main() {
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
     let highest_diff_time = Instant::now();
-    mlp_helper::calculate_node_layer_heights(
+    mlp_helper::calculate_levels(
         &mut nodes,
         &edges,
         &up_offset,
         &down_offset,
         &down_index,
-        &mlp_layers,
+        &mlp_levels,
     );
-    println!("MLP-Layer in: {:?}", highest_diff_time.elapsed());
+    println!("MLP in: {:?}", highest_diff_time.elapsed());
 
     let contraction_time = Instant::now();
     contraction::prp_contraction(
@@ -72,7 +72,7 @@ fn main() {
         &mut up_offset,
         &mut down_offset,
         &mut down_index,
-        &mlp_layers,
+        &mlp_levels,
         contraction_stop,
     );
     println!("Contraction in: {:?}", contraction_time.elapsed());
@@ -88,7 +88,7 @@ fn main() {
 
     let result = BinFile {
         nodes,
-        mlp_layers,
+        mlp_levels,
         edges,
         edge_costs,
         up_offset,

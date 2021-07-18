@@ -4,7 +4,7 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
     let matches = App::new("mlp_hop_distance")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
-        .about("generates multi-layer-partition using merge-algo")
+        .about("generates multi-level-partition using merge-algo")
         .arg(
             Arg::with_name("graph-file")
                 .help("the input file to use")

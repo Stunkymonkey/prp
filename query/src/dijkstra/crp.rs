@@ -58,7 +58,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         alpha: Vec<f64>,
         graph: &Graph,
         nodes: &[Node],
-        mlp_layers: &[usize],
+        mlp_levels: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 
@@ -77,8 +77,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         let mut best_cost = COST_MAX;
         let mut meeting_node = None;
 
-        let from_partitions = mlp_helper::get_node_partitions(from, &nodes, &mlp_layers);
-        let to_partitions = mlp_helper::get_node_partitions(to, &nodes, &mlp_layers);
+        let from_partitions = mlp_helper::get_node_partitions(from, &nodes, &mlp_levels);
+        let to_partitions = mlp_helper::get_node_partitions(to, &nodes, &mlp_levels);
 
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
@@ -154,30 +154,30 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter.visited_edge(prev_edge);
 
             // get query level on which to walk
-            let query_layer = std::cmp::min(
+            let query_level = std::cmp::min(
                 mlp_helper::get_highest_differing_level_partition(
                     node,
                     &from_partitions,
                     &nodes,
-                    &mlp_layers,
+                    &mlp_levels,
                 ),
                 mlp_helper::get_highest_differing_level_partition(
                     node,
                     &to_partitions,
                     &nodes,
-                    &mlp_layers,
+                    &mlp_levels,
                 ),
             );
 
             for edge_id in get_edges(&graph, node) {
                 let edge = graph.get_edge(edge_id);
 
-                // skip edges, that are shortcuts-resultions from upper layers
-                if edge.layer.is_none() {
+                // skip edges, that are shortcuts-resultions from upper levels
+                if edge.level.is_none() {
                     continue;
                 }
-                // only walk on query layers and never below
-                if query_layer > edge.layer.unwrap() {
+                // only walk on query levels and never below
+                if query_level > edge.level.unwrap() {
                     continue;
                 }
 

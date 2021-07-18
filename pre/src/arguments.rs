@@ -15,7 +15,7 @@ pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
         )
         .arg(
             Arg::with_name("mlp-file")
-                .help("the multi-layer-partition file")
+                .help("the multi-level-partition file")
                 .takes_value(true)
                 .short("m")
                 .long("mlp")

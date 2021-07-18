@@ -1,45 +1,45 @@
 use super::*;
 
-/// get in what PartitionId it is on a specific layer
+/// get in what PartitionId it is on a specific level
 pub fn get_partition_id_on_level(
     node_id: NodeId,
-    layer: usize,
+    level: usize,
     nodes: &[Node],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> PartitionId {
     let partition = nodes[node_id].partition;
-    if layer == 0 {
+    if level == 0 {
         partition
     } else {
-        partition / mlp_layers.iter().take(layer).product::<usize>()
+        partition / mlp_levels.iter().take(level).product::<usize>()
     }
 }
 
-// find most common layer height (0 = same partition, ...)
+// find most common level height (0 = same partition, ...)
 pub fn get_highest_differing_level(
     node_a: NodeId,
     node_b: NodeId,
     nodes: &[Node],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) -> usize {
-    for layer in 0..=mlp_layers.len() {
-        if get_partition_id_on_level(node_a, layer, &nodes, &mlp_layers)
-            == get_partition_id_on_level(node_b, layer, &nodes, &mlp_layers)
+    for level in 0..=mlp_levels.len() {
+        if get_partition_id_on_level(node_a, level, &nodes, &mlp_levels)
+            == get_partition_id_on_level(node_b, level, &nodes, &mlp_levels)
         {
-            return layer;
+            return level;
         }
     }
-    panic!("no common layer found")
+    panic!("no common level found")
 }
 
-// convert the partition_id to the layer_height
-pub fn calculate_node_layer_heights(
+// convert the partition_id to the level
+pub fn calculate_levels(
     nodes: &mut [Node],
     edges: &[Edge],
     up_offset: &[EdgeId],
     down_offset: &[EdgeId],
     down_index: &[EdgeId],
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
 ) {
     // only calculated via edges, that existed before contraction
     let highest_edge_diff: Vec<_> = edges
@@ -49,7 +49,7 @@ pub fn calculate_node_layer_heights(
             if edge.contracted_edges.is_some() {
                 0
             } else {
-                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_layers)
+                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_levels)
             }
         })
         .collect();
@@ -57,7 +57,7 @@ pub fn calculate_node_layer_heights(
     for (node_id, mut node) in nodes.iter_mut().enumerate() {
         let node_edges =
             graph_helper::get_all_edge_ids(node_id, &up_offset, &down_offset, &down_index);
-        node.layer_height = node_edges
+        node.level = node_edges
             .iter()
             .map(|edge_id| highest_edge_diff[*edge_id])
             .max()
@@ -66,7 +66,7 @@ pub fn calculate_node_layer_heights(
 }
 
 #[test]
-fn layer_partition_ids() {
+fn level_partition_ids() {
     let partitions = vec![4, 3, 3];
 
     let mut nodes = Vec::<Node>::new();
@@ -76,7 +76,7 @@ fn layer_partition_ids() {
             longitude: 0.0,
             rank: 0,
             partition: partition,
-            layer_height: INVALID_LAYER_HEIGHT,
+            level: INVALID_LEVEL,
             old_id: None,
         });
     }
@@ -85,7 +85,7 @@ fn layer_partition_ids() {
         longitude: 0.0,
         rank: 0,
         partition: 27,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level: INVALID_LEVEL,
         old_id: None,
     });
 
@@ -113,7 +113,7 @@ fn node_height() {
     // V       V            V
     // 6-->7-->8-->9-->10-->11-->13
 
-    let mlp_layers = vec![3, 2];
+    let mlp_levels = vec![3, 2];
 
     let mut nodes = Vec::<Node>::new();
     for partition in 0..12 {
@@ -122,7 +122,7 @@ fn node_height() {
             longitude: 0.0,
             rank: 0,
             partition: partition % 6,
-            layer_height: INVALID_LAYER_HEIGHT,
+            level: INVALID_LEVEL,
             old_id: None,
         });
     }
@@ -131,7 +131,7 @@ fn node_height() {
         longitude: 0.0,
         rank: 0,
         partition: 5,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level: INVALID_LEVEL,
         old_id: None,
     });
 
@@ -140,7 +140,7 @@ fn node_height() {
         longitude: 0.0,
         rank: 0,
         partition: 5,
-        layer_height: INVALID_LAYER_HEIGHT,
+        level: INVALID_LEVEL,
         old_id: None,
     });
 
@@ -165,27 +165,27 @@ fn node_height() {
     let down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
-    calculate_node_layer_heights(
+    calculate_node_levels(
         &mut nodes,
         &edges,
         &up_offset,
         &down_offset,
         &down_index,
-        &mlp_layers,
+        &mlp_levels,
     );
 
-    assert_eq!(nodes[0].layer_height, 1);
-    assert_eq!(nodes[1].layer_height, 1);
-    assert_eq!(nodes[2].layer_height, 2);
-    assert_eq!(nodes[3].layer_height, 2);
-    assert_eq!(nodes[4].layer_height, 1);
-    assert_eq!(nodes[5].layer_height, 1);
-    assert_eq!(nodes[6].layer_height, 1);
-    assert_eq!(nodes[7].layer_height, 1);
-    assert_eq!(nodes[8].layer_height, 2);
-    assert_eq!(nodes[9].layer_height, 2);
-    assert_eq!(nodes[10].layer_height, 1);
-    assert_eq!(nodes[11].layer_height, 1);
-    assert_eq!(nodes[12].layer_height, 0);
-    assert_eq!(nodes[13].layer_height, 0);
+    assert_eq!(nodes[0].level, 1);
+    assert_eq!(nodes[1].level, 1);
+    assert_eq!(nodes[2].level, 2);
+    assert_eq!(nodes[3].level, 2);
+    assert_eq!(nodes[4].level, 1);
+    assert_eq!(nodes[5].level, 1);
+    assert_eq!(nodes[6].level, 1);
+    assert_eq!(nodes[7].level, 1);
+    assert_eq!(nodes[8].level, 2);
+    assert_eq!(nodes[9].level, 2);
+    assert_eq!(nodes[10].level, 1);
+    assert_eq!(nodes[11].level, 1);
+    assert_eq!(nodes[12].level, 0);
+    assert_eq!(nodes[13].level, 0);
 }

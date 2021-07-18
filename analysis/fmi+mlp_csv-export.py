@@ -11,8 +11,8 @@ parser.add_argument("-o", "--output", type=str, help="output csv-file", required
 args = parser.parse_args()
 
 
-def get_partition_id_on_level(node_id, layer_id, partitions, mlp_layers):
-    divisor = np.prod(mlp_layers[:layer_id])
+def get_partition_id_on_level(node_id, level_id, partitions, mlp_levels):
+    divisor = np.prod(mlp_levels[:level_id])
     if int(divisor) == 0:
         return partitions[node_id]
     else:
@@ -23,18 +23,18 @@ def get_highest_differing_level(
     node_id_a,
     node_id_b,
     partitions,
-    mlp_layers,
+    mlp_levels,
 ):
-    for layer in range(len(mlp_layers) + 1):
-        if get_partition_id_on_level(node_id_a, layer, partitions, mlp_layers) == \
-           get_partition_id_on_level(node_id_b, layer, partitions, mlp_layers):
-            return layer
-    raise Exception("no common layer found")
+    for level in range(len(mlp_levels) + 1):
+        if get_partition_id_on_level(node_id_a, level, partitions, mlp_levels) == \
+           get_partition_id_on_level(node_id_b, level, partitions, mlp_levels):
+            return level
+    raise Exception("no common level found")
 
 
 def main():
     result = list()
-    mlp_layers = list()
+    mlp_levels = list()
     neighbors = list()
     # read files
     with open(args.fmi_input) as csvfile:
@@ -56,9 +56,9 @@ def main():
             neighbors[int(tmp[1])].add(int(tmp[0]))
     with open(args.mlp_input) as csvfile:
         mlpreader = csv.reader(csvfile, delimiter=' ')
-        amount_layers = int(next(mlpreader)[0])
-        for i in range(amount_layers):
-            mlp_layers.append(int(next(mlpreader)[0]))
+        amount_levels = int(next(mlpreader)[0])
+        for i in range(amount_levels):
+            mlp_levels.append(int(next(mlpreader)[0]))
         amount_nodes_mlp = int(next(mlpreader)[0])
         assert amount_nodes_fmi == amount_nodes_mlp
         for i in range(amount_nodes_mlp):
@@ -69,17 +69,17 @@ def main():
     with open(args.output, mode='w') as qgis_csv:
         qgis_writer = csv.writer(qgis_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         header = ["lat", "lon"]
-        for mlp_layer_index in range(len(mlp_layers)):
-            header.append("partition" + str(mlp_layer_index))
+        for mlp_level_index in range(len(mlp_levels)):
+            header.append("partition" + str(mlp_level_index))
         header.append("highest_diff")
         qgis_writer.writerow(header)
         for node_id, entry in enumerate(result):
             line = [entry["lat"], entry["lon"]]
-            for mlp_layer_index in range(len(mlp_layers)):
-                line.append(get_partition_id_on_level(node_id, mlp_layer_index, partitions, mlp_layers))
+            for mlp_level_index in range(len(mlp_levels)):
+                line.append(get_partition_id_on_level(node_id, mlp_level_index, partitions, mlp_levels))
             highest_level = 0
             for neighbor in neighbors[node_id]:
-                new_value = get_highest_differing_level(node_id, neighbor, partitions, mlp_layers)
+                new_value = get_highest_differing_level(node_id, neighbor, partitions, mlp_levels)
                 if new_value > highest_level:
                     highest_level = new_value
             line.append(highest_level)

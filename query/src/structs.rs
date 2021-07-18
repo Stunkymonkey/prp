@@ -15,7 +15,7 @@ pub struct Node {
 pub struct Edge {
     pub from: NodeId,
     pub to: NodeId,
-    pub layer: Option<LayerHeight>,
+    pub level: Option<Level>,
     pub contracted_edges: Option<(EdgeId, EdgeId)>,
 }
 
@@ -44,7 +44,7 @@ pub struct GridBounds {
 #[derive(Deserialize, Clone)]
 pub struct BinFile {
     pub nodes: Vec<Node>,
-    pub mlp_layers: Vec<usize>,
+    pub mlp_levels: Vec<usize>,
     pub edges: Vec<Edge>,
     pub edge_costs: Vec<Cost>,
     pub up_offset: Vec<EdgeId>,
@@ -59,7 +59,7 @@ pub struct BinFile {
 #[derive(Clone)]
 pub struct WebData {
     pub nodes: Vec<Node>,
-    pub mlp_layers: Vec<usize>,
+    pub mlp_levels: Vec<usize>,
     pub graph: Graph,
     pub grid_offset: Vec<GridId>,
     pub grid: Vec<NodeId>,

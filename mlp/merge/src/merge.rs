@@ -31,13 +31,13 @@ pub fn merge(
     let mut current_partition = Vec::with_capacity(nodes.len());
     // keep track if heuristics are up-to-date
     let mut amount_merges = vec![0; nodes.len()];
-    let mut amount_merges_per_layer = vec![0; nodes.len()];
+    let mut amount_merges_per_level = vec![0; nodes.len()];
 
     // counting the amount of partitions
     let mut partition_amount = nodes.len();
 
-    // keep track of how many_layers are done
-    let mut amount_layer: usize = 0;
+    // keep track of how many levels are done
+    let mut amount_level: usize = 0;
 
     // save current_partition and amount of partitions
     let mut results: Vec<(Vec<BTreeSet<NodeId>>, usize, usize)> = Vec::with_capacity(
@@ -107,9 +107,9 @@ pub fn merge(
         }
         amount_merges[set_a] += 1;
         amount_merges[set_b] += 1;
-        let new_value = amount_merges_per_layer[set_a] + amount_merges_per_layer[set_b] + 1;
-        amount_merges_per_layer[set_a] = new_value;
-        amount_merges_per_layer[set_b] = new_value;
+        let new_value = amount_merges_per_level[set_a] + amount_merges_per_level[set_b] + 1;
+        amount_merges_per_level[set_a] = new_value;
+        amount_merges_per_level[set_b] = new_value;
         // combine both sets and switch so the small get merged into the bigger
         let mut merge_set = std::mem::take(&mut sets[set_b]);
         if merge_set.len() > sets[set_a].len() {
@@ -160,25 +160,25 @@ pub fn merge(
         partition_amount -= 1;
         let partition_size = sets[set_a].len();
 
-        // check if saving of one layer is needed
-        if (!partition_sizes.is_empty() && partition_sizes[amount_layer] <= partition_size)
+        // check if saving of one level is needed
+        if (!partition_sizes.is_empty() && partition_sizes[amount_level] <= partition_size)
             || (!partition_amounts.is_empty()
-                && partition_amounts[amount_layer] >= partition_amount)
+                && partition_amounts[amount_level] >= partition_amount)
         {
             println!(
-                "one layer finished with {:?} partitions and a maximum partition-size of {:?}",
+                "one level finished with {:?} partitions and a maximum partition-size of {:?}",
                 partition_amount, partition_size
             );
-            amount_layer += 1;
+            amount_level += 1;
             results.push((
                 sets.clone(),
                 partition_amount,
-                amount_merges_per_layer.iter().max().unwrap_or(&0) + 1,
+                amount_merges_per_level.iter().max().unwrap_or(&0) + 1,
             ));
-            amount_merges_per_layer = vec![0; nodes.len()];
+            amount_merges_per_level = vec![0; nodes.len()];
         }
-        // now the layers are all finished
-        if amount_layer >= std::cmp::max(partition_sizes.len(), partition_amounts.len()) {
+        // now the levels are all finished
+        if amount_level >= std::cmp::max(partition_sizes.len(), partition_amounts.len()) {
             // println!(
             //     "nodes: {:?}\t upper-partition_amount: {:?}\t max-partition_size: {:?}",
             //     nodes.len(),
@@ -198,7 +198,7 @@ pub fn merge(
         .last()
         .unwrap_or(1)];
 
-    // append amount of merges in each layer and ignore first merges
+    // append amount of merges in each level and ignore first merges
     results
         .iter()
         .skip(1)

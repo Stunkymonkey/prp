@@ -98,7 +98,7 @@ async fn shortest_path(
         alpha,
         &data.graph,
         &data.nodes,
-        &data.mlp_layers,
+        &data.mlp_levels,
     );
     info!("    Dijkstra in: {:?}", dijkstra_time.elapsed());
 
@@ -186,7 +186,7 @@ async fn main() -> std::io::Result<()> {
     );
     let data_ref = web::Data::new(WebData {
         nodes: data.nodes,
-        mlp_layers: data.mlp_layers,
+        mlp_levels: data.mlp_levels,
         graph,
         grid_offset: data.grid_offset,
         grid: data.grid,

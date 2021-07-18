@@ -20,7 +20,7 @@ pub fn write_wkt_file(
     visited_edges: &[EdgeId],
     nodes: &[Node],
     edges: &[Edge],
-    layer_heights: &[usize],
+    level_heights: &[usize],
 ) -> std::io::Result<()> {
     let f = File::create(file_path.replace(".wkt", "-query.wkt"))?;
     let mut f = BufWriter::new(f);
@@ -46,12 +46,12 @@ pub fn write_wkt_file(
 
     let f = File::create(file_path.replace(".wkt", "-nodes.wkt"))?;
     let mut f = BufWriter::new(f);
-    f.write_all("WKT-POINTS; layer_height\n".as_bytes())?;
+    f.write_all("WKT-POINTS; level_height\n".as_bytes())?;
 
     for node_id in visited_nodes {
         let line = format!(
             "POINT ({:?} {:?}); {:?}\n",
-            nodes[*node_id].longitude, nodes[*node_id].latitude, layer_heights[*node_id]
+            nodes[*node_id].longitude, nodes[*node_id].latitude, level_heights[*node_id]
         );
         f.write_all(line.as_bytes())?;
     }

@@ -14,20 +14,17 @@ fn sort_nodes_ranked(
     down_offset: &[EdgeId],
     nodes: &mut [Node],
 ) {
-    // sort nodes based on layerheight & rank & edge-degree so hopefully only forward walking is done in dijkstra
+    // sort nodes based on level & rank & edge-degree so hopefully only forward walking is done in dijkstra
     nodes
         .par_iter_mut()
         .enumerate()
         .for_each(|(i, node)| node.old_id = Some(i));
     nodes.par_sort_unstable_by(|a, b| {
-        a.layer_height
-            .cmp(&b.layer_height)
-            .then(a.rank.cmp(&b.rank))
-            .then(
-                graph_helper::node_degree(a.old_id.unwrap(), &up_offset, &down_offset).cmp(
-                    &graph_helper::node_degree(b.old_id.unwrap(), &up_offset, &down_offset),
-                ),
-            )
+        a.level.cmp(&b.level).then(a.rank.cmp(&b.rank)).then(
+            graph_helper::node_degree(a.old_id.unwrap(), &up_offset, &down_offset).cmp(
+                &graph_helper::node_degree(b.old_id.unwrap(), &up_offset, &down_offset),
+            ),
+        )
     });
     // create new index
     let mut new_node_index = vec![INVALID_NODE; nodes.len()];
@@ -107,10 +104,10 @@ fn revert_indices(edges: &mut Vec<Edge>) {
     }
 }
 
-// contract one layer until end
+// contract one level until end
 #[allow(clippy::too_many_arguments)]
-fn layer_contraction(
-    layer_height: LayerHeight,
+fn level_contraction(
+    level: Level,
     remaining_nodes: &mut BTreeSet<NodeId>,
     mut independent_set_flags: &mut ValidFlag,
     mut heuristics: &mut Vec<usize>,
@@ -277,7 +274,7 @@ fn layer_contraction(
         neighbors.dedup();
         ordering::update_neighbor_heuristics(
             neighbors,
-            layer_height,
+            level,
             &mut heuristics,
             &nodes,
             &deleted_neighbors,
@@ -300,7 +297,7 @@ fn layer_contraction(
         *down_index =
             offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
-        // move I to their Level
+        // move I to their rank
         for node in &minimas {
             nodes[*node].rank = *rank;
             remaining_nodes.remove(&node);
@@ -327,7 +324,7 @@ pub fn prp_contraction(
     mut up_offset: &mut Vec<EdgeId>,
     mut down_offset: &mut Vec<EdgeId>,
     mut down_index: &mut Vec<EdgeId>,
-    mlp_layers: &[usize],
+    mlp_levels: &[usize],
     contraction_stop: f64,
 ) {
     let mut independent_set_flags = ValidFlag::new(nodes.len());
@@ -346,30 +343,30 @@ pub fn prp_contraction(
 
     let contracted_nodes_amount = 0;
 
-    let mut resulting_edges = Vec::<Edge>::with_capacity(edges.len() * mlp_layers.len());
+    let mut resulting_edges = Vec::<Edge>::with_capacity(edges.len() * mlp_levels.len());
 
-    for layer_height in 0..mlp_layers.len() {
+    for level in 0..mlp_levels.len() {
         let mut remaining_nodes = BTreeSet::new();
         for (node_id, node) in nodes.iter().enumerate() {
-            if layer_height == node.layer_height {
+            if level == node.level {
                 remaining_nodes.insert(node_id);
             }
         }
 
         // assign core-edge
         for mut edge in edges.iter_mut() {
-            edge.layer = Some(layer_height);
+            edge.level = Some(level);
         }
 
         let mut heuristics = ordering::calculate_heuristics(
-            layer_height,
+            level,
             &nodes,
             &deleted_neighbors,
             &up_offset,
             &down_offset,
         );
-        layer_contraction(
-            layer_height,
+        level_contraction(
+            level,
             &mut remaining_nodes,
             &mut independent_set_flags,
             &mut heuristics,
@@ -391,9 +388,9 @@ pub fn prp_contraction(
     let unique_set: BTreeSet<usize> = edges.iter().cloned().map(|e| e.id.unwrap()).collect();
     assert_eq!(unique_set.len(), edges.len());
 
-    // assign each top edge to top layer
+    // assign each top edge to top level
     for mut edge in edges.iter_mut() {
-        edge.layer = Some(mlp_layers.len());
+        edge.level = Some(mlp_levels.len());
     }
 
     // merging both graphs back together to have a single one
@@ -401,13 +398,13 @@ pub fn prp_contraction(
 
     // check that no edge has invalid height
     for edge in edges.iter_mut() {
-        if let Some(layer) = edge.layer {
-            assert!(INVALID_LAYER_HEIGHT != layer);
+        if let Some(level) = edge.level {
+            assert!(INVALID_LEVEL != level);
         }
     }
     let unique_height_set: BTreeSet<usize> =
-        edges.iter().cloned().filter_map(|e| e.layer).collect();
-    assert!(unique_height_set.len() - 1 == mlp_layers.len());
+        edges.iter().cloned().filter_map(|e| e.level).collect();
+    assert!(unique_height_set.len() - 1 == mlp_levels.len());
 
     sort_nodes_ranked(&mut edges, &up_offset, &down_offset, &mut nodes);
 

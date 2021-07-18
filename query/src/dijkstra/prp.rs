@@ -66,7 +66,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         alpha: Vec<f64>,
         graph: &Graph,
         nodes: &[Node],
-        mlp_layers: &[usize],
+        mlp_levels: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)> {
         self.reset_state();
 
@@ -85,8 +85,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         let mut best_cost = COST_MAX;
         let mut meeting_node = None;
 
-        let from_partitions = mlp_helper::get_node_partitions(from, &nodes, &mlp_layers);
-        let to_partitions = mlp_helper::get_node_partitions(to, &nodes, &mlp_layers);
+        let from_partitions = mlp_helper::get_node_partitions(from, &nodes, &mlp_levels);
+        let to_partitions = mlp_helper::get_node_partitions(to, &nodes, &mlp_levels);
 
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
@@ -168,29 +168,29 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter.visited_node(node);
             exporter.visited_edge(prev_edge);
 
-            for edge in get_edges(&graph, node) {
-                let next = walk(&graph.get_edge(edge));
+            for edge_id in get_edges(&graph, node) {
+                let next = walk(&graph.get_edge(edge_id));
 
                 // skip pch ranks
-                // top-layer nodes have maximum layer number so no equal test
+                // top-level nodes have maximum level number so no equal test
                 if nodes[node].rank > nodes[next].rank {
                     break;
                 }
 
                 exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge), &alpha);
+                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
                     if nodes[node].partition != nodes[next].partition {
-                        // if node is in other partition insert it into crp_heap
-                        crp_heap.push(MinHeapItem::new(next, alt, Some(edge)));
+                        // if next node is in other partition insert it into crp_heap
+                        crp_heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
                     } else {
                         // otherwise
-                        heap.push(MinHeapItem::new(next, alt, Some(edge)));
+                        heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
                     }
                     visited.set_valid(next);
-                    dist[next] = (alt, Some(edge));
+                    dist[next] = (alt, Some(edge_id));
 
                     // check if other dijkstra has visited this point before
                     if visited_.is_valid(next) {
@@ -273,30 +273,30 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter.visited_edge(prev_edge);
 
             // get query level on which to walk
-            let query_layer = std::cmp::min(
+            let query_level = std::cmp::min(
                 mlp_helper::get_highest_differing_level_partition(
                     node,
                     &from_partitions,
                     &nodes,
-                    &mlp_layers,
+                    &mlp_levels,
                 ),
                 mlp_helper::get_highest_differing_level_partition(
                     node,
                     &to_partitions,
                     &nodes,
-                    &mlp_layers,
+                    &mlp_levels,
                 ),
             );
 
             for edge_id in get_edges(&graph, node) {
                 let edge = graph.get_edge(edge_id);
 
-                // skip edges, that are shortcuts-resultions from upper layers
-                if edge.layer.is_none() {
+                // skip edges, that are shortcuts-resultions from upper levels
+                if edge.level.is_none() {
                     continue;
                 }
-                // only walk on query layers and never below
-                if query_layer > edge.layer.unwrap() {
+                // only walk on query levels and never below
+                if query_level > edge.level.unwrap() {
                     continue;
                 }
 

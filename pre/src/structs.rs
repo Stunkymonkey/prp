@@ -10,7 +10,7 @@ pub struct Node {
     pub rank: Rank,
     pub partition: PartitionId,
     #[serde(skip_serializing)]
-    pub layer_height: LayerHeight,
+    pub level: Level,
     #[serde(skip_serializing)]
     pub old_id: Option<NodeId>,
 }
@@ -23,7 +23,7 @@ pub struct Edge {
     pub id: Option<EdgeId>,
     #[serde(skip_serializing)]
     pub cost: Vec<Cost>,
-    pub layer: Option<LayerHeight>,
+    pub level: Option<Level>,
     pub contracted_edges: Option<(EdgeId, EdgeId)>,
 }
 
@@ -47,7 +47,7 @@ impl Edge {
             to,
             id: None,
             cost,
-            layer: None,
+            level: None,
             contracted_edges: None,
         }
     }
@@ -58,7 +58,7 @@ impl Edge {
             to,
             id: Some(id),
             cost,
-            layer: None,
+            level: None,
             contracted_edges: None,
         }
     }
@@ -75,7 +75,7 @@ impl Edge {
             to,
             id: Some(id),
             cost,
-            layer: None,
+            level: None,
             contracted_edges: Some(contracted_edges),
         }
     }
@@ -94,7 +94,7 @@ pub struct GridBounds {
 #[derive(Serialize)]
 pub struct BinFile {
     pub nodes: Vec<Node>,
-    pub mlp_layers: Vec<usize>,
+    pub mlp_levels: Vec<usize>,
     pub edges: Vec<Edge>,
     pub edge_costs: Vec<Cost>,
     pub up_offset: Vec<EdgeId>,

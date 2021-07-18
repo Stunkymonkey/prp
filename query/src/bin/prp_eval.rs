@@ -88,7 +88,7 @@ fn main() {
     );
     let data = WebData {
         nodes: data.nodes,
-        mlp_layers: data.mlp_layers,
+        mlp_levels: data.mlp_levels,
         graph,
         grid_offset: data.grid_offset,
         grid: data.grid,
@@ -142,7 +142,7 @@ fn main() {
                     query.alpha.clone(),
                     &data.graph,
                     &data.nodes,
-                    &data.mlp_layers,
+                    &data.mlp_levels,
                 );
                 export_list.push(TimeExport {
                     id: query.id,
@@ -173,7 +173,7 @@ fn main() {
                     query.alpha.clone(),
                     &data.graph,
                     &data.nodes,
-                    &data.mlp_layers,
+                    &data.mlp_levels,
                 );
                 export_list.push(CounterExport {
                     id: query.id,
@@ -197,11 +197,8 @@ fn main() {
         Vals::Export => {
             let mut dijkstra = get_dijkstra(method, amount_nodes, RealExport::new());
 
-            let layer_heights = mlp_helper::calculate_node_layer_heights(
-                &data.nodes,
-                &data.graph,
-                &data.mlp_layers,
-            );
+            let level_heights =
+                mlp_helper::calculate_levels(&data.nodes, &data.graph, &data.mlp_levels);
 
             for query in &eval {
                 let result = dijkstra.find_path(
@@ -210,7 +207,7 @@ fn main() {
                     query.alpha.clone(),
                     &data.graph,
                     &data.nodes,
-                    &data.mlp_layers,
+                    &data.mlp_levels,
                 );
                 let path = result.unwrap_or((vec![], 0.0));
 
@@ -227,7 +224,7 @@ fn main() {
                             &(*dijkstra).get_query_export().visited_edges,
                             &data.nodes,
                             &data.graph.edges,
-                            &layer_heights,
+                            &level_heights,
                         ) {
                             Ok(_result) => println!("exported successfully at {}", export_path),
                             Err(error) => println!("error exporting wkt-file: {:?}", error),
@@ -256,7 +253,7 @@ fn main() {
                     query.alpha.clone(),
                     &data.graph,
                     &data.nodes,
-                    &data.mlp_layers,
+                    &data.mlp_levels,
                 );
                 let prp_result = prp_dijkstra.find_path(
                     query.start_id.unwrap(),
@@ -264,7 +261,7 @@ fn main() {
                     query.alpha.clone(),
                     &data.graph,
                     &data.nodes,
-                    &data.mlp_layers,
+                    &data.mlp_levels,
                 );
                 match (result, prp_result) {
                     (Some(result), Some(prp_result)) => {
