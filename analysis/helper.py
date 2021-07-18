@@ -4,6 +4,26 @@ import subprocess
 import os
 import time
 import json
+import matplotlib.pyplot as plt
+
+
+MLP_METHODS = ["kmeans", "merge", "hop"]
+QUERY_METHODS = ["normal", "bi", "crp", "pch", "prp"]
+
+colors = plt.cm.Set1(range(len(MLP_METHODS)))
+markers = ['s', 'X', '*', '+', 'o']
+
+identifiert = dict()
+
+for method, color in zip(MLP_METHODS, colors):
+    identifiert[method] = color
+
+for method, marker in zip(QUERY_METHODS, markers):
+    identifiert[method] = marker
+
+
+def plot_get(method):
+    return identifiert[method]
 
 
 def shell_execute(command, EVAL_DIR):
