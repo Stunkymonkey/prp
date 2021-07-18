@@ -69,7 +69,7 @@ fn make_partition(
     }
 
     let ndata: Array2<f64> = Array2::from_shape_vec((data.len() / 2, 2), data).unwrap();
-    let config = rkm::Config::from(Some((42 as u128).to_le_bytes()), Some(10_000), None);
+    let config = rkm::Config::from(Some((42_u128).to_le_bytes()), Some(10_000), None);
     let (_means, clusters) = rkm::kmeans_lloyd_with_config(&ndata.view(), k, &config);
 
     let mut order = Vec::with_capacity(node_ids.len());
