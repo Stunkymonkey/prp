@@ -63,7 +63,7 @@ struct CounterExport {
 }
 
 fn main() {
-    let (fmi_file, eval_file, eval_type, method, export_path) = get_arguments();
+    let (fmi_file, eval_file, eval_type, query_type, export_path) = get_arguments();
     // read binfile
     let data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
@@ -131,7 +131,7 @@ fn main() {
 
     match eval_type {
         Vals::Time => {
-            let mut dijkstra = get_dijkstra(method, amount_nodes, NoOp::new());
+            let mut dijkstra = get_dijkstra(query_type, amount_nodes, NoOp::new());
             let mut export_list: Vec<TimeExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -163,7 +163,7 @@ fn main() {
             }
         }
         Vals::Count => {
-            let mut dijkstra = get_dijkstra(method, amount_nodes, Counter::new());
+            let mut dijkstra = get_dijkstra(query_type, amount_nodes, Counter::new());
             let mut export_list: Vec<CounterExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -195,7 +195,7 @@ fn main() {
             }
         }
         Vals::Export => {
-            let mut dijkstra = get_dijkstra(method, amount_nodes, RealExport::new());
+            let mut dijkstra = get_dijkstra(query_type, amount_nodes, RealExport::new());
 
             let level_heights =
                 mlp_helper::calculate_levels(&data.nodes, &data.graph, &data.mlp_levels);
@@ -235,13 +235,13 @@ fn main() {
             }
         }
         Vals::Check => {
-            if matches!(method, Methods::Normal) {
+            if matches!(query_type, Methods::Normal) {
                 warn!("checking Dijkstra against itself. does not make much sense");
             }
             let mut dijkstra =
             // prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
                 prp_query::dijkstra::pch::Dijkstra::new(amount_nodes, NoOp::new());
-            let mut prp_dijkstra = get_dijkstra(method, amount_nodes, NoOp::new());
+            let mut prp_dijkstra = get_dijkstra(query_type, amount_nodes, NoOp::new());
             let mut correct = 0;
             let mut not_correct = 0;
             let mut no_path_found = 0;
@@ -275,7 +275,7 @@ fn main() {
                         } else {
                             not_correct += 1;
                             println!(
-                                "{:?} from: {:?} to {:?} \tdij: {:?}/{:?} \talt: {:?}/{:?}",
+                                "{:?} from: {:?} to {:?} \tdijkstra: cost={:.2} cost_of_path={:.2} \tquery: cost={:.2} cost_of_path={:.2}",
                                 query.id,
                                 query.start_id.unwrap(),
                                 query.end_id.unwrap(),
@@ -329,11 +329,11 @@ fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
 }
 
 fn get_dijkstra<E: 'static + Export>(
-    method: Methods,
+    query_type: Methods,
     amount_nodes: usize,
     exporter: E,
 ) -> Box<dyn FindPath<E>> {
-    match method {
+    match query_type {
         Methods::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
             amount_nodes,
             exporter,
@@ -388,11 +388,11 @@ fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
                 .possible_values(&["time", "count", "export", "check"]),
         )
         .arg(
-            clap::Arg::with_name("method")
-                .help("What kind of evaluation will be done")
+            clap::Arg::with_name("query")
+                .help("What type of query will be used")
                 .takes_value(true)
-                .short("m")
-                .long("method")
+                .short("q")
+                .long("query")
                 .required(true)
                 .possible_values(&["normal", "bi", "pch", "crp", "prp"]),
         )
@@ -406,14 +406,14 @@ fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
         .get_matches();
 
     let eval_type = clap::value_t!(matches.value_of("type"), Vals).unwrap_or_else(|e| e.exit());
-    let method_type =
-        clap::value_t!(matches.value_of("method"), Methods).unwrap_or_else(|e| e.exit());
+    let query_type =
+        clap::value_t!(matches.value_of("query"), Methods).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
         matches.value_of("eval-file").unwrap().to_string(),
         eval_type,
-        method_type,
+        query_type,
         matches.value_of("export-path").map(String::from),
     )
 }
