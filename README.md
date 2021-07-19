@@ -27,14 +27,20 @@ two methods possible:
 
 - Merge
 
-```bash
+```shell
 cargo run --bin mlp_merge --release -- -f [path/to/fmi-file] -o [path/to/mlp-file(output)] [-p/-s defining save points when merging e.g. -s 500 5000]
+```
+
+- Hop
+
+```shell
+cargo run --bin mlp_hop --release -- -f [path/to/fmi-file]  -o [path/to/mlp-file(output)] -p [partitions from top to bottom e.g. 50 100]
 ```
 
 - K-Means
 
 ```shell
-cargo run --bin mlp_kmeans --release -- -f [path/to/fmi-file]  -o [path/to/mlp-file(output)] [partitions from top to bottom e.g. 50 100]
+cargo run --bin mlp_kmeans --release -- -f [path/to/fmi-file]  -o [path/to/mlp-file(output)] -p [partitions from top to bottom e.g. 50 100]
 ```
 
 ## Pre-computation
@@ -56,6 +62,6 @@ cargo run --bin prp_web --release -- -f [path/to/bin-file]
 - evaluation-tool via: (evaluation file can be generated with `helper/generate-eval-file.py`)
 
 ```shell
-cargo run --bin prp_eval --release -- -f [path/to/bin-file] -e [path/to/eval_file] -t check -m prp
+cargo run --bin prp_eval --release -- -f [path/to/bin-file] -e [path/to/eval_file] -t check -q prp
 ```
 
