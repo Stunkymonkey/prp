@@ -5,23 +5,41 @@ use actix_web::{get, middleware, post, web, App, HttpServer};
 use rayon::prelude::*;
 use std::cell::RefCell;
 use std::path::Path;
+use std::str::FromStr;
 use std::time::Instant;
 
-// changing the import changes the dijkstra query method
-use prp_query::dijkstra::prp::Dijkstra;
-// use prp_query::dijkstra::crp::Dijkstra;
-// use prp_query::dijkstra::pch::Dijkstra;
-// use prp_query::dijkstra::bidirectional::Dijkstra;
-// use prp_query::dijkstra::normal::Dijkstra;
 use prp_query::geojson::*;
 use prp_query::query_export::*;
 use prp_query::*;
+
+#[derive(Debug, Copy, Clone)]
+enum Method {
+    Normal,
+    Bi,
+    Pch,
+    Crp,
+    Prp,
+}
+
+impl FromStr for Method {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "normal" => Ok(Method::Normal),
+            "bi" => Ok(Method::Bi),
+            "pch" => Ok(Method::Pch),
+            "crp" => Ok(Method::Crp),
+            "prp" => Ok(Method::Prp),
+            _ => Err("no match"),
+        }
+    }
+}
 
 #[post("/dijkstra")]
 async fn shortest_path(
     request: web::Json<GeoJsonRequest>,
     data: web::Data<WebData>,
-    dijkstra_cell: web::Data<RefCell<Dijkstra<NoOp>>>,
+    dijkstra_cell: web::Data<RefCell<Box<dyn FindPath<NoOp>>>>,
 ) -> Result<web::Json<GeoJsonResponse>, geojson::Error> {
     let total_time = Instant::now();
 
@@ -144,7 +162,7 @@ async fn shortest_path(
 #[get("/metrics")]
 async fn metrics(
     data: web::Data<WebData>,
-    _dijkstra_cell: web::Data<RefCell<Dijkstra<NoOp>>>,
+    _dijkstra_cell: web::Data<RefCell<Box<dyn FindPath<NoOp>>>>,
 ) -> web::Json<Vec<String>> {
     return web::Json(data.metrics.clone());
 }
@@ -163,7 +181,7 @@ fn convert_edge_ids_to_node_ids(edges: &[EdgeId], graph: &Graph) -> Vec<NodeId> 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let (fmi_file, port) = get_arguments();
+    let (fmi_file, port, query_type) = get_arguments();
     // read binfile
     let data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
@@ -209,7 +227,7 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: http://localhost:{}", port);
     HttpServer::new(move || {
         // initialize thread-local dijkstra
-        let dijkstra = RefCell::new(Dijkstra::new(amount_nodes, NoOp::new()));
+        let dijkstra = RefCell::new(get_dijkstra(query_type, amount_nodes, NoOp::new()));
         App::new()
             .wrap(middleware::Logger::default())
             .data(web::JsonConfig::default().limit(1024))
@@ -225,7 +243,36 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-fn get_arguments() -> (String, String) {
+fn get_dijkstra<E: 'static + Export>(
+    query_type: Method,
+    amount_nodes: usize,
+    exporter: E,
+) -> Box<dyn FindPath<E>> {
+    match query_type {
+        Method::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Method::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Method::Pch => Box::new(prp_query::dijkstra::pch::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Method::Crp => Box::new(prp_query::dijkstra::crp::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        Method::Prp => Box::new(prp_query::dijkstra::prp::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+    }
+}
+
+fn get_arguments() -> (String, String, Method) {
     let matches = clap::App::new("prp_web")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -246,10 +293,21 @@ fn get_arguments() -> (String, String) {
                 .long("port")
                 .default_value("8080"),
         )
+        .arg(
+            clap::Arg::with_name("query")
+                .help("What type of query will be used")
+                .takes_value(true)
+                .short("q")
+                .long("query")
+                .required(true)
+                .possible_values(&["normal", "bi", "pch", "crp", "prp"]),
+        )
         .get_matches();
+    let query_type = clap::value_t!(matches.value_of("query"), Method).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
         matches.value_of("port").unwrap().to_string(),
+        query_type,
     )
 }

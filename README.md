@@ -56,7 +56,7 @@ this may take some time
 - web-server via:
 
 ```shell
-cargo run --bin prp_web --release -- -f [path/to/bin-file]
+cargo run --bin prp_web --release -- -f [path/to/bin-file] -q prp
 ```
 
 - evaluation-tool via: (evaluation file can be generated with `helper/generate-eval-file.py`)
