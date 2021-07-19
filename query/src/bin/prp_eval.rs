@@ -28,7 +28,7 @@ impl FromStr for Vals {
         }
     }
 }
-enum Methods {
+enum Method {
     Normal,
     Bi,
     Pch,
@@ -36,15 +36,15 @@ enum Methods {
     Prp,
 }
 
-impl FromStr for Methods {
+impl FromStr for Method {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "normal" => Ok(Methods::Normal),
-            "bi" => Ok(Methods::Bi),
-            "pch" => Ok(Methods::Pch),
-            "crp" => Ok(Methods::Crp),
-            "prp" => Ok(Methods::Prp),
+            "normal" => Ok(Method::Normal),
+            "bi" => Ok(Method::Bi),
+            "pch" => Ok(Method::Pch),
+            "crp" => Ok(Method::Crp),
+            "prp" => Ok(Method::Prp),
             _ => Err("no match"),
         }
     }
@@ -235,7 +235,7 @@ fn main() {
             }
         }
         Vals::Check => {
-            if matches!(query_type, Methods::Normal) {
+            if matches!(query_type, Method::Normal) {
                 warn!("checking Dijkstra against itself. does not make much sense");
             }
             let mut dijkstra =
@@ -329,35 +329,35 @@ fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
 }
 
 fn get_dijkstra<E: 'static + Export>(
-    query_type: Methods,
+    query_type: Method,
     amount_nodes: usize,
     exporter: E,
 ) -> Box<dyn FindPath<E>> {
     match query_type {
-        Methods::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
+        Method::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
             amount_nodes,
             exporter,
         )),
-        Methods::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
+        Method::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
             amount_nodes,
             exporter,
         )),
-        Methods::Pch => Box::new(prp_query::dijkstra::pch::Dijkstra::new(
+        Method::Pch => Box::new(prp_query::dijkstra::pch::Dijkstra::new(
             amount_nodes,
             exporter,
         )),
-        Methods::Crp => Box::new(prp_query::dijkstra::crp::Dijkstra::new(
+        Method::Crp => Box::new(prp_query::dijkstra::crp::Dijkstra::new(
             amount_nodes,
             exporter,
         )),
-        Methods::Prp => Box::new(prp_query::dijkstra::prp::Dijkstra::new(
+        Method::Prp => Box::new(prp_query::dijkstra::prp::Dijkstra::new(
             amount_nodes,
             exporter,
         )),
     }
 }
 
-fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
+fn get_arguments() -> (String, String, Vals, Method, Option<String>) {
     let matches = clap::App::new("prp_eval")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -406,8 +406,7 @@ fn get_arguments() -> (String, String, Vals, Methods, Option<String>) {
         .get_matches();
 
     let eval_type = clap::value_t!(matches.value_of("type"), Vals).unwrap_or_else(|e| e.exit());
-    let query_type =
-        clap::value_t!(matches.value_of("query"), Methods).unwrap_or_else(|e| e.exit());
+    let query_type = clap::value_t!(matches.value_of("query"), Method).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
