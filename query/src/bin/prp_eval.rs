@@ -239,8 +239,7 @@ fn main() {
                 warn!("checking Dijkstra against itself. does not make much sense");
             }
             let mut dijkstra =
-            // prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
-                prp_query::dijkstra::pch::Dijkstra::new(amount_nodes, NoOp::new());
+                prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
             let mut prp_dijkstra = get_dijkstra(query_type, amount_nodes, NoOp::new());
             let mut correct = 0;
             let mut not_correct = 0;
