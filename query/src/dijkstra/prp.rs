@@ -300,7 +300,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 // only walk on query levels and never below
                 if query_level > edge.level.unwrap() {
-                    continue;
+                    break;
                 }
 
                 let next = walk(&edge);
