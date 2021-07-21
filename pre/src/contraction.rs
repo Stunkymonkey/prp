@@ -412,7 +412,7 @@ pub fn prp_contraction(
     *down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
-    // sort edges from top to down ranks for bidijkstra
+    // sort edges from top to down ranks for pch-dijkstra
     sort_edges_ranked(&mut edges, &down_offset, &mut down_index, &nodes);
 
     // revert the edge-ids back to usual ids
