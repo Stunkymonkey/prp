@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 
 
 MLP_METHODS = ["kmeans", "merge", "hop"]
-QUERY_METHODS = ["normal", "bi", "crp", "pch", "prp"]
+QUERY_METHODS = ["normal", "bi", "crp", "pch", "prp", "pch-pch"]
 
 colors = plt.cm.Set1(range(len(MLP_METHODS)))
-markers = ['s', 'X', '*', '+', 'o']
+markers = ['s', 'X', '*', '+', 'o', '^']
 
 identifiert = dict()
 
