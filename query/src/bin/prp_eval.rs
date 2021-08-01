@@ -28,27 +28,6 @@ impl FromStr for Vals {
         }
     }
 }
-enum Method {
-    Normal,
-    Bi,
-    Pch,
-    Crp,
-    Prp,
-}
-
-impl FromStr for Method {
-    type Err = &'static str;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "normal" => Ok(Method::Normal),
-            "bi" => Ok(Method::Bi),
-            "pch" => Ok(Method::Pch),
-            "crp" => Ok(Method::Crp),
-            "prp" => Ok(Method::Prp),
-            _ => Err("no match"),
-        }
-    }
-}
 
 #[derive(Debug, Serialize)]
 struct TimeExport {
@@ -127,11 +106,11 @@ fn main() {
         }
     }
 
-    println!("calculated all closest-point node_ids");
+    println!("precalculation done. evaluating now...");
 
     match eval_type {
         Vals::Time => {
-            let mut dijkstra = get_dijkstra(query_type, amount_nodes, NoOp::new());
+            let mut dijkstra = prp_query::dijkstra::get(query_type, amount_nodes, NoOp::new());
             let mut export_list: Vec<TimeExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -163,7 +142,7 @@ fn main() {
             }
         }
         Vals::Count => {
-            let mut dijkstra = get_dijkstra(query_type, amount_nodes, Counter::new());
+            let mut dijkstra = prp_query::dijkstra::get(query_type, amount_nodes, Counter::new());
             let mut export_list: Vec<CounterExport> = Vec::with_capacity(eval.len());
 
             for query in &eval {
@@ -195,7 +174,8 @@ fn main() {
             }
         }
         Vals::Export => {
-            let mut dijkstra = get_dijkstra(query_type, amount_nodes, RealExport::new());
+            let mut dijkstra =
+                prp_query::dijkstra::get(query_type, amount_nodes, RealExport::new());
 
             let level_heights =
                 mlp_helper::calculate_levels(&data.nodes, &data.graph, &data.mlp_levels);
@@ -235,17 +215,26 @@ fn main() {
             }
         }
         Vals::Check => {
-            if matches!(query_type, Method::Normal) {
+            if matches!(query_type, QueryType::Normal) {
                 warn!("checking Dijkstra against itself. does not make much sense");
             }
-            let mut dijkstra =
+            let mut debug_dijkstra =
                 prp_query::dijkstra::normal::Dijkstra::new(amount_nodes, NoOp::new());
-            let mut prp_dijkstra = get_dijkstra(query_type, amount_nodes, NoOp::new());
+            debug_dijkstra.set_debug(true);
+            let mut dijkstra = prp_query::dijkstra::get(query_type, amount_nodes, NoOp::new());
             let mut correct = 0;
             let mut not_correct = 0;
             let mut no_path_found = 0;
             let mut not_no_path_found = 0;
             for query in &eval {
+                let normal_result = debug_dijkstra.find_path(
+                    query.start_id.unwrap(),
+                    query.end_id.unwrap(),
+                    query.alpha.clone(),
+                    &data.graph,
+                    &data.nodes,
+                    &data.mlp_levels,
+                );
                 let result = dijkstra.find_path(
                     query.start_id.unwrap(),
                     query.end_id.unwrap(),
@@ -254,19 +243,11 @@ fn main() {
                     &data.nodes,
                     &data.mlp_levels,
                 );
-                let prp_result = prp_dijkstra.find_path(
-                    query.start_id.unwrap(),
-                    query.end_id.unwrap(),
-                    query.alpha.clone(),
-                    &data.graph,
-                    &data.nodes,
-                    &data.mlp_levels,
-                );
-                match (result, prp_result) {
-                    (Some(result), Some(prp_result)) => {
+                match (normal_result, result) {
+                    (Some(normal_result), Some(result)) => {
                         // only check costs of paths, because there can be multiple paths with same value
-                        if (cost_of_path(&query.alpha, &result.0, &data.graph)
-                            - cost_of_path(&query.alpha, &prp_result.0, &data.graph))
+                        if (cost_of_path(&query.alpha, &normal_result.0, &data.graph)
+                            - cost_of_path(&query.alpha, &result.0, &data.graph))
                         .abs()
                             < 1.0
                         {
@@ -278,20 +259,20 @@ fn main() {
                                 query.id,
                                 query.start_id.unwrap(),
                                 query.end_id.unwrap(),
+                                normal_result.1,
+                                cost_of_path(&query.alpha, &normal_result.0, &data.graph),
                                 result.1,
                                 cost_of_path(&query.alpha, &result.0, &data.graph),
-                                prp_result.1,
-                                cost_of_path(&query.alpha, &prp_result.0, &data.graph),
                             );
                         }
                     }
                     (None, None) => {
                         no_path_found += 1;
                     }
-                    (None, Some(_prp_result)) => {
+                    (None, Some(_result)) => {
                         not_no_path_found += 1;
                     }
-                    (Some(_result), None) => not_correct += 1,
+                    (Some(_normal_result), None) => not_correct += 1,
                 }
             }
 
@@ -327,36 +308,7 @@ fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
     cost
 }
 
-fn get_dijkstra<E: 'static + Export>(
-    query_type: Method,
-    amount_nodes: usize,
-    exporter: E,
-) -> Box<dyn FindPath<E>> {
-    match query_type {
-        Method::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Pch => Box::new(prp_query::dijkstra::pch::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Crp => Box::new(prp_query::dijkstra::crp::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Prp => Box::new(prp_query::dijkstra::prp::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-    }
-}
-
-fn get_arguments() -> (String, String, Vals, Method, Option<String>) {
+fn get_arguments() -> (String, String, Vals, QueryType, Option<String>) {
     let matches = clap::App::new("prp_eval")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -405,7 +357,8 @@ fn get_arguments() -> (String, String, Vals, Method, Option<String>) {
         .get_matches();
 
     let eval_type = clap::value_t!(matches.value_of("type"), Vals).unwrap_or_else(|e| e.exit());
-    let query_type = clap::value_t!(matches.value_of("query"), Method).unwrap_or_else(|e| e.exit());
+    let query_type =
+        clap::value_t!(matches.value_of("query"), QueryType).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),

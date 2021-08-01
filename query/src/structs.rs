@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::str::FromStr;
 
 use crate::constants::*;
 use crate::graph::Graph;
@@ -83,4 +84,27 @@ pub struct EvalPoint {
     pub start_pos: Location,
     pub end_pos: Location,
     pub alpha: Vec<f64>,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum QueryType {
+    Normal,
+    Bi,
+    Pch,
+    Crp,
+    Prp,
+}
+
+impl FromStr for QueryType {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "normal" => Ok(QueryType::Normal),
+            "bi" => Ok(QueryType::Bi),
+            "pch" => Ok(QueryType::Pch),
+            "crp" => Ok(QueryType::Crp),
+            "prp" => Ok(QueryType::Prp),
+            _ => Err("no match"),
+        }
+    }
 }

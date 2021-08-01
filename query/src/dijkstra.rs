@@ -23,3 +23,20 @@ pub trait FindPath<E: Export> {
         _mlp_levels: &[usize],
     ) -> Option<(Vec<NodeId>, Cost)>;
 }
+
+pub fn get<E: 'static + Export>(
+    query_type: QueryType,
+    amount_nodes: usize,
+    exporter: E,
+) -> Box<dyn FindPath<E>> {
+    match query_type {
+        QueryType::Normal => Box::new(dijkstra::normal::Dijkstra::new(amount_nodes, exporter)),
+        QueryType::Bi => Box::new(dijkstra::bidirectional::Dijkstra::new(
+            amount_nodes,
+            exporter,
+        )),
+        QueryType::Pch => Box::new(dijkstra::pch::Dijkstra::new(amount_nodes, exporter)),
+        QueryType::Crp => Box::new(dijkstra::crp::Dijkstra::new(amount_nodes, exporter)),
+        QueryType::Prp => Box::new(dijkstra::prp::Dijkstra::new(amount_nodes, exporter)),
+    }
+}

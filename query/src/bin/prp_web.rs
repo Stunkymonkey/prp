@@ -5,35 +5,11 @@ use actix_web::{get, middleware, post, web, App, HttpServer};
 use rayon::prelude::*;
 use std::cell::RefCell;
 use std::path::Path;
-use std::str::FromStr;
 use std::time::Instant;
 
 use prp_query::geojson::*;
 use prp_query::query_export::*;
 use prp_query::*;
-
-#[derive(Debug, Copy, Clone)]
-enum Method {
-    Normal,
-    Bi,
-    Pch,
-    Crp,
-    Prp,
-}
-
-impl FromStr for Method {
-    type Err = &'static str;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "normal" => Ok(Method::Normal),
-            "bi" => Ok(Method::Bi),
-            "pch" => Ok(Method::Pch),
-            "crp" => Ok(Method::Crp),
-            "prp" => Ok(Method::Prp),
-            _ => Err("no match"),
-        }
-    }
-}
 
 #[post("/dijkstra")]
 async fn shortest_path(
@@ -142,7 +118,7 @@ async fn shortest_path(
 
     info!("        Overall: {:?}", total_time.elapsed());
 
-    return Ok(web::Json(GeoJsonResponse {
+    Ok(web::Json(GeoJsonResponse {
         // escaping the rust-type command to normal type string
         r#type: "FeatureCollection".to_string(),
         features: vec![FeatureResponse {
@@ -156,7 +132,7 @@ async fn shortest_path(
                 alpha: None,
             }),
         }],
-    }));
+    }))
 }
 
 #[get("/metrics")]
@@ -164,7 +140,7 @@ async fn metrics(
     data: web::Data<WebData>,
     _dijkstra_cell: web::Data<RefCell<Box<dyn FindPath<NoOp>>>>,
 ) -> web::Json<Vec<String>> {
-    return web::Json(data.metrics.clone());
+    web::Json(data.metrics.clone())
 }
 
 fn convert_edge_ids_to_node_ids(edges: &[EdgeId], graph: &Graph) -> Vec<NodeId> {
@@ -227,7 +203,11 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: http://localhost:{}", port);
     HttpServer::new(move || {
         // initialize thread-local dijkstra
-        let dijkstra = RefCell::new(get_dijkstra(query_type, amount_nodes, NoOp::new()));
+        let dijkstra = RefCell::new(prp_query::dijkstra::get(
+            query_type,
+            amount_nodes,
+            NoOp::new(),
+        ));
         App::new()
             .wrap(middleware::Logger::default())
             .data(web::JsonConfig::default().limit(1024))
@@ -243,36 +223,7 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-fn get_dijkstra<E: 'static + Export>(
-    query_type: Method,
-    amount_nodes: usize,
-    exporter: E,
-) -> Box<dyn FindPath<E>> {
-    match query_type {
-        Method::Normal => Box::new(prp_query::dijkstra::normal::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Bi => Box::new(prp_query::dijkstra::bidirectional::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Pch => Box::new(prp_query::dijkstra::pch::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Crp => Box::new(prp_query::dijkstra::crp::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-        Method::Prp => Box::new(prp_query::dijkstra::prp::Dijkstra::new(
-            amount_nodes,
-            exporter,
-        )),
-    }
-}
-
-fn get_arguments() -> (String, String, Method) {
+fn get_arguments() -> (String, String, QueryType) {
     let matches = clap::App::new("prp_web")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -303,7 +254,8 @@ fn get_arguments() -> (String, String, Method) {
                 .possible_values(&["normal", "bi", "pch", "crp", "prp"]),
         )
         .get_matches();
-    let query_type = clap::value_t!(matches.value_of("query"), Method).unwrap_or_else(|e| e.exit());
+    let query_type =
+        clap::value_t!(matches.value_of("query"), QueryType).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
