@@ -22,6 +22,10 @@ for method, marker in zip(QUERY_METHODS, markers):
     identifiert[method] = marker
 
 
+def ns_to_ms(value):
+    return value / 1e6
+
+
 def plot_get(method):
     return identifiert[method]
 
