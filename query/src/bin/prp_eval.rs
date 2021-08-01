@@ -44,7 +44,7 @@ struct CounterExport {
 fn main() {
     let (fmi_file, eval_file, eval_type, query_type, export_path) = get_arguments();
     // read binfile
-    let data: BinFile = match bin_import::read_file(&fmi_file) {
+    let mut data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
         Err(error) => panic!("error while reading bin-file: {:?}", error),
     };
@@ -56,6 +56,8 @@ fn main() {
 
     let amount_nodes = data.nodes.len();
     let dim = data.edge_costs.len() / data.edges.len();
+
+    sort_edges::sort_edges(query_type, &mut data);
 
     let graph = Graph::new(
         data.edges,

@@ -8,6 +8,7 @@ pub mod grid;
 pub mod min_heap;
 pub mod mlp_helper;
 pub mod query_export;
+pub mod sort_edges;
 pub mod structs;
 pub mod valid_flag;
 

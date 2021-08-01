@@ -18,6 +18,8 @@ pub struct Edge {
     pub to: NodeId,
     pub level: Option<Level>,
     pub contracted_edges: Option<(EdgeId, EdgeId)>,
+    #[serde(skip_deserializing)]
+    pub old_id: Option<EdgeId>,
 }
 
 impl Edge {

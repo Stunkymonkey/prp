@@ -159,7 +159,7 @@ fn convert_edge_ids_to_node_ids(edges: &[EdgeId], graph: &Graph) -> Vec<NodeId> 
 async fn main() -> std::io::Result<()> {
     let (fmi_file, port, query_type) = get_arguments();
     // read binfile
-    let data: BinFile = match bin_import::read_file(&fmi_file) {
+    let mut data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
         Err(error) => panic!("error while reading bin-file: {:?}", error),
     };
@@ -169,6 +169,8 @@ async fn main() -> std::io::Result<()> {
 
     let amount_nodes = data.nodes.len();
     let dim = data.edge_costs.len() / data.edges.len();
+
+    sort_edges::sort_edges(query_type, &mut data);
 
     let graph = Graph::new(
         data.edges,
