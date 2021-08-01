@@ -174,7 +174,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 // skip edges, that are pch-shortcuts-resolutions from upper levels
                 if edge.level.is_none() {
-                    continue;
+                    break;
                 }
 
                 // only walk on query levels and never below

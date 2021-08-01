@@ -11,6 +11,7 @@ pub struct Dijkstra<E: Export> {
     dist: Vec<(Cost, Option<NodeId>)>,
     heap: BinaryHeap<MinHeapItem>,
     visited: ValidFlag,
+    debug: bool,
     pub exporter: E,
 }
 
@@ -24,6 +25,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             dist,
             heap,
             visited,
+            debug: false,
             exporter,
         }
     }
@@ -80,7 +82,11 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 // skip edges, that are shortcuts
                 if new_edge.contracted_edges.is_some() {
-                    continue;
+                    if self.debug {
+                        continue;
+                    } else {
+                        break;
+                    }
                 }
 
                 self.exporter.relaxed_edge();
@@ -107,5 +113,8 @@ impl<E: Export> Dijkstra<E> {
         }
         path.reverse();
         (path, weight)
+    }
+    pub fn set_debug(&mut self, debug: bool) {
+        self.debug = debug;
     }
 }

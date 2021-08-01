@@ -169,14 +169,13 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter.visited_edge(prev_edge);
 
             for edge_id in get_edges(&graph, node) {
-                let next = walk(&graph.get_edge(edge_id));
+                let edge = graph.get_edge(edge_id);
+                let next = walk(&edge);
 
                 // skip pch ranks
                 // top-level nodes have maximum level number so no equal test
-                if nodes[node].rank > nodes[next].rank
-                    && nodes[node].partition == nodes[next].partition
-                {
-                    continue;
+                if nodes[node].rank > nodes[next].rank && edge.level.is_none() {
+                    break;
                 }
 
                 exporter.relaxed_edge();
@@ -295,7 +294,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 // skip edges, that are pch-shortcuts-resolutions from upper levels
                 if edge.level.is_none() {
-                    continue;
+                    break;
                 }
 
                 // only walk on query levels and never below

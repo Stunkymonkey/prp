@@ -155,7 +155,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 // skip edges, that are shortcuts
                 if edge.contracted_edges.is_some() {
-                    continue;
+                    break;
                 }
 
                 let next = walk(&edge);
