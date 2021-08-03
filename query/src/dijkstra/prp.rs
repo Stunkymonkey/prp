@@ -15,8 +15,8 @@ pub struct Dijkstra<E: Export> {
     visited_down: ValidFlag,
     heap_pch_up: BinaryHeap<MinHeapItem>,
     heap_pch_down: BinaryHeap<MinHeapItem>,
-    heap_crp_up: BinaryHeap<MinHeapItem>,
-    heap_crp_down: BinaryHeap<MinHeapItem>,
+    heap_pcrp_up: BinaryHeap<MinHeapItem>,
+    heap_pcrp_down: BinaryHeap<MinHeapItem>,
     pub exporter: E,
 }
 
@@ -29,8 +29,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         let visited_down = ValidFlag::new(amount_nodes);
         let heap_pch_up = BinaryHeap::with_capacity(amount_nodes);
         let heap_pch_down = BinaryHeap::with_capacity(amount_nodes);
-        let heap_crp_up = BinaryHeap::with_capacity(amount_nodes);
-        let heap_crp_down = BinaryHeap::with_capacity(amount_nodes);
+        let heap_pcrp_up = BinaryHeap::with_capacity(amount_nodes);
+        let heap_pcrp_down = BinaryHeap::with_capacity(amount_nodes);
         Dijkstra {
             dist_up,
             dist_down,
@@ -38,8 +38,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             visited_down,
             heap_pch_up,
             heap_pch_down,
-            heap_crp_up,
-            heap_crp_down,
+            heap_pcrp_up,
+            heap_pcrp_down,
             exporter,
         }
     }
@@ -50,8 +50,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         self.visited_down.invalidate_all();
         self.heap_pch_up.clear();
         self.heap_pch_down.clear();
-        self.heap_crp_up.clear();
-        self.heap_crp_down.clear();
+        self.heap_pcrp_up.clear();
+        self.heap_pcrp_down.clear();
         self.exporter.reset();
     }
     fn get_query_export(&self) -> &E {
@@ -101,7 +101,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 prev_edge,
             },
             heap,
-            crp_heap,
+            pcrp_heap,
             visited,
             dist,
             walk,
@@ -131,7 +131,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                     (
                         x,
                         &mut self.heap_pch_up,
-                        &mut self.heap_crp_up,
+                        &mut self.heap_pcrp_up,
                         &mut self.visited_up,
                         &mut self.dist_up,
                         get_to,
@@ -146,7 +146,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                     (
                         x,
                         &mut self.heap_pch_down,
-                        &mut self.heap_crp_down,
+                        &mut self.heap_pcrp_down,
                         &mut self.visited_down,
                         &mut self.dist_down,
                         get_from,
@@ -184,8 +184,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
                     if nodes[node].partition != nodes[next].partition {
-                        // if next node is in other partition insert it into crp_heap
-                        crp_heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
+                        // if next node is in other partition insert it into pcrp_heap
+                        pcrp_heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
                     } else {
                         // otherwise
                         heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
@@ -222,22 +222,22 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter,
         )) = {
             let next_up: Cost = self
-                .heap_crp_up
+                .heap_pcrp_up
                 .peek()
                 .map(|min_item| min_item.cost)
                 .unwrap_or(COST_MAX);
             let next_down: Cost = self
-                .heap_crp_down
+                .heap_pcrp_down
                 .peek()
                 .map(|min_item| min_item.cost)
                 .unwrap_or(COST_MAX);
             if next_up + next_down > best_cost {
                 None
             } else if next_up <= next_down {
-                self.heap_crp_up.pop().map(|x| {
+                self.heap_pcrp_up.pop().map(|x| {
                     (
                         x,
-                        &mut self.heap_crp_up,
+                        &mut self.heap_pcrp_up,
                         &mut self.visited_up,
                         &mut self.dist_up,
                         get_to,
@@ -248,10 +248,10 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                     )
                 })
             } else {
-                self.heap_crp_down.pop().map(|x| {
+                self.heap_pcrp_down.pop().map(|x| {
                     (
                         x,
-                        &mut self.heap_crp_down,
+                        &mut self.heap_pcrp_down,
                         &mut self.visited_down,
                         &mut self.dist_down,
                         get_from,

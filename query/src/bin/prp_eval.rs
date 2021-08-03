@@ -347,7 +347,7 @@ fn get_arguments() -> (String, String, Vals, QueryType, Option<String>) {
                 .short("q")
                 .long("query")
                 .required(true)
-                .possible_values(&["normal", "bi", "pch", "crp", "prp"]),
+                .possible_values(&["normal", "bi", "pch", "pcrp", "prp"]),
         )
         .arg(
             clap::Arg::with_name("export-path")

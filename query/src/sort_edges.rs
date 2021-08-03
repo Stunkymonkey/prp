@@ -71,7 +71,7 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
                 subvector.sort_unstable_by_key(|edge_id| Reverse(nodes[edges[*edge_id].from].rank));
             }
         }
-        QueryType::Crp => {
+        QueryType::Pcrp => {
             // add id to keep track of permuation
             set_indices(&mut data.edges);
 

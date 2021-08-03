@@ -2,9 +2,9 @@ use super::*;
 use query_export::Export;
 
 pub mod bidirectional;
-pub mod crp;
 pub mod normal;
 pub mod pch;
+pub mod pcrp;
 pub mod prp;
 
 pub trait FindPath<E: Export> {
@@ -36,7 +36,7 @@ pub fn get<E: 'static + Export>(
             exporter,
         )),
         QueryType::Pch => Box::new(dijkstra::pch::Dijkstra::new(amount_nodes, exporter)),
-        QueryType::Crp => Box::new(dijkstra::crp::Dijkstra::new(amount_nodes, exporter)),
+        QueryType::Pcrp => Box::new(dijkstra::pcrp::Dijkstra::new(amount_nodes, exporter)),
         QueryType::Prp => Box::new(dijkstra::prp::Dijkstra::new(amount_nodes, exporter)),
     }
 }

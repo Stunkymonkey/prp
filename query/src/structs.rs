@@ -93,7 +93,7 @@ pub enum QueryType {
     Normal,
     Bi,
     Pch,
-    Crp,
+    Pcrp,
     Prp,
 }
 
@@ -104,7 +104,7 @@ impl FromStr for QueryType {
             "normal" => Ok(QueryType::Normal),
             "bi" => Ok(QueryType::Bi),
             "pch" => Ok(QueryType::Pch),
-            "crp" => Ok(QueryType::Crp),
+            "pcrp" => Ok(QueryType::Pcrp),
             "prp" => Ok(QueryType::Prp),
             _ => Err("no match"),
         }

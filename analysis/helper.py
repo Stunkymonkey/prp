@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 MLP_METHODS = ["kmeans", "merge", "hop"]
-QUERY_METHODS = ["normal", "bi", "crp", "pch", "prp", "pch-pch"]
+QUERY_METHODS = ["normal", "bi", "pcrp", "pch", "prp", "pch-pch"]
 
 colors = plt.cm.Set1(range(len(MLP_METHODS)))
 markers = ['s', 'X', '*', '+', 'o', '^']
