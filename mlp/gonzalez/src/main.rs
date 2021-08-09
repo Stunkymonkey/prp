@@ -3,8 +3,8 @@ mod bidirect_graph;
 mod constants;
 mod export;
 mod fmi_import;
+mod gonzalez;
 mod graph_helper;
-mod hop;
 mod hop_bfs;
 mod offset;
 mod structs;
@@ -44,7 +44,7 @@ fn main() {
 
     // do partitioning
     let partition_time = Instant::now();
-    match hop::partition(&partition_amount, &mut nodes, &mut edges) {
+    match gonzalez::partition(&partition_amount, &mut nodes, &mut edges) {
         Ok(_result) => println!("creating partitions sucessfully"),
         Err(error) => panic!("error while creating partitions: {:?}", error),
     };
