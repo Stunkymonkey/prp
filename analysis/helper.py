@@ -7,7 +7,7 @@ import json
 import matplotlib.pyplot as plt
 
 
-MLP_METHODS = ["kmeans", "merge", "hop"]
+MLP_METHODS = ["kmeans", "merge", "gonzalez"]
 QUERY_METHODS = ["normal", "bi", "pcrp", "pch", "prp", "pch-pch"]
 
 colors = plt.cm.Set1(range(len(MLP_METHODS)))

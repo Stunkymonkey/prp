@@ -1260,7 +1260,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mlp_hop"
+name = "mlp_gonzalez"
 version = "0.1.0"
 dependencies = [
  "clap",

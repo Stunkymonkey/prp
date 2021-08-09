@@ -15,7 +15,7 @@ cargo build --release
 cargo run --bin pbfextractor --release -- [path/to/pbf-file] [folder/with/srtm/files] [path/to/output/fmi-file(output)]
 ```
 
-extracting largest connected set of node: (specially needed for merge-partitioning)
+extracting largest connected set of node: (needed for Merge- & Gonzalez-partitioning)
 
 ```shell
 cargo run --bin fmi_largest_set --release -- -i [path/to/fmi-file] -o [path/to/fmi-file(output)]
@@ -31,10 +31,10 @@ two methods possible:
 cargo run --bin mlp_merge --release -- -f [path/to/fmi-file] -o [path/to/mlp-file(output)] [-p/-s defining save points when merging e.g. -s 500 5000]
 ```
 
-- Hop
+- Gonzalez
 
 ```shell
-cargo run --bin mlp_hop --release -- -f [path/to/fmi-file]  -o [path/to/mlp-file(output)] -p [partitions from top to bottom e.g. 50 100]
+cargo run --bin mlp_gonzalez --release -- -f [path/to/fmi-file]  -o [path/to/mlp-file(output)] -p [partitions from top to bottom e.g. 50 100]
 ```
 
 - K-Means

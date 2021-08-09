@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "mlp/hop",
+    "mlp/gonzalez",
     "mlp/merge",
     "mlp/kmeans",
     "osm-graph/largest-set",
