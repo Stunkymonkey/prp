@@ -1621,6 +1621,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "clap",
+ "crossbeam-channel",
  "mch",
  "num_cpus",
  "ordered-float",
