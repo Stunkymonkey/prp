@@ -152,14 +152,6 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
                 new_subvector.sort_unstable_by_key(|edge| Reverse(nodes[edge.to].rank));
             }
 
-            // find edges from pch to insert then sort subvector by pch!
-
-            // sort only level zero
-            for node in 0..data.nodes.len() {
-                let subvector = &mut data.edges[data.up_offset[node]..data.up_offset[node + 1]];
-                subvector.sort_unstable_by_key(|edge| Reverse(edge.level));
-            }
-
             // get permutation
             let new_edge_index = get_indices(&data.edges);
 
