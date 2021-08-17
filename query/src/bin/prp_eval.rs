@@ -3,6 +3,7 @@ use log::warn;
 use serde::Serialize;
 use serde_json::json;
 use std::fs::File;
+use std::process;
 use std::str::FromStr;
 use std::time::Instant;
 
@@ -41,18 +42,21 @@ struct CounterExport {
     relaxed_edges: usize,
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub struct GrapInfo {
+    pub amount_nodes: usize,
+    pub amount_edges: usize,
+    pub amount_used_edges: usize,
+}
+
 fn main() {
-    let (fmi_file, eval_file, eval_type, query_type, export_path) = get_arguments();
+    let (fmi_file, eval_file, eval_type, query_type, export_graph_info, export_path) =
+        get_arguments();
     // read binfile
     let mut data: BinFile = match bin_import::read_file(&fmi_file) {
         Ok(result) => result,
         Err(error) => panic!("error while reading bin-file: {:?}", error),
     };
-
-    //read eval-file
-    let file = File::open(eval_file).expect("file should open read only");
-    let mut eval: Vec<EvalPoint> =
-        serde_json::from_reader(file).expect("file should be proper JSON");
 
     let amount_nodes = data.nodes.len();
     let dim = data.edge_costs.len() / data.edges.len();
@@ -76,6 +80,69 @@ fn main() {
         grid_bounds: data.grid_bounds,
         metrics: data.metrics,
     };
+
+    // if graph infos are needed otherwise normal evaluation
+    if export_graph_info {
+        let mut used_edges = 0;
+        //iterate over all nodes
+        for node in 0..data.nodes.len() {
+            // extract edges of one node
+            let subvector =
+                &data.graph.edges[data.graph.up_offset[node]..data.graph.up_offset[node + 1]];
+            let mut edge_counter = 0;
+            for edge in subvector {
+                // count for every query algo differently
+                match query_type {
+                    QueryType::Normal | QueryType::Bi => {
+                        if edge.contracted_edges.is_some() {
+                            break;
+                        }
+                        used_edges += 1;
+                    }
+                    QueryType::Pch => {
+                        used_edges += 1;
+                    }
+                    QueryType::Pcrp => {
+                        if edge.level.is_none() {
+                            break;
+                        }
+                        used_edges += 1;
+                    }
+                    QueryType::Prp => {
+                        edge_counter += 1;
+                        if edge.level.is_some() {
+                            used_edges += edge_counter;
+                            edge_counter = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        let graph_info = GrapInfo {
+            amount_nodes: data.nodes.len(),
+            amount_edges: data.graph.edges.len(),
+            amount_used_edges: used_edges,
+        };
+
+        // export
+        let output =
+            serde_json::to_string_pretty(&serde_json::to_value(graph_info).unwrap()).unwrap();
+        match export_path {
+            Some(path) => match export::write_file(&path, &output) {
+                Ok(_) => println!("exported succesfully"),
+                Err(err) => println!("error while exporting {:?}", err),
+            },
+            None => println!("{}", output),
+        }
+        // quiting, because everything is done and evaluation is another parameter
+        process::exit(0);
+    }
+
+    //read eval-file
+    let file = File::open(eval_file.unwrap()).expect("file should open read only");
+    let mut eval: Vec<EvalPoint> =
+        serde_json::from_reader(file).expect("file should be proper JSON");
 
     println!("amount of evaluation-points: {:?}", eval.len());
 
@@ -111,7 +178,7 @@ fn main() {
     println!("precalculation done. evaluating now...");
 
     match eval_type {
-        Vals::Time => {
+        Some(Vals::Time) => {
             let mut dijkstra = prp_query::dijkstra::get(query_type, amount_nodes, NoOp::new());
             let mut export_list: Vec<TimeExport> = Vec::with_capacity(eval.len());
 
@@ -143,7 +210,7 @@ fn main() {
                 None => println!("{}", output),
             }
         }
-        Vals::Count => {
+        Some(Vals::Count) => {
             let mut dijkstra = prp_query::dijkstra::get(query_type, amount_nodes, Counter::new());
             let mut export_list: Vec<CounterExport> = Vec::with_capacity(eval.len());
 
@@ -175,7 +242,7 @@ fn main() {
                 None => println!("{}", output),
             }
         }
-        Vals::Export => {
+        Some(Vals::Export) => {
             let mut dijkstra =
                 prp_query::dijkstra::get(query_type, amount_nodes, RealExport::new());
 
@@ -216,7 +283,7 @@ fn main() {
                 }
             }
         }
-        Vals::Check => {
+        Some(Vals::Check) => {
             if matches!(query_type, QueryType::Normal) {
                 warn!("checking Dijkstra against itself. does not make much sense");
             }
@@ -299,6 +366,7 @@ fn main() {
                 None => println!("{}", output),
             }
         }
+        None => {}
     }
 }
 
@@ -310,7 +378,14 @@ fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
     cost
 }
 
-fn get_arguments() -> (String, String, Vals, QueryType, Option<String>) {
+fn get_arguments() -> (
+    String,
+    Option<String>,
+    Option<Vals>,
+    QueryType,
+    bool,
+    Option<String>,
+) {
     let matches = clap::App::new("prp_eval")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -329,7 +404,16 @@ fn get_arguments() -> (String, String, Vals, QueryType, Option<String>) {
                 .takes_value(true)
                 .short("e")
                 .long("eval-file")
-                .required(true),
+                .conflicts_with("graph-info")
+                .required_unless("graph-info"),
+        )
+        .arg(
+            clap::Arg::with_name("graph-info")
+                .help("export graph info")
+                .short("g")
+                .long("graph-info")
+                .conflicts_with_all(&["eval-file", "type"])
+                .required_unless_one(&["eval-file", "type"]),
         )
         .arg(
             clap::Arg::with_name("type")
@@ -337,7 +421,8 @@ fn get_arguments() -> (String, String, Vals, QueryType, Option<String>) {
                 .takes_value(true)
                 .short("t")
                 .long("type")
-                .required(true)
+                .conflicts_with("graph-info")
+                .required_unless("graph-info")
                 .possible_values(&["time", "count", "export", "check"]),
         )
         .arg(
@@ -358,15 +443,16 @@ fn get_arguments() -> (String, String, Vals, QueryType, Option<String>) {
         )
         .get_matches();
 
-    let eval_type = clap::value_t!(matches.value_of("type"), Vals).unwrap_or_else(|e| e.exit());
+    let eval_type = clap::value_t!(matches.value_of("type"), Vals);
     let query_type =
         clap::value_t!(matches.value_of("query"), QueryType).unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),
-        matches.value_of("eval-file").unwrap().to_string(),
-        eval_type,
+        matches.value_of("eval-file").map(str::to_string),
+        eval_type.ok(),
         query_type,
+        matches.is_present("graph-info"),
         matches.value_of("export-path").map(String::from),
     )
 }
