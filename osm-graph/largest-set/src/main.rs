@@ -34,7 +34,7 @@ fn main() {
     // add note that the file was modified, to distinct them
     header = header.replace(
         "# Build by: pbfextractor",
-        "# Build by: pbfextractor\n# Modified by: fmi-disjoint-set",
+        "# Build by: pbfextractor\n# Modified by: fmi_largest_set",
     );
 
     // make graph bidirect
