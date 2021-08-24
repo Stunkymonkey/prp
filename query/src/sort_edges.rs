@@ -137,7 +137,7 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
                     .enumerate()
                     .find(|(_index, &edge)| {
                         if edge.level.is_none() {
-                            nodes[edge.from].rank >= minimum_rank_of_layer_one
+                            nodes[edge.from].rank > minimum_rank_of_layer_one
                         } else {
                             false
                         }
