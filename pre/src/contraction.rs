@@ -201,7 +201,7 @@ fn level_contraction(
                             mch_edges
                         },
                         //dims
-                        edges[0].cost.len(),
+                        dim,
                     ) {
                         Ok(mch) => mch,
                         Err(error) => {
@@ -419,9 +419,13 @@ pub fn prp_contraction(
             assert!(INVALID_LEVEL != level);
         }
     }
-    let unique_height_set: BTreeSet<usize> =
-        edges.iter().cloned().filter_map(|e| e.level).collect();
-    assert!(unique_height_set.len() - 1 == mlp_levels.len());
+
+    // check that levels are correct
+    if contraction_stop < 1.0 {
+        let unique_height_set: BTreeSet<usize> =
+            edges.iter().cloned().filter_map(|e| e.level).collect();
+        assert!(unique_height_set.len() - 1 == mlp_levels.len());
+    }
 
     sort_nodes_ranked(&mut edges, &up_offset, &down_offset, &mut nodes);
 
