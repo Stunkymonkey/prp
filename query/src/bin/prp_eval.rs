@@ -264,7 +264,7 @@ fn main() {
                 match export_path {
                     Some(ref export_path) => {
                         match export::write_wkt_file(
-                            &format!("{}/{}.wkt", export_path, query.id),
+                            &format!("{}/{}.csv", export_path, query.id),
                             query.start_id.unwrap(),
                             query.end_id.unwrap(),
                             dijkstra.get_query_export().meeting_node,
