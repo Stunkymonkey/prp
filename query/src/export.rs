@@ -22,9 +22,9 @@ pub fn write_wkt_file(
     edges: &[Edge],
     level_heights: &[usize],
 ) -> std::io::Result<()> {
-    let f = File::create(file_path.replace(".csv", "-query.csv"))?;
+    let f = File::create(file_path.replace(".csv", "-query.wkt"))?;
     let mut f = BufWriter::new(f);
-    f.write_all("wkt;\nWKT-POINTS; type\n".as_bytes())?;
+    f.write_all("WKT-POINTS; type\n".as_bytes())?;
 
     let line = format!(
         "POINT ({:?} {:?}); 0\n",
@@ -44,9 +44,9 @@ pub fn write_wkt_file(
         f.write_all(line.as_bytes())?;
     }
 
-    let f = File::create(file_path.replace(".csv", "-nodes.csv"))?;
+    let f = File::create(file_path.replace(".csv", "-nodes.wkt"))?;
     let mut f = BufWriter::new(f);
-    f.write_all("wkt;\nWKT-POINTS; level_height\n".as_bytes())?;
+    f.write_all("WKT-POINTS; level\n".as_bytes())?;
 
     for node_id in visited_nodes {
         let line = format!(
@@ -73,17 +73,18 @@ pub fn write_wkt_file(
         f.write_all(line.as_bytes())?;
     }
 
-    let f = File::create(file_path.replace(".csv", "-edges.csv"))?;
+    let f = File::create(file_path.replace(".csv", "-edges.wkt"))?;
     let mut f = BufWriter::new(f);
-    f.write_all("wkt;\nWKT-LINESTRINGS\n".as_bytes())?;
+    f.write_all("WKT-LINESTRINGS; level\n".as_bytes())?;
 
     for edge_id in visited_edges {
         let line = format!(
-            "LINESTRING ({:?} {:?}, {:?} {:?})\n",
+            "LINESTRING ({:?} {:?}, {:?} {:?}); {:?}\n",
             nodes[edges[*edge_id].from].longitude,
             nodes[edges[*edge_id].from].latitude,
             nodes[edges[*edge_id].to].longitude,
             nodes[edges[*edge_id].to].latitude,
+            edges[*edge_id].level.unwrap_or(usize::MAX),
         );
         f.write_all(line.as_bytes())?;
     }
