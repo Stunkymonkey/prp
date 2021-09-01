@@ -5,7 +5,7 @@ use valid_flag::*;
 #[derive(Clone)]
 pub struct HopBFS {
     dist: Vec<(Cost, Option<NodeId>)>,
-    heap: VecDeque<(NodeId, Cost, Option<EdgeId>)>,
+    queue: VecDeque<(NodeId, Cost, Option<EdgeId>)>,
     visited: ValidFlag,
 }
 
@@ -13,18 +13,18 @@ impl HopBFS {
     /// general constructor
     pub fn new(amount_nodes: usize) -> Self {
         let dist = vec![(COST_MAX, None); amount_nodes];
-        let heap = VecDeque::new();
+        let queue = VecDeque::with_capacity(amount_nodes / 4);
         let visited = ValidFlag::new(amount_nodes);
         HopBFS {
             dist,
-            heap,
+            queue,
             visited,
         }
     }
 
     /// reseting its internal state
     pub fn reset_state(&mut self) {
-        self.heap.clear();
+        self.queue.clear();
         self.visited.invalidate_all();
     }
 
@@ -39,9 +39,9 @@ impl HopBFS {
     ) {
         self.reset_state();
 
-        self.heap.push_front((from, 0, None));
+        self.queue.push_front((from, 0, None));
 
-        while let Some((node, dist, prev_edge)) = self.heap.pop_front() {
+        while let Some((node, dist, prev_edge)) = self.queue.pop_front() {
             // node has already been visited and can be skipped
             // replacement for decrease key operation
             if self.visited.is_valid(node) && dist > self.dist[node].0 {
@@ -69,7 +69,7 @@ impl HopBFS {
 
                 let alt = dist + 1;
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
-                    self.heap.push_back((new_edge.to, alt, Some(edge)));
+                    self.queue.push_back((new_edge.to, alt, Some(edge)));
                 }
             }
         }
