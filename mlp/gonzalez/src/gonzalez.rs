@@ -84,25 +84,27 @@ fn make_partition(
 
     // get random start
     let start = node_ids.choose(rng).unwrap();
-    let mut dijkstra = HopBFS::new(nodes.len());
+    let mut bfs = HopBFS::new(nodes.len());
 
     let mut core_nodes: Vec<NodeId> = Vec::with_capacity(k + 1);
 
     // find most distant node to set as real start
-    dijkstra.get_costs(*start, &edges, &up_offset, &current_set, &mut tmp);
-    let mut start: usize = *node_ids
+    bfs.get_costs(*start, &edges, &up_offset, &current_set, &mut tmp);
+    let mut start: usize = node_ids
         .iter()
-        .max_by(|a, b| (tmp[**a].0).cmp(&tmp[**b].0))
-        .unwrap_or(&0);
+        .cloned()
+        .max_by_key(|node_id| distances[*node_id].0)
+        .unwrap_or(0);
     core_nodes.push(start);
 
-    // run dijkstra for every partition again to find a good partitioning
+    // run bfs for every partition again to find a good partitioning
     for _i in 0..k {
-        dijkstra.get_costs(start, &edges, &up_offset, &current_set, &mut distances);
-        start = *node_ids
+        bfs.get_costs(start, &edges, &up_offset, &current_set, &mut distances);
+        start = node_ids
             .iter()
-            .max_by(|a, b| (distances[**a].0).cmp(&distances[**b].0))
-            .unwrap_or(&0);
+            .cloned()
+            .max_by_key(|node_ids| distances[*node_ids].0)
+            .unwrap_or(0);
         core_nodes.push(start);
     }
     core_nodes.pop();
