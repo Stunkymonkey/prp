@@ -179,7 +179,7 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
                         .level
                         .cmp(&edges[*b].level)
                         .reverse()
-                        .then(nodes[edges[*a].from].rank.cmp(&nodes[edges[*b].from].rank))
+                        .then(nodes[edges[*a].to].rank.cmp(&nodes[edges[*b].to].rank))
                 });
                 // find index of pch edges
                 let pch_level_one_index = subvector
@@ -187,7 +187,7 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
                     .enumerate()
                     .find(|(_index, &edge)| {
                         if edges[edge].level.is_none() {
-                            nodes[edges[edge].from].rank >= minimum_rank_of_layer_one
+                            nodes[edges[edge].to].rank > minimum_rank_of_layer_one
                         } else {
                             false
                         }
@@ -199,7 +199,7 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
                 let new_subvector = &mut subvector[..pch_level_one_index];
 
                 // sort new subvector by pch-rank
-                new_subvector.sort_unstable_by_key(|edge| Reverse(nodes[edges[*edge].to].rank));
+                new_subvector.sort_unstable_by_key(|edge| Reverse(nodes[edges[*edge].from].rank));
             }
         }
     }
