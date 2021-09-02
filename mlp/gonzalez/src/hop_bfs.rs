@@ -44,7 +44,7 @@ impl HopBFS {
         while let Some((node, dist, prev_edge)) = self.queue.pop_front() {
             // node has already been visited and can be skipped
             // replacement for decrease key operation
-            if self.visited.is_valid(node) && dist > self.dist[node].0 {
+            if self.visited.is_valid(node) {
                 continue;
             }
 
@@ -68,7 +68,7 @@ impl HopBFS {
                 }
 
                 let alt = dist + 1;
-                if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
+                if !self.visited.is_valid(new_edge.to) {
                     self.queue.push_back((new_edge.to, alt, Some(edge)));
                 }
             }
