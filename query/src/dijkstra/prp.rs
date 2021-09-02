@@ -174,8 +174,14 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 // skip pch ranks
                 // top-level nodes have maximum level number so no equal test
-                if nodes[node].rank > nodes[next].rank && edge.level.is_none() {
+                if nodes[node].rank > nodes[next].rank
+                    && (edge.level.is_none() || edge.level.unwrap() == 0)
+                {
                     break;
+                }
+                // skip pch edges, that are beyond the mlp-cell connected with a boundary node
+                if nodes[node].partition != nodes[next].partition && edge.level.is_none() {
+                    continue;
                 }
 
                 exporter.relaxed_edge();
