@@ -14,6 +14,7 @@ colors = plt.cm.Set1(range(len(MLP_METHODS)))
 markers = ['s', 'X', '*', '+', 'o', '^']
 
 identifiert = dict()
+mapping_colors = dict()
 
 for method, color in zip(MLP_METHODS, colors):
     identifiert[method] = color
@@ -21,13 +22,33 @@ for method, color in zip(MLP_METHODS, colors):
 for method, marker in zip(QUERY_METHODS, markers):
     identifiert[method] = marker
 
+mapping_colors["pch"] = "kmeans"
+mapping_colors["pcrp"] = "gonzalez"
+mapping_colors["prp"] = "merge"
+
+TEXT_WIDTH = 426.0
+
 
 def ns_to_ms(value):
     return value / 1e6
 
 
+def sec_to_min(value):
+    return value / 60
+
+
 def plot_get(method):
     return identifiert[method]
+
+
+def plot_color_get(method):
+    return identifiert[mapping_colors[method]]
+
+
+def mlp_title(method):
+    if method == "kmeans":
+        return "K-means"
+    return method.title()
 
 
 def shell_execute(command, EVAL_DIR):
@@ -73,6 +94,38 @@ def not_created_yet(file, EVAL_DIR):
         return True
     else:
         return False
+
+
+def set_pgf_size(width_pt, fraction=1, subplots=(1, 1)):
+    """Set figure dimensions to sit nicely in our document.
+
+    Parameters
+    ----------
+    width_pt: float
+            Document width in points
+    fraction: float, optional
+            Fraction of the width which you wish the figure to occupy
+    subplots: array-like, optional
+            The number of rows and columns of subplots.
+    Returns
+    -------
+    fig_dim: tuple
+            Dimensions of figure in inches
+    """
+    # Width of figure (in pts)
+    fig_width_pt = width_pt * fraction
+    # Convert from pt to inches
+    inches_per_pt = 1 / 72.27
+
+    # Golden ratio to set aesthetic figure height
+    golden_ratio = (5**.5 - 1) / 2
+
+    # Figure width in inches
+    fig_width_in = fig_width_pt * inches_per_pt
+    # Figure height in inches
+    fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
+
+    return (fig_width_in, fig_height_in)
 
 
 def main():
