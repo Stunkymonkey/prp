@@ -60,7 +60,7 @@ pub fn write_wkt_file(
     let mut f = BufWriter::new(f);
     f.write_all("wkt;\nWKT-LINESTRINGS\n".as_bytes())?;
 
-    let path = convert_edge_ids_to_node_ids(&path, &edges);
+    let path = convert_edge_ids_to_node_ids(path, edges);
 
     for (prev, next) in path.iter().zip(path.iter().skip(1)) {
         let line = format!(

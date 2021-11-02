@@ -150,7 +150,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter.visited_node(node);
             exporter.visited_edge(prev_edge);
 
-            for edge_id in get_edges(&graph, node) {
+            for edge_id in get_edges(graph, node) {
                 let edge = graph.get_edge(edge_id);
 
                 // skip edges, that are shortcuts
@@ -162,7 +162,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
+                let alt = cost + costs_by_alpha(graph.get_edge_costs(edge_id), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
                     heap.push(MinHeapItem::new(next, alt, Some(edge_id)));

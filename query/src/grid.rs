@@ -46,8 +46,8 @@ fn get_adjacent_nodes(
     grid_offset: &[GridId],
     grid_bounds: &GridBounds,
 ) -> Vec<NodeId> {
-    let grid_id_lat: isize = get_grid_lat(&node, &grid_bounds) as isize;
-    let grid_id_lng: isize = get_grid_lng(&node, &grid_bounds) as isize;
+    let grid_id_lat: isize = get_grid_lat(node, grid_bounds) as isize;
+    let grid_id_lng: isize = get_grid_lng(node, grid_bounds) as isize;
     // println!("grid_id_lat {:?}", grid_id_lat);
     // println!("grid_id_lng {:?}", grid_id_lng);
     let mut grid_dist: isize = 1;
@@ -67,7 +67,7 @@ fn get_adjacent_nodes(
                 cell_ids.push(calculate_grid_id(
                     (grid_id_lat) as usize,
                     (grid_id_lng) as usize,
-                    &grid_bounds,
+                    grid_bounds,
                 ));
             }
             // north left to right
@@ -79,7 +79,7 @@ fn get_adjacent_nodes(
                 cell_ids.push(calculate_grid_id(
                     (grid_id_lat + i) as usize,
                     (grid_id_lng + grid_dist) as usize,
-                    &grid_bounds,
+                    grid_bounds,
                 ));
             }
             // east top to bottom
@@ -91,7 +91,7 @@ fn get_adjacent_nodes(
                 cell_ids.push(calculate_grid_id(
                     (grid_id_lat + grid_dist) as usize,
                     (grid_id_lng - i) as usize,
-                    &grid_bounds,
+                    grid_bounds,
                 ));
             }
             // south top to bottom
@@ -103,7 +103,7 @@ fn get_adjacent_nodes(
                 cell_ids.push(calculate_grid_id(
                     (grid_id_lat - i) as usize,
                     (grid_id_lng - grid_dist) as usize,
-                    &grid_bounds,
+                    grid_bounds,
                 ));
             }
             // west top to bottom
@@ -115,13 +115,13 @@ fn get_adjacent_nodes(
                 cell_ids.push(calculate_grid_id(
                     (grid_id_lat - grid_dist) as usize,
                     (grid_id_lng + i) as usize,
-                    &grid_bounds,
+                    grid_bounds,
                 ));
             }
         }
 
         // get all points from cells
-        let adjacent_nodes = get_points_from_cells(&cell_ids, &grid, &grid_offset);
+        let adjacent_nodes = get_points_from_cells(&cell_ids, grid, grid_offset);
 
         if !adjacent_nodes.is_empty() {
             return adjacent_nodes;
@@ -174,7 +174,7 @@ fn calculate_grid_id(lat_index: usize, lng_index: usize, grid_bounds: &GridBound
 fn get_grid_id(node: &Location, grid_bounds: &GridBounds) -> GridId {
     let lat_index = get_grid_lat(node, grid_bounds);
     let lng_index = get_grid_lng(node, grid_bounds);
-    calculate_grid_id(lat_index, lng_index, &grid_bounds)
+    calculate_grid_id(lat_index, lng_index, grid_bounds)
 }
 
 /// get distance on earth surface using haversine formula

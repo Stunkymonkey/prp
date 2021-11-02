@@ -58,7 +58,7 @@ pub fn merge(
     let mut already_inserted: BTreeSet<(NodeId, NodeId)> = BTreeSet::new();
     for node_id in 0..nodes.len() {
         // since graph is bidirectional up-graph is sufficient
-        let neighbors = graph_helper::get_up_neighbors(node_id, &edges, &up_offset);
+        let neighbors = graph_helper::get_up_neighbors(node_id, edges, &up_offset);
         for neighbor in neighbors {
             if !already_inserted.contains(&(node_id, neighbor)) {
                 heap.push(MaxHeapItem::new(
@@ -70,7 +70,7 @@ pub fn merge(
                         &mut rng,
                         &sets,
                         &current_partition,
-                        &edges,
+                        edges,
                         &up_offset,
                     ),
                 ));
@@ -122,7 +122,7 @@ pub fn merge(
         // collect all neighbors
         let mut neighbors: Vec<NodeId> = sets[set_a]
             .iter()
-            .map(|node| graph_helper::get_up_neighbors(*node, &edges, &up_offset))
+            .map(|node| graph_helper::get_up_neighbors(*node, edges, &up_offset))
             .flatten()
             .collect();
         neighbors.par_sort_unstable();
@@ -151,7 +151,7 @@ pub fn merge(
                     &mut rng,
                     &sets,
                     &current_partition,
-                    &edges,
+                    edges,
                     &up_offset,
                 ),
             ));
@@ -295,7 +295,7 @@ fn get_priority(
     // count amount of edges between both sets (bidirectional -> onsoly one side-comparison)
     let mut connecting_a_b = 0;
     for node in nodes_a {
-        let neighbors = graph_helper::get_up_neighbors(*node, &edges, &up_offset);
+        let neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
         for neighbor in neighbors {
             if nodes_b.contains(&neighbor) {
                 connecting_a_b += 1;
@@ -306,7 +306,7 @@ fn get_priority(
     // amount of nodes that have a connection to outside
     let mut border_nodes_a = 0;
     for node in nodes_a {
-        let node_neighbors = graph_helper::get_up_neighbors(*node, &edges, &up_offset);
+        let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
         for neighbor in node_neighbors {
             if !nodes_a.contains(&neighbor) {
                 border_nodes_a += 1;
@@ -318,7 +318,7 @@ fn get_priority(
     // amount of nodes that have a connection to outside
     let mut border_nodes_b = 0;
     for node in nodes_b {
-        let node_neighbors = graph_helper::get_up_neighbors(*node, &edges, &up_offset);
+        let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
         for neighbor in node_neighbors {
             if !nodes_b.contains(&neighbor) {
                 border_nodes_b += 1;
@@ -330,7 +330,7 @@ fn get_priority(
     // amount of nodes that have a connection outside AFTER union of sets
     let mut new_border_nodes = 0;
     for node in nodes_a {
-        let node_neighbors = graph_helper::get_up_neighbors(*node, &edges, &up_offset);
+        let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
         for neighbor in node_neighbors {
             if !(nodes_a.contains(&neighbor) || nodes_b.contains(&neighbor)) {
                 new_border_nodes += 1;
@@ -339,7 +339,7 @@ fn get_priority(
         }
     }
     for node in nodes_b {
-        let node_neighbors = graph_helper::get_up_neighbors(*node, &edges, &up_offset);
+        let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
         for neighbor in node_neighbors {
             if !(nodes_a.contains(&neighbor) || nodes_b.contains(&neighbor)) {
                 new_border_nodes += 1;

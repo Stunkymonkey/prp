@@ -31,9 +31,9 @@ pub fn partition(
 
             let (mut new_indices, new_clusters) = match make_partition(
                 *cluster,
-                &current_cluster,
-                &nodes,
-                &edges,
+                current_cluster,
+                nodes,
+                edges,
                 &up_offset,
                 &mut rng,
             ) {
@@ -89,7 +89,7 @@ fn make_partition(
     let mut core_nodes: Vec<NodeId> = Vec::with_capacity(k + 1);
 
     // find most distant node to set as real start
-    bfs.get_costs(*start, &edges, &up_offset, &current_set, &mut tmp);
+    bfs.get_costs(*start, edges, up_offset, &current_set, &mut tmp);
     let mut start: usize = node_ids
         .iter()
         .cloned()
@@ -99,7 +99,7 @@ fn make_partition(
 
     // run bfs for every partition again to find a good partitioning
     for _i in 0..k {
-        bfs.get_costs(start, &edges, &up_offset, &current_set, &mut distances);
+        bfs.get_costs(start, edges, up_offset, &current_set, &mut distances);
         start = node_ids
             .iter()
             .cloned()

@@ -32,8 +32,8 @@ pub fn calculate_heuristics(
             heuristics.push(calculate_single_heuristic(
                 node_id,
                 deleted_neighbors,
-                &up_offset,
-                &down_offset,
+                up_offset,
+                down_offset,
             ));
         }
     }
@@ -54,7 +54,7 @@ pub fn update_neighbor_heuristics(
     for neighbor in neighbors {
         if nodes[neighbor].level == level_height {
             heuristics[neighbor] =
-                calculate_single_heuristic(neighbor, deleted_neighbors, &up_offset, &down_offset);
+                calculate_single_heuristic(neighbor, deleted_neighbors, up_offset, down_offset);
         }
     }
 }
@@ -87,7 +87,7 @@ pub fn get_independent_set(
     for node in &subset {
         let mut is_valid = true;
         for neighbor in
-            graph_helper::get_all_neighbours(*node, &edges, &up_offset, &down_offset, &down_index)
+            graph_helper::get_all_neighbours(*node, edges, up_offset, down_offset, down_index)
         {
             if minimas_bool.is_valid(neighbor)
                 || *node == neighbor

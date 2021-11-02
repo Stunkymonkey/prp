@@ -23,12 +23,7 @@ pub fn get_node_partitions(
 ) -> Vec<PartitionId> {
     let mut partitions = Vec::with_capacity(mlp_levels.len() + 1);
     for level in 0..=mlp_levels.len() {
-        partitions.push(get_partition_id_on_level(
-            node_id,
-            level,
-            &nodes,
-            &mlp_levels,
-        ));
+        partitions.push(get_partition_id_on_level(node_id, level, nodes, mlp_levels));
     }
     partitions
 }
@@ -42,7 +37,7 @@ pub fn get_highest_differing_level_partition(
 ) -> usize {
     assert_eq!(mlp_levels.len() + 1, partitions_b.len());
     for (level, partition) in partitions_b.iter().enumerate().take(mlp_levels.len() + 1) {
-        if get_partition_id_on_level(node_a, level, &nodes, &mlp_levels) == *partition {
+        if get_partition_id_on_level(node_a, level, nodes, mlp_levels) == *partition {
             return level;
         }
     }
@@ -57,8 +52,8 @@ pub fn get_highest_differing_level(
     mlp_levels: &[usize],
 ) -> usize {
     for level in 0..=mlp_levels.len() {
-        if get_partition_id_on_level(node_a, level, &nodes, &mlp_levels)
-            == get_partition_id_on_level(node_b, level, &nodes, &mlp_levels)
+        if get_partition_id_on_level(node_a, level, nodes, mlp_levels)
+            == get_partition_id_on_level(node_b, level, nodes, mlp_levels)
         {
             return level;
         }
@@ -82,7 +77,7 @@ pub fn calculate_node_levels(
             if edge.contracted_edges.is_some() {
                 0
             } else {
-                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_levels)
+                get_highest_differing_level(edge.from, edge.to, nodes, mlp_levels)
             }
         })
         .max()
@@ -99,7 +94,7 @@ pub fn calculate_levels(nodes: &[Node], graph: &Graph, mlp_levels: &[usize]) -> 
             if edge.contracted_edges.is_some() {
                 0
             } else {
-                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_levels)
+                get_highest_differing_level(edge.from, edge.to, nodes, mlp_levels)
             }
         })
         .collect();
@@ -128,7 +123,7 @@ fn level_partition_ids() {
             latitude: 0.0,
             longitude: 0.0,
             rank: 0,
-            partition: partition,
+            partition,
         });
     }
     nodes.push(Node {

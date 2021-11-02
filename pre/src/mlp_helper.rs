@@ -23,8 +23,8 @@ pub fn get_highest_differing_level(
     mlp_levels: &[usize],
 ) -> usize {
     for level in 0..=mlp_levels.len() {
-        if get_partition_id_on_level(node_a, level, &nodes, &mlp_levels)
-            == get_partition_id_on_level(node_b, level, &nodes, &mlp_levels)
+        if get_partition_id_on_level(node_a, level, nodes, mlp_levels)
+            == get_partition_id_on_level(node_b, level, nodes, mlp_levels)
         {
             return level;
         }
@@ -49,14 +49,14 @@ pub fn calculate_levels(
             if edge.contracted_edges.is_some() {
                 0
             } else {
-                get_highest_differing_level(edge.from, edge.to, &nodes, &mlp_levels)
+                get_highest_differing_level(edge.from, edge.to, nodes, mlp_levels)
             }
         })
         .collect();
 
     for (node_id, mut node) in nodes.iter_mut().enumerate() {
         let node_edges =
-            graph_helper::get_all_edge_ids(node_id, &up_offset, &down_offset, &down_index);
+            graph_helper::get_all_edge_ids(node_id, up_offset, down_offset, down_index);
         node.level = node_edges
             .iter()
             .map(|edge_id| highest_edge_diff[*edge_id])
@@ -75,7 +75,7 @@ fn level_partition_ids() {
             latitude: 0.0,
             longitude: 0.0,
             rank: 0,
-            partition: partition,
+            partition,
             level: INVALID_LEVEL,
             old_id: None,
         });

@@ -373,7 +373,7 @@ fn main() {
 fn cost_of_path(alpha: &[Cost], path: &[EdgeId], graph: &Graph) -> f64 {
     let mut cost: f64 = 0.0;
     for edge in path {
-        cost += mch::costs_by_alpha(&graph.get_edge_costs(*edge), &alpha);
+        cost += mch::costs_by_alpha(graph.get_edge_costs(*edge), alpha);
     }
     cost
 }

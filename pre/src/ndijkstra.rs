@@ -48,7 +48,7 @@ impl NDijkstra {
     ) -> Option<(Vec<NodeId>, Vec<Cost>)> {
         if self.last_from == from && same_array(&self.last_pref, &alpha) {
             if self.visited.is_valid(to) {
-                return Some(self.resolve_path(to, &edges));
+                return Some(self.resolve_path(to, edges));
             }
         } else {
             // If something changed, we initialize it normally
@@ -74,7 +74,7 @@ impl NDijkstra {
             self.visited.set_valid(node);
             self.dist[node] = (dist, prev_edge);
 
-            for edge in graph_helper::get_up_edge_ids(node, &offset) {
+            for edge in graph_helper::get_up_edge_ids(node, offset) {
                 let new_edge = &edges[edge];
                 let alt = dist + costs_by_alpha(&new_edge.cost, &alpha);
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
@@ -85,7 +85,7 @@ impl NDijkstra {
 
             // found end
             if node == to {
-                return Some(self.resolve_path(to, &edges));
+                return Some(self.resolve_path(to, edges));
             }
         }
         None

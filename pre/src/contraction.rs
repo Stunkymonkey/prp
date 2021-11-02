@@ -22,8 +22,8 @@ fn sort_nodes_ranked(
         .for_each(|(i, node)| node.old_id = Some(i));
     nodes.par_sort_unstable_by(|a, b| {
         a.level.cmp(&b.level).then(a.rank.cmp(&b.rank)).then(
-            graph_helper::node_degree(a.old_id.unwrap(), &up_offset, &down_offset).cmp(
-                &graph_helper::node_degree(b.old_id.unwrap(), &up_offset, &down_offset),
+            graph_helper::node_degree(a.old_id.unwrap(), up_offset, down_offset).cmp(
+                &graph_helper::node_degree(b.old_id.unwrap(), up_offset, down_offset),
             ),
         )
     });
@@ -134,13 +134,13 @@ fn level_contraction(
     {
         // I ← independent node set
         let minimas = ordering::get_independent_set(
-            &remaining_nodes,
-            &heuristics,
+            remaining_nodes,
+            heuristics,
             &mut independent_set_flags,
-            &edges,
-            &up_offset,
-            &down_offset,
-            &down_index,
+            edges,
+            up_offset,
+            down_offset,
+            down_index,
         );
 
         // REMINDER: the break is allowed and does not mess up correctness only on the top layer
@@ -163,8 +163,7 @@ fn level_contraction(
                     let mut mch = match mch::Contractor::new(
                         // dijkstra
                         |start, end, alpha| -> Vec<Cost> {
-                            match dijkstra.find_path(start, end, alpha.to_vec(), &up_offset, &edges)
-                            {
+                            match dijkstra.find_path(start, end, alpha.to_vec(), up_offset, edges) {
                                 Some(costs) => costs.1,
                                 None => vec![COST_MAX; edges[0].cost.len()],
                             }
@@ -172,7 +171,7 @@ fn level_contraction(
                         // to-edges
                         |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
                             let down_edge_ids =
-                                graph_helper::get_down_edge_ids(node_id, &down_offset, &down_index);
+                                graph_helper::get_down_edge_ids(node_id, down_offset, down_index);
                             let mut mch_edges = Vec::new();
                             for down_edge_id in down_edge_ids {
                                 let edge = &edges[down_edge_id];
@@ -187,7 +186,7 @@ fn level_contraction(
                         },
                         // from-edges
                         |node_id| -> Vec<mch::Edge<EdgeId, NodeId>> {
-                            let up_edge_ids = graph_helper::get_up_edge_ids(node_id, &up_offset);
+                            let up_edge_ids = graph_helper::get_up_edge_ids(node_id, up_offset);
                             let mut mch_edges = Vec::new();
                             for up_edge_id in up_edge_ids {
                                 let edge = &edges[up_edge_id];
@@ -232,13 +231,12 @@ fn level_contraction(
                 });
             }
             for node_id in &minimas {
-                for to_edge_id in
-                    graph_helper::get_down_edge_ids(*node_id, &down_offset, &down_index)
+                for to_edge_id in graph_helper::get_down_edge_ids(*node_id, down_offset, down_index)
                 {
                     let edge = &edges[to_edge_id];
                     let to_edge =
                         mch::Edge::new(edge.id.unwrap(), edge.from, edge.to, edge.cost.clone());
-                    for from_edge_id in graph_helper::get_up_edge_ids(*node_id, &up_offset) {
+                    for from_edge_id in graph_helper::get_up_edge_ids(*node_id, up_offset) {
                         let edge = &edges[from_edge_id];
                         let from_edge =
                             mch::Edge::new(edge.id.unwrap(), edge.from, edge.to, edge.cost.clone());
@@ -254,9 +252,7 @@ fn level_contraction(
         // collecting all edges to be removed
         let mut connected_edges: Vec<EdgeId> = minimas
             .par_iter()
-            .map(|node| {
-                graph_helper::get_all_edge_ids(*node, &up_offset, &down_offset, &down_index)
-            })
+            .map(|node| graph_helper::get_all_edge_ids(*node, up_offset, down_offset, down_index))
             .flatten()
             .collect();
 
@@ -274,13 +270,7 @@ fn level_contraction(
         let mut neighbors: Vec<NodeId> = minimas
             .par_iter()
             .map(|node| {
-                graph_helper::get_all_neighbours(
-                    *node,
-                    &edges,
-                    &up_offset,
-                    &down_offset,
-                    &down_index,
-                )
+                graph_helper::get_all_neighbours(*node, edges, up_offset, down_offset, down_index)
             })
             .flatten()
             .collect();
@@ -293,10 +283,10 @@ fn level_contraction(
             neighbors,
             level,
             &mut heuristics,
-            &nodes,
-            &deleted_neighbors,
-            &up_offset,
-            &down_offset,
+            nodes,
+            deleted_neighbors,
+            up_offset,
+            down_offset,
         );
 
         // sort in reverse order for removing from bottom up
@@ -317,7 +307,7 @@ fn level_contraction(
         // move I to their rank
         for node in &minimas {
             nodes[*node].rank = *rank;
-            remaining_nodes.remove(&node);
+            remaining_nodes.remove(node);
         }
         contracted_nodes_amount += minimas.len();
 
@@ -377,10 +367,10 @@ pub fn prp_contraction(
 
         let mut heuristics = ordering::calculate_heuristics(
             level,
-            &nodes,
+            nodes,
             &deleted_neighbors,
-            &up_offset,
-            &down_offset,
+            up_offset,
+            down_offset,
         );
         level_contraction(
             level,
@@ -427,14 +417,14 @@ pub fn prp_contraction(
         assert!(unique_height_set.len() - 1 == mlp_levels.len());
     }
 
-    sort_nodes_ranked(&mut edges, &up_offset, &down_offset, &mut nodes);
+    sort_nodes_ranked(&mut edges, up_offset, down_offset, &mut nodes);
 
     // and calculate the offsets
     *down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
 
     // sort edges from top to down ranks for pch-dijkstra
-    sort_edges_ranked(&mut edges, &down_offset, &mut down_index, &nodes);
+    sort_edges_ranked(&mut edges, down_offset, &mut down_index, nodes);
 
     // revert the edge-ids back to usual ids
     revert_indices(&mut edges);

@@ -23,7 +23,7 @@ pub fn partition(partitions: &[usize], nodes: &mut Vec<Node>) -> Result<(), Stri
             // let (mut new_indices, new_partitions) = make_partition(*partition, &current_partition, &nodes);
 
             let (mut new_indices, new_partition) =
-                match make_partition(*partition, &current_partition, &nodes) {
+                match make_partition(*partition, current_partition, nodes) {
                     Ok(result) => result,
                     Err(error) => {
                         return Err(format!(

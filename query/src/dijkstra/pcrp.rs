@@ -77,8 +77,8 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
         let mut best_cost = COST_MAX;
         let mut meeting_node = None;
 
-        let from_partitions = mlp_helper::get_node_partitions(from, &nodes, &mlp_levels);
-        let to_partitions = mlp_helper::get_node_partitions(to, &nodes, &mlp_levels);
+        let from_partitions = mlp_helper::get_node_partitions(from, nodes, mlp_levels);
+        let to_partitions = mlp_helper::get_node_partitions(to, nodes, mlp_levels);
 
         // function pointers for only having one single dijkstra
         let get_up_edge_ids: fn(&Graph, NodeId) -> Vec<EdgeId> = Graph::get_up_edge_ids;
@@ -158,18 +158,18 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 mlp_helper::get_highest_differing_level_partition(
                     node,
                     &from_partitions,
-                    &nodes,
-                    &mlp_levels,
+                    nodes,
+                    mlp_levels,
                 ),
                 mlp_helper::get_highest_differing_level_partition(
                     node,
                     &to_partitions,
-                    &nodes,
-                    &mlp_levels,
+                    nodes,
+                    mlp_levels,
                 ),
             );
 
-            for edge_id in get_edges(&graph, node) {
+            for edge_id in get_edges(graph, node) {
                 let edge = graph.get_edge(edge_id);
 
                 // skip edges, that are pch-shortcuts-resolutions from upper levels
@@ -208,7 +208,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
                 //     continue;
                 // }
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
+                let alt = cost + costs_by_alpha(graph.get_edge_costs(edge_id), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
                     heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
@@ -251,11 +251,11 @@ impl<E: Export> Dijkstra<E> {
         let down_edge = self.dist_down[meeting_node];
 
         if let Some(prev_edge) = up_edge.1 {
-            self.walk_down(prev_edge, true, &mut path, &edges);
+            self.walk_down(prev_edge, true, &mut path, edges);
         }
         path.reverse();
         if let Some(prev_edge) = down_edge.1 {
-            self.walk_down(prev_edge, false, &mut path, &edges);
+            self.walk_down(prev_edge, false, &mut path, edges);
         }
         (path, cost)
     }
@@ -268,7 +268,7 @@ impl<E: Export> Dijkstra<E> {
         mut path: &mut Vec<NodeId>,
         edges: &[Edge],
     ) {
-        self.resolve_edge(edge, &mut path, is_upwards, &edges);
+        self.resolve_edge(edge, &mut path, is_upwards, edges);
 
         let current_edge = &edges[edge];
         let prev;
@@ -279,7 +279,7 @@ impl<E: Export> Dijkstra<E> {
             prev = self.dist_down[current_edge.to];
         }
         if let Some(child) = prev.1 {
-            self.walk_down(child, is_upwards, &mut path, &edges);
+            self.walk_down(child, is_upwards, &mut path, edges);
         }
     }
 
@@ -294,11 +294,11 @@ impl<E: Export> Dijkstra<E> {
         match &edges[edge].contracted_edges {
             Some(shortcut) => {
                 if is_upwards {
-                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
-                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, edges);
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, edges);
                 } else {
-                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
-                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, edges);
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, edges);
                 }
             }
             None => path.push(edge),

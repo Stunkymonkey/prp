@@ -154,7 +154,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
             exporter.visited_node(node);
             exporter.visited_edge(prev_edge);
 
-            for edge_id in get_edges(&graph, node) {
+            for edge_id in get_edges(graph, node) {
                 let next = walk(&graph.get_edge(edge_id));
 
                 // skip pch ranks
@@ -165,7 +165,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
+                let alt = cost + costs_by_alpha(graph.get_edge_costs(edge_id), &alpha);
 
                 if !visited.is_valid(next) || alt < dist[next].0 {
                     heap.push(MinHeapItem::new(next, alt, Some(edge_id)));
@@ -207,11 +207,11 @@ impl<E: Export> Dijkstra<E> {
         let down_edge = self.dist_down[meeting_node];
 
         if let Some(prev_edge) = up_edge.1 {
-            self.walk_down(prev_edge, true, &mut path, &edges);
+            self.walk_down(prev_edge, true, &mut path, edges);
         }
         path.reverse();
         if let Some(prev_edge) = down_edge.1 {
-            self.walk_down(prev_edge, false, &mut path, &edges);
+            self.walk_down(prev_edge, false, &mut path, edges);
         }
         (path, cost)
     }
@@ -224,7 +224,7 @@ impl<E: Export> Dijkstra<E> {
         mut path: &mut Vec<NodeId>,
         edges: &[Edge],
     ) {
-        self.resolve_edge(edge, &mut path, is_upwards, &edges);
+        self.resolve_edge(edge, &mut path, is_upwards, edges);
 
         let current_edge = &edges[edge];
         let prev;
@@ -235,7 +235,7 @@ impl<E: Export> Dijkstra<E> {
             prev = self.dist_down[current_edge.to];
         }
         if let Some(child) = prev.1 {
-            self.walk_down(child, is_upwards, &mut path, &edges);
+            self.walk_down(child, is_upwards, &mut path, edges);
         }
     }
 
@@ -250,11 +250,11 @@ impl<E: Export> Dijkstra<E> {
         match &edges[edge].contracted_edges {
             Some(shortcut) => {
                 if is_upwards {
-                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
-                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, edges);
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, edges);
                 } else {
-                    self.resolve_edge(shortcut.0, &mut path, is_upwards, &edges);
-                    self.resolve_edge(shortcut.1, &mut path, is_upwards, &edges);
+                    self.resolve_edge(shortcut.0, &mut path, is_upwards, edges);
+                    self.resolve_edge(shortcut.1, &mut path, is_upwards, edges);
                 }
             }
             None => path.push(edge),

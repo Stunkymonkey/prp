@@ -91,7 +91,7 @@ impl<E: Export> FindPath<E> for Dijkstra<E> {
 
                 self.exporter.relaxed_edge();
 
-                let alt = cost + costs_by_alpha(&graph.get_edge_costs(edge_id), &alpha);
+                let alt = cost + costs_by_alpha(graph.get_edge_costs(edge_id), &alpha);
                 if !self.visited.is_valid(new_edge.to) || alt < self.dist[new_edge.to].0 {
                     self.heap
                         .push(MinHeapItem::new(new_edge.to, alt, Some(edge_id)));

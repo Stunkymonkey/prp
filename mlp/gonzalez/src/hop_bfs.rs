@@ -55,7 +55,7 @@ impl HopBFS {
                 distances[node] = (dist, from)
             }
 
-            for edge in graph_helper::get_up_edge_ids(node, &offset) {
+            for edge in graph_helper::get_up_edge_ids(node, offset) {
                 let new_edge = &edges[edge];
 
                 // skip edges, that go outside of the parent-set
