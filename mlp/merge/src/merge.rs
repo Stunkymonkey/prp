@@ -348,7 +348,7 @@ fn get_priority(
         }
     }
 
-    (connecting_a_b * (1 + border_nodes_a + border_nodes_b + new_border_nodes)) as f64
+    (connecting_a_b * (1 + border_nodes_a + border_nodes_b - new_border_nodes)) as f64
         / (nodes_a.len() * nodes_b.len()) as f64
         * rng.gen_range(1.0..1.01)
 }
