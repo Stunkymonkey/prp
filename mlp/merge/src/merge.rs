@@ -292,7 +292,7 @@ fn get_priority(
     let nodes_a = &sets[node_id_a];
     let nodes_b = &sets[node_id_b];
 
-    // count amount of edges between both sets (bidirectional -> onsoly one side-comparison)
+    // count number of edges between both sets (bidirectional -> only one side-comparison)
     let mut connecting_a_b = 0;
     for node in nodes_a {
         let neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
@@ -303,7 +303,7 @@ fn get_priority(
         }
     }
 
-    // amount of nodes that have a connection to outside
+    // number of nodes that have a connection to outside
     let mut border_nodes_a = 0;
     for node in nodes_a {
         let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
@@ -315,7 +315,7 @@ fn get_priority(
         }
     }
 
-    // amount of nodes that have a connection to outside
+    // number of nodes that have a connection to outside
     let mut border_nodes_b = 0;
     for node in nodes_b {
         let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
@@ -327,7 +327,7 @@ fn get_priority(
         }
     }
 
-    // amount of nodes that have a connection outside AFTER union of sets
+    // number of nodes that have a connection outside AFTER union of sets
     let mut new_border_nodes = 0;
     for node in nodes_a {
         let node_neighbors = graph_helper::get_up_neighbors(*node, edges, up_offset);
