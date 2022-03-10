@@ -1,5 +1,7 @@
 # Personalizable Route Planning (PRP)
 
+[master-thesis(pdf)](https://elib.uni-stuttgart.de/handle/11682/11805)
+
 based on [related work](https://ad-publications.cs.uni-freiburg.de/GIS_personal_FS_2015.pdf) using [OSM](openstreetmap.org/) data. download `osm.pbf` files from [geofabrik](https://download.geofabrik.de/)
 
 ![screenshot](./web_client.png)
