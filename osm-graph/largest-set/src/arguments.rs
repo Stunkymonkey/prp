@@ -1,23 +1,23 @@
-use clap::{App, Arg};
+use clap::{Arg, Command};
 
 pub fn get_arguments() -> clap::Result<(String, String)> {
-    let matches = App::new("fmi_largest_set")
+    let matches = Command::new("fmi_largest_set")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about("extract largest disjoint set")
         .arg(
-            Arg::with_name("input-file")
+            Arg::new("input-file")
                 .help("the input fmi-file")
                 .takes_value(true)
-                .short("i")
+                .short('i')
                 .long("input")
                 .required(true),
         )
         .arg(
-            Arg::with_name("output-file")
+            Arg::new("output-file")
                 .help("the output fmi-file")
                 .takes_value(true)
-                .short("o")
+                .short('o')
                 .long("output")
                 .required(true),
         )

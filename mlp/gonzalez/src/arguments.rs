@@ -1,40 +1,40 @@
-use clap::{values_t, App, Arg};
+use clap::{Arg, Command};
 
 pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
-    let matches = App::new("mlp_hop_distance")
+    let matches = Command::new("mlp_hop_distance")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about("generates multi-level-partition using merge-algo")
         .arg(
-            Arg::with_name("graph-file")
+            Arg::new("graph-file")
                 .help("the input file to use")
                 .takes_value(true)
-                .short("f")
+                .short('f')
                 .long("file")
                 .required(true),
         )
         .arg(
-            Arg::with_name("mlp-file")
+            Arg::new("mlp-file")
                 .help("the output file")
                 .takes_value(true)
-                .short("o")
+                .short('o')
                 .long("output")
                 .required(true),
         )
         .arg(
-            Arg::with_name("partitions")
+            Arg::new("partitions")
                 .help("how much (size of parameters) and often (amount of parameters) the graph is divided (from top to bottom)")
                 .takes_value(true)
-                .multiple(true)
-                .short("p")
+                .multiple_occurrences(true)
+                .short('p')
                 .long("partitions")
                 .required(true),
         )
         .get_matches();
 
     let mut partitions = vec![];
-    if values_t!(matches, "partitions", usize).is_ok() {
-        for val in values_t!(matches, "partitions", usize).unwrap() {
+    if matches.values_of_t::<usize>("partitions").is_ok() {
+        for val in matches.values_of_t("partitions").unwrap() {
             partitions.push(val);
         }
     }

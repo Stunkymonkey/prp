@@ -1,41 +1,41 @@
-use clap::{crate_authors, crate_version, values_t, App, Arg};
+use clap::{crate_authors, crate_version, Arg, Command};
 
 pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
-    let matches = App::new("prp-pre")
+    let matches = Command::new("prp-pre")
         .version(crate_version!())
         .author(crate_authors!())
         .about("generates overlay-graph")
         .arg(
-            Arg::with_name("graph-file")
+            Arg::new("graph-file")
                 .help("the input file to use")
                 .takes_value(true)
-                .short("f")
+                .short('f')
                 .long("file")
                 .required(true),
         )
         .arg(
-            Arg::with_name("mlp-file")
+            Arg::new("mlp-file")
                 .help("the multi-level-partition file")
                 .takes_value(true)
-                .short("m")
+                .short('m')
                 .long("mlp")
                 .conflicts_with("contraction-stop")
-                .required_unless("contraction-stop"),
+                .required_unless_present("contraction-stop"),
         )
         .arg(
-            Arg::with_name("contraction-stop")
+            Arg::new("contraction-stop")
                 .help("how much nodes are contracted")
                 .takes_value(true)
-                .short("p")
+                .short('p')
                 .long("contraction-stop")
                 .conflicts_with("mlp-file")
-                .required_unless("mlp-file"),
+                .required_unless_present("mlp-file"),
         )
         .arg(
-            Arg::with_name("output-file")
+            Arg::new("output-file")
                 .help("the output file")
                 .takes_value(true)
-                .short("o")
+                .short('o')
                 .long("output")
                 .required(true),
         )
@@ -45,7 +45,9 @@ pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
     let mlp_file = matches.value_of("mlp-file").unwrap_or("");
     let contraction_stop = match matches.value_of("mlp-file") {
         Some(_value) => 1.0,
-        None => values_t!(matches, "contraction-stop", f64).unwrap_or_else(|e| e.exit())[0],
+        None => matches
+            .values_of_t::<f64>("contraction-stop")
+            .unwrap_or_else(|e| e.exit())[0],
     };
     let output_file = matches.value_of("output-file").unwrap();
 

@@ -1,7 +1,7 @@
 use crate::constants::*;
 
 use actix_web::http::StatusCode;
-use actix_web::{web, ResponseError};
+use actix_web::{HttpResponse, ResponseError};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, to_string_pretty};
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -74,8 +74,8 @@ impl Display for Error {
 
 impl ResponseError for Error {
     // builds the actual response to send back when an error occurs
-    fn error_response(&self) -> web::HttpResponse {
+    fn error_response(&self) -> HttpResponse {
         let err_json = json!({ "error": self.msg });
-        web::HttpResponse::build(StatusCode::from_u16(self.status).unwrap()).json(err_json)
+        HttpResponse::build(StatusCode::from_u16(self.status).unwrap()).json(err_json)
     }
 }

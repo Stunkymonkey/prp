@@ -386,66 +386,67 @@ fn get_arguments() -> (
     bool,
     Option<String>,
 ) {
-    let matches = clap::App::new("prp_eval")
+    let matches = clap::Command::new("prp_eval")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about("provides webinterface and testing option")
         .arg(
-            clap::Arg::with_name("fmi-file")
+            clap::Arg::new("fmi-file")
                 .help("the input file to use")
                 .takes_value(true)
-                .short("f")
+                .short('f')
                 .long("file")
                 .required(true),
         )
         .arg(
-            clap::Arg::with_name("eval-file")
+            clap::Arg::new("eval-file")
                 .help("the CSV file it will evaluate")
                 .takes_value(true)
-                .short("e")
+                .short('e')
                 .long("eval-file")
                 .conflicts_with("graph-info")
-                .required_unless("graph-info"),
+                .required_unless_present("graph-info"),
         )
         .arg(
-            clap::Arg::with_name("graph-info")
+            clap::Arg::new("graph-info")
                 .help("export graph info")
-                .short("g")
+                .short('g')
                 .long("graph-info")
                 .conflicts_with_all(&["eval-file", "type"])
-                .required_unless_one(&["eval-file", "type"]),
+                .required_unless_present_any(&["eval-file", "type"]),
         )
         .arg(
-            clap::Arg::with_name("type")
+            clap::Arg::new("type")
                 .help("What kind of evaluation will be done")
                 .takes_value(true)
-                .short("t")
+                .short('t')
                 .long("type")
                 .conflicts_with("graph-info")
-                .required_unless("graph-info")
+                .required_unless_present("graph-info")
                 .possible_values(&["time", "count", "export", "check"]),
         )
         .arg(
-            clap::Arg::with_name("query")
+            clap::Arg::new("query")
                 .help("What type of query will be used")
                 .takes_value(true)
-                .short("q")
+                .short('q')
                 .long("query")
                 .required(true)
                 .possible_values(&["normal", "bi", "pch", "pcrp", "prp"]),
         )
         .arg(
-            clap::Arg::with_name("export-path")
+            clap::Arg::new("export-path")
                 .help("where to export to")
                 .takes_value(true)
-                .short("x")
+                .short('x')
                 .long("export"),
         )
         .get_matches();
 
-    let eval_type = clap::value_t!(matches.value_of("type"), Vals);
-    let query_type =
-        clap::value_t!(matches.value_of("query"), QueryType).unwrap_or_else(|e| e.exit());
+    let eval_type = matches.value_of_t::<Vals>("type");
+    let query_type = matches
+        .value_of_t::<QueryType>("query")
+        .unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),

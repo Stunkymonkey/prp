@@ -212,9 +212,9 @@ async fn main() -> std::io::Result<()> {
         ));
         App::new()
             .wrap(middleware::Logger::default())
-            .data(web::JsonConfig::default().limit(1024))
+            .app_data(web::JsonConfig::default().limit(1024))
             .app_data(data_ref.clone())
-            .data(dijkstra)
+            .app_data(dijkstra)
             .service(shortest_path)
             .service(metrics)
             .service(actix_files::Files::new("/", html_path).index_file("index.html"))
@@ -226,38 +226,39 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn get_arguments() -> (String, String, QueryType) {
-    let matches = clap::App::new("prp_web")
+    let matches = clap::Command::new("prp_web")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about("provides webinterface and testing option")
         .arg(
-            clap::Arg::with_name("fmi-file")
+            clap::Arg::new("fmi-file")
                 .help("the input file to use")
                 .takes_value(true)
-                .short("f")
+                .short('f')
                 .long("file")
                 .required(true),
         )
         .arg(
-            clap::Arg::with_name("port")
+            clap::Arg::new("port")
                 .help("the port the webserver will bind to")
                 .takes_value(true)
-                .short("p")
+                .short('p')
                 .long("port")
                 .default_value("8080"),
         )
         .arg(
-            clap::Arg::with_name("query")
+            clap::Arg::new("query")
                 .help("What type of query will be used")
                 .takes_value(true)
-                .short("q")
+                .short('q')
                 .long("query")
                 .required(true)
                 .possible_values(&["normal", "bi", "pch", "pcrp", "prp"]),
         )
         .get_matches();
-    let query_type =
-        clap::value_t!(matches.value_of("query"), QueryType).unwrap_or_else(|e| e.exit());
+    let query_type = matches
+        .value_of_t::<QueryType>("query")
+        .unwrap_or_else(|e| e.exit());
 
     (
         matches.value_of("fmi-file").unwrap().to_string(),

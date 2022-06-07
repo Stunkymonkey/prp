@@ -1,39 +1,42 @@
-use clap::{values_t, App, Arg};
+use clap::{Arg, Command};
 
 pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
-    let matches = App::new("mlp_kmeans")
+    let matches = Command::new("mlp_kmeans")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
         .about("generates multi-level-partition using kmeans")
         .arg(
-            Arg::with_name("graph-file")
+            Arg::new("graph-file")
                 .help("the input file to use")
                 .takes_value(true)
-                .short("f")
+                .short('f')
                 .long("file")
                 .required(true),
         )
         .arg(
-            Arg::with_name("mlp-file")
+            Arg::new("mlp-file")
                 .help("the output file")
                 .takes_value(true)
-                .short("o")
+                .short('o')
                 .long("output")
                 .required(true),
         )
         .arg(
-            Arg::with_name("partitions")
+            Arg::new("partitions")
                 .help("how much (size of parameters) and often (amount of parameters) the graph is divided (from top to bottom)")
                 .takes_value(true)
-                .multiple(true)
-                .short("p")
+                .multiple_values(true)
+                .short('p')
                 .long("partitions")
                 .required(true),
         )
         .get_matches();
 
     let mut partitions = vec![];
-    for val in values_t!(matches, "partitions", usize).unwrap_or_else(|e| e.exit()) {
+    for val in matches
+        .values_of_t("partitions")
+        .unwrap_or_else(|e| e.exit())
+    {
         // println!("divide: {}", val);
         partitions.push(val);
     }
