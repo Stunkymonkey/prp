@@ -77,7 +77,7 @@ fn main() {
     );
     println!("Contraction in: {:?}", contraction_time.elapsed());
 
-    let edge_costs: Vec<Cost> = edges.iter().map(|e| e.cost.clone()).flatten().collect();
+    let edge_costs: Vec<Cost> = edges.iter().flat_map(|e| e.cost.clone()).collect();
 
     let grid_time = Instant::now();
     let mut grid_offset = Vec::<GridId>::new();

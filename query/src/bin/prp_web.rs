@@ -253,7 +253,7 @@ fn get_arguments() -> (String, String, QueryType) {
                 .short('q')
                 .long("query")
                 .required(true)
-                .possible_values(&["normal", "bi", "pch", "pcrp", "prp"]),
+                .possible_values(["normal", "bi", "pch", "pcrp", "prp"]),
         )
         .get_matches();
     let query_type = matches

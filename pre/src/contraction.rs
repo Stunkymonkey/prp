@@ -110,16 +110,16 @@ fn revert_indices(edges: &mut Vec<Edge>) {
 fn level_contraction(
     level: Level,
     remaining_nodes: &mut BTreeSet<NodeId>,
-    mut independent_set_flags: &mut ValidFlag,
-    mut heuristics: &mut Vec<usize>,
-    deleted_neighbors: &mut Vec<usize>,
+    independent_set_flags: &mut ValidFlag,
+    heuristics: &mut [usize],
+    deleted_neighbors: &mut [usize],
     shortcut_id: &AtomicUsize,
     resulting_edges: &mut Vec<Edge>,
     rank: &mut Rank,
     nodes: &mut Vec<Node>,
-    mut edges: &mut Vec<Edge>,
-    mut up_offset: &mut Vec<EdgeId>,
-    mut down_offset: &mut Vec<EdgeId>,
+    edges: &mut Vec<Edge>,
+    up_offset: &mut Vec<EdgeId>,
+    down_offset: &mut Vec<EdgeId>,
     down_index: &mut Vec<EdgeId>,
     mut contracted_nodes_amount: usize,
     contraction_stop: f64,
@@ -136,7 +136,7 @@ fn level_contraction(
         let minimas = ordering::get_independent_set(
             remaining_nodes,
             heuristics,
-            &mut independent_set_flags,
+            independent_set_flags,
             edges,
             up_offset,
             down_offset,
@@ -282,7 +282,7 @@ fn level_contraction(
         ordering::update_neighbor_heuristics(
             neighbors,
             level,
-            &mut heuristics,
+            heuristics,
             nodes,
             deleted_neighbors,
             up_offset,
@@ -301,8 +301,7 @@ fn level_contraction(
         edges.par_extend(shortcuts);
 
         // recalc edge-indices
-        *down_index =
-            offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
+        *down_index = offset::generate_offsets(edges, up_offset, down_offset, nodes.len());
 
         // move I to their rank
         for node in &minimas {
@@ -326,11 +325,11 @@ fn level_contraction(
 }
 
 pub fn prp_contraction(
-    mut nodes: &mut Vec<Node>,
-    mut edges: &mut Vec<Edge>,
-    mut up_offset: &mut Vec<EdgeId>,
-    mut down_offset: &mut Vec<EdgeId>,
-    mut down_index: &mut Vec<EdgeId>,
+    nodes: &mut Vec<Node>,
+    edges: &mut Vec<Edge>,
+    up_offset: &mut Vec<EdgeId>,
+    down_offset: &mut Vec<EdgeId>,
+    down_index: &mut Vec<EdgeId>,
     mlp_levels: &[usize],
     contraction_stop: f64,
 ) {
@@ -381,11 +380,11 @@ pub fn prp_contraction(
             &shortcut_id,
             &mut resulting_edges,
             &mut rank,
-            &mut nodes,
-            &mut edges,
-            &mut up_offset,
-            &mut down_offset,
-            &mut down_index,
+            nodes,
+            edges,
+            up_offset,
+            down_offset,
+            down_index,
             contracted_nodes_amount,
             contraction_stop,
         );
@@ -417,17 +416,16 @@ pub fn prp_contraction(
         assert!(unique_height_set.len() - 1 == mlp_levels.len());
     }
 
-    sort_nodes_ranked(&mut edges, up_offset, down_offset, &mut nodes);
+    sort_nodes_ranked(edges, up_offset, down_offset, nodes);
 
     // and calculate the offsets
-    *down_index =
-        offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, nodes.len());
+    *down_index = offset::generate_offsets(edges, up_offset, down_offset, nodes.len());
 
     // sort edges from top to down ranks for pch-dijkstra
-    sort_edges_ranked(&mut edges, down_offset, &mut down_index, nodes);
+    sort_edges_ranked(edges, down_offset, down_index, nodes);
 
     // revert the edge-ids back to usual ids
-    revert_indices(&mut edges);
+    revert_indices(edges);
 }
 
 #[test]

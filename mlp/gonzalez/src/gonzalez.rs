@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 pub fn partition(
     partition_amount: &[usize],
     nodes: &mut [structs::Node],
-    edges: &mut Vec<Edge>,
+    edges: &mut [Edge],
 ) -> Result<(), String> {
     let mut partition_order: Vec<NodeId> = (0..nodes.len()).collect();
     let mut partition_indices: Vec<usize> = vec![0, nodes.len()];

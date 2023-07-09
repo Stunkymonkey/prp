@@ -205,10 +205,10 @@ pub fn sort_edges(method: QueryType, data: &mut BinFile) {
     }
 }
 
-fn fix_cost(edge_costs: &mut Vec<Cost>, new_edge_index: &[EdgeId], dim: usize) {
+fn fix_cost(edge_costs: &mut [Cost], new_edge_index: &[EdgeId], dim: usize) {
     for (new_index, edge_cost) in new_edge_index
         .iter()
-        .zip(edge_costs.clone().chunks_exact(dim))
+        .zip(edge_costs.to_owned().chunks_exact(dim))
     {
         for i in 0..dim {
             edge_costs[(new_index * dim) + i] = edge_cost[i];

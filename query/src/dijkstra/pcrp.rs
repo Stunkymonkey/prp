@@ -261,47 +261,34 @@ impl<E: Export> Dijkstra<E> {
     }
 
     // walk shortcuts from meeting point to end
-    fn walk_down(
-        &self,
-        edge: EdgeId,
-        is_upwards: bool,
-        mut path: &mut Vec<NodeId>,
-        edges: &[Edge],
-    ) {
-        self.resolve_edge(edge, &mut path, is_upwards, edges);
+    fn walk_down(&self, edge: EdgeId, is_upwards: bool, path: &mut Vec<NodeId>, edges: &[Edge]) {
+        resolve_edge(edge, path, is_upwards, edges);
 
         let current_edge = &edges[edge];
-        let prev;
 
-        if is_upwards {
-            prev = self.dist_up[current_edge.from];
+        let prev = if is_upwards {
+            self.dist_up[current_edge.from]
         } else {
-            prev = self.dist_down[current_edge.to];
-        }
+            self.dist_down[current_edge.to]
+        };
         if let Some(child) = prev.1 {
-            self.walk_down(child, is_upwards, &mut path, edges);
+            self.walk_down(child, is_upwards, path, edges);
         }
     }
+}
 
-    /// resolve shortcuts to original edges
-    fn resolve_edge(
-        &self,
-        edge: EdgeId,
-        mut path: &mut Vec<NodeId>,
-        is_upwards: bool,
-        edges: &[Edge],
-    ) {
-        match &edges[edge].contracted_edges {
-            Some(shortcut) => {
-                if is_upwards {
-                    self.resolve_edge(shortcut.1, &mut path, is_upwards, edges);
-                    self.resolve_edge(shortcut.0, &mut path, is_upwards, edges);
-                } else {
-                    self.resolve_edge(shortcut.0, &mut path, is_upwards, edges);
-                    self.resolve_edge(shortcut.1, &mut path, is_upwards, edges);
-                }
+/// resolve shortcuts to original edges
+fn resolve_edge(edge: EdgeId, path: &mut Vec<NodeId>, is_upwards: bool, edges: &[Edge]) {
+    match &edges[edge].contracted_edges {
+        Some(shortcut) => {
+            if is_upwards {
+                resolve_edge(shortcut.1, path, is_upwards, edges);
+                resolve_edge(shortcut.0, path, is_upwards, edges);
+            } else {
+                resolve_edge(shortcut.0, path, is_upwards, edges);
+                resolve_edge(shortcut.1, path, is_upwards, edges);
             }
-            None => path.push(edge),
         }
+        None => path.push(edge),
     }
 }

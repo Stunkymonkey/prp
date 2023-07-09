@@ -35,7 +35,7 @@ impl HopBFS {
         edges: &[Edge],
         offset: &[EdgeId],
         current_set: &BTreeSet<NodeId>,
-        distances: &mut Vec<(Cost, NodeId)>,
+        distances: &mut [(Cost, NodeId)],
     ) {
         self.reset_state();
 

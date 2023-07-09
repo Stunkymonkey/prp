@@ -122,8 +122,7 @@ pub fn merge(
         // collect all neighbors
         let mut neighbors: Vec<NodeId> = sets[set_a]
             .iter()
-            .map(|node| graph_helper::get_up_neighbors(*node, edges, &up_offset))
-            .flatten()
+            .flat_map(|node| graph_helper::get_up_neighbors(*node, edges, &up_offset))
             .collect();
         neighbors.par_sort_unstable();
         neighbors.dedup();

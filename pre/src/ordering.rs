@@ -45,7 +45,7 @@ pub fn calculate_heuristics(
 pub fn update_neighbor_heuristics(
     neighbors: Vec<NodeId>,
     level_height: Level,
-    heuristics: &mut Vec<usize>,
+    heuristics: &mut [usize],
     nodes: &[Node],
     deleted_neighbors: &[NodeId],
     up_offset: &[EdgeId],
@@ -69,18 +69,16 @@ pub fn get_independent_set(
     down_offset: &[EdgeId],
     down_index: &[NodeId],
 ) -> Vec<NodeId> {
-    let subset: Vec<NodeId>;
     let mut remaining_nodes_vector: Vec<NodeId> = remaining_nodes.iter().copied().collect();
-    if remaining_nodes.len() > 10 {
+    let subset: Vec<NodeId> = if remaining_nodes.len() > 10 {
         // sort remaining_nodes via heuristic
         remaining_nodes_vector.par_sort_unstable_by_key(|&node| heuristics[node]);
 
         // take lower 1/10 and round up by adding the divider minus one
-        subset =
-            (&remaining_nodes_vector[0..((remaining_nodes_vector.len() + 10 - 1) / 10)]).to_vec();
+        remaining_nodes_vector[0..((remaining_nodes_vector.len() + 10 - 1) / 10)].to_vec()
     } else {
-        subset = remaining_nodes_vector;
-    }
+        remaining_nodes_vector
+    };
 
     minimas_bool.invalidate_all();
     // mark all neighbors with greater equal value as invalid

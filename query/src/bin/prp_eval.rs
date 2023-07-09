@@ -413,7 +413,7 @@ fn get_arguments() -> (
                 .short('g')
                 .long("graph-info")
                 .conflicts_with_all(&["eval-file", "type"])
-                .required_unless_present_any(&["eval-file", "type"]),
+                .required_unless_present_any(["eval-file", "type"]),
         )
         .arg(
             clap::Arg::new("type")
@@ -423,7 +423,7 @@ fn get_arguments() -> (
                 .long("type")
                 .conflicts_with("graph-info")
                 .required_unless_present("graph-info")
-                .possible_values(&["time", "count", "export", "check"]),
+                .possible_values(["time", "count", "export", "check"]),
         )
         .arg(
             clap::Arg::new("query")
@@ -432,7 +432,7 @@ fn get_arguments() -> (
                 .short('q')
                 .long("query")
                 .required(true)
-                .possible_values(&["normal", "bi", "pch", "pcrp", "prp"]),
+                .possible_values(["normal", "bi", "pch", "pcrp", "prp"]),
         )
         .arg(
             clap::Arg::new("export-path")

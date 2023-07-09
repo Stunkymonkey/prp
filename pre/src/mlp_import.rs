@@ -3,7 +3,7 @@ use crate::fmi_import::file_reader;
 
 pub fn read_file(
     file_path: &str,
-    nodes: &mut Vec<Node>,
+    nodes: &mut [Node],
     mlp_levels: &mut Vec<usize>,
 ) -> std::io::Result<()> {
     let mut mlp_amount = 0;
