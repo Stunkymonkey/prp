@@ -6,5 +6,10 @@
       brotli # web
       glpk # pre
       minizip # pbfextractor
+      # rust
+      cargo
+      rustfmt
+      clippy
+      cargo-outdated
     ];
 }
