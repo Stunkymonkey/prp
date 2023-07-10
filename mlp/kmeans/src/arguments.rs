@@ -1,6 +1,6 @@
-use clap::{Arg, Command};
+use clap::{Arg, Command, value_parser};
 
-pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
+pub fn get_arguments() -> clap::error::Result<(String, String, Vec<usize>)> {
     let matches = Command::new("mlp_kmeans")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -8,7 +8,7 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
         .arg(
             Arg::new("graph-file")
                 .help("the input file to use")
-                .takes_value(true)
+                .num_args(1)
                 .short('f')
                 .long("file")
                 .required(true),
@@ -16,7 +16,7 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
         .arg(
             Arg::new("mlp-file")
                 .help("the output file")
-                .takes_value(true)
+                .num_args(1)
                 .short('o')
                 .long("output")
                 .required(true),
@@ -24,25 +24,20 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>)> {
         .arg(
             Arg::new("partitions")
                 .help("how much (size of parameters) and often (amount of parameters) the graph is divided (from top to bottom)")
-                .takes_value(true)
-                .multiple_values(true)
+                .num_args(1..)
                 .short('p')
                 .long("partitions")
-                .required(true),
+                .required(true)
+                .value_parser(value_parser!(usize)),
         )
         .get_matches();
 
-    let mut partitions = vec![];
-    for val in matches
-        .values_of_t("partitions")
-        .unwrap_or_else(|e| e.exit())
-    {
-        // println!("divide: {}", val);
-        partitions.push(val);
-    }
+    let partitions = matches
+        .get_many("partitions")
+        .expect("`partitions` are required").copied().collect();
 
-    let fmi_file = matches.value_of("graph-file").unwrap();
-    let mlp_file = matches.value_of("mlp-file").unwrap();
+    let fmi_file = matches.get_one::<String>("graph-file").expect("`graph-file` is required");
+    let mlp_file = matches.get_one::<String>("mlp-file").expect("`mlp-file` is required");
 
     Ok((fmi_file.to_string(), mlp_file.to_string(), partitions))
 }

@@ -1,6 +1,6 @@
-use clap::{Arg, Command};
+use clap::{Arg, Command, value_parser};
 
-pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)> {
+pub fn get_arguments() -> clap::error::Result<(String, String, Vec<usize>, Vec<usize>)> {
     let matches = Command::new("mlp_merge")
         .version(clap::crate_version!())
         .author(clap::crate_authors!())
@@ -8,7 +8,7 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)>
         .arg(
             Arg::new("graph-file")
                 .help("the input file to use")
-                .takes_value(true)
+                .num_args(1)
                 .short('f')
                 .long("file")
                 .required(true),
@@ -16,7 +16,7 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)>
         .arg(
             Arg::new("mlp-file")
                 .help("the output file")
-                .takes_value(true)
+                .num_args(1)
                 .short('o')
                 .long("output")
                 .required(true),
@@ -24,43 +24,30 @@ pub fn get_arguments() -> clap::Result<(String, String, Vec<usize>, Vec<usize>)>
         .arg(
             Arg::new("partitions")
                 .help("how many partitions (size of parameters) and often (amount of parameters) the graph is stored (from top to bottom)")
-                .takes_value(true)
-                .multiple_occurrences(true)
+                .num_args(1..)
                 .short('p')
                 .long("partitions")
                 .conflicts_with("sizes")
-                .required_unless_present("sizes"),
+                .required_unless_present("sizes")
+                .value_parser(value_parser!(usize)),
         )
         .arg(
             Arg::new("sizes")
                 .help("how much nodes should be in each partition (from bottom to up)")
-                .takes_value(true)
-                .multiple_occurrences(true)
+                .num_args(1..)
                 .short('s')
                 .long("sizes")
                 .conflicts_with("partitions")
-                .required_unless_present("partitions"),
+                .required_unless_present("partitions")
+                .value_parser(value_parser!(usize)),
         )
         .get_matches();
 
-    let mut partitions = vec![];
-    if matches.values_of_t::<usize>("partitions").is_ok() {
-        for val in matches.values_of_t::<usize>("partitions").unwrap() {
-            // println!("divide: {}", val);
-            partitions.push(val);
-        }
-    }
+    let partitions = if matches.get_many::<usize>("partitions").is_some() {matches.get_many("partitions").unwrap().copied().collect()} else {vec![]};
+    let sizes = if matches.get_many::<usize>("sizes").is_some() {matches.get_many("sizes").unwrap().copied().collect()} else {vec![]};
 
-    let mut sizes = vec![];
-    if matches.values_of_t::<usize>("sizes").is_ok() {
-        for val in matches.values_of_t::<usize>("sizes").unwrap() {
-            // println!("divide: {}", val);
-            sizes.push(val);
-        }
-    }
-
-    let fmi_file = matches.value_of("graph-file").unwrap();
-    let mlp_file = matches.value_of("mlp-file").unwrap();
+    let fmi_file = matches.get_one::<String>("graph-file").expect("`graph-file` is required");
+    let mlp_file = matches.get_one::<String>("mlp-file").expect("`mlp-file` is required");
 
     Ok((
         fmi_file.to_string(),

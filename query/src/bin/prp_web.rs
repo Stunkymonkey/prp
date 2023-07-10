@@ -205,11 +205,11 @@ async fn main() -> std::io::Result<()> {
     println!("Starting server at: http://localhost:{}", port);
     HttpServer::new(move || {
         // initialize thread-local dijkstra
-        let dijkstra = RefCell::new(prp_query::dijkstra::get(
+        let dijkstra = web::Data::new(RefCell::new(prp_query::dijkstra::get(
             query_type,
             amount_nodes,
             NoOp::new(),
-        ));
+        )));
         App::new()
             .wrap(middleware::Logger::default())
             .app_data(web::JsonConfig::default().limit(1024))
@@ -233,7 +233,7 @@ fn get_arguments() -> (String, String, QueryType) {
         .arg(
             clap::Arg::new("fmi-file")
                 .help("the input file to use")
-                .takes_value(true)
+                .num_args(1)
                 .short('f')
                 .long("file")
                 .required(true),
@@ -241,7 +241,7 @@ fn get_arguments() -> (String, String, QueryType) {
         .arg(
             clap::Arg::new("port")
                 .help("the port the webserver will bind to")
-                .takes_value(true)
+                .num_args(1)
                 .short('p')
                 .long("port")
                 .default_value("8080"),
@@ -249,20 +249,20 @@ fn get_arguments() -> (String, String, QueryType) {
         .arg(
             clap::Arg::new("query")
                 .help("What type of query will be used")
-                .takes_value(true)
+                .num_args(1)
                 .short('q')
                 .long("query")
                 .required(true)
-                .possible_values(["normal", "bi", "pch", "pcrp", "prp"]),
+                .value_parser(clap::value_parser!(QueryType)),
         )
         .get_matches();
     let query_type = matches
-        .value_of_t::<QueryType>("query")
-        .unwrap_or_else(|e| e.exit());
+        .get_one::<QueryType>("query")
+        .expect("`query` is required");
 
     (
-        matches.value_of("fmi-file").unwrap().to_string(),
-        matches.value_of("port").unwrap().to_string(),
-        query_type,
+        matches.get_one::<String>("fmi-file").unwrap().to_string(),
+        matches.get_one::<String>("port").unwrap().to_string(),
+        *query_type,
     )
 }

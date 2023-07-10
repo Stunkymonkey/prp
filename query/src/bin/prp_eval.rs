@@ -10,6 +10,7 @@ use std::time::Instant;
 use prp_query::query_export::*;
 use prp_query::*;
 
+#[derive(Copy, Clone)]
 enum Vals {
     Time,
     Count,
@@ -393,7 +394,7 @@ fn get_arguments() -> (
         .arg(
             clap::Arg::new("fmi-file")
                 .help("the input file to use")
-                .takes_value(true)
+                .num_args(1)
                 .short('f')
                 .long("file")
                 .required(true),
@@ -401,7 +402,7 @@ fn get_arguments() -> (
         .arg(
             clap::Arg::new("eval-file")
                 .help("the CSV file it will evaluate")
-                .takes_value(true)
+                .num_args(1)
                 .short('e')
                 .long("eval-file")
                 .conflicts_with("graph-info")
@@ -412,48 +413,50 @@ fn get_arguments() -> (
                 .help("export graph info")
                 .short('g')
                 .long("graph-info")
-                .conflicts_with_all(&["eval-file", "type"])
-                .required_unless_present_any(["eval-file", "type"]),
+                .conflicts_with_all(["eval-file", "type"])
+                .required_unless_present_any(["eval-file", "type"])
+                .action(clap::ArgAction::SetTrue)
+                .value_parser(clap::value_parser!(bool)),
         )
         .arg(
             clap::Arg::new("type")
                 .help("What kind of evaluation will be done")
-                .takes_value(true)
+                .num_args(1)
                 .short('t')
                 .long("type")
                 .conflicts_with("graph-info")
                 .required_unless_present("graph-info")
-                .possible_values(["time", "count", "export", "check"]),
+                .value_parser(clap::value_parser!(Vals)),
         )
         .arg(
             clap::Arg::new("query")
                 .help("What type of query will be used")
-                .takes_value(true)
+                .num_args(1)
                 .short('q')
                 .long("query")
                 .required(true)
-                .possible_values(["normal", "bi", "pch", "pcrp", "prp"]),
+                .value_parser(clap::value_parser!(QueryType)),
         )
         .arg(
             clap::Arg::new("export-path")
                 .help("where to export to")
-                .takes_value(true)
+                .num_args(1)
                 .short('x')
                 .long("export"),
         )
         .get_matches();
 
-    let eval_type = matches.value_of_t::<Vals>("type");
+    let eval_type = matches.get_one::<Vals>("type");
     let query_type = matches
-        .value_of_t::<QueryType>("query")
-        .unwrap_or_else(|e| e.exit());
+        .get_one::<QueryType>("query")
+        .expect("`query` is required");
 
     (
-        matches.value_of("fmi-file").unwrap().to_string(),
-        matches.value_of("eval-file").map(str::to_string),
-        eval_type.ok(),
-        query_type,
-        matches.is_present("graph-info"),
-        matches.value_of("export-path").map(String::from),
+        matches.get_one::<String>("fmi-file").expect("`fmi-file` is required").to_string(),
+        matches.get_one::<String>("eval-file").cloned(),
+        eval_type.copied(),
+        *query_type,
+        matches.get_flag("graph-info"),
+        matches.get_one::<String>("export-path").cloned(),
     )
 }

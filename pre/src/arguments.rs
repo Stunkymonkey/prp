@@ -1,6 +1,6 @@
 use clap::{crate_authors, crate_version, Arg, Command};
 
-pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
+pub fn get_arguments() -> clap::error::Result<(String, String, f64, String)> {
     let matches = Command::new("prp-pre")
         .version(crate_version!())
         .author(crate_authors!())
@@ -8,7 +8,7 @@ pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
         .arg(
             Arg::new("graph-file")
                 .help("the input file to use")
-                .takes_value(true)
+                .num_args(1)
                 .short('f')
                 .long("file")
                 .required(true),
@@ -16,7 +16,7 @@ pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
         .arg(
             Arg::new("mlp-file")
                 .help("the multi-level-partition file")
-                .takes_value(true)
+                .num_args(1)
                 .short('m')
                 .long("mlp")
                 .conflicts_with("contraction-stop")
@@ -25,7 +25,7 @@ pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
         .arg(
             Arg::new("contraction-stop")
                 .help("how much nodes are contracted")
-                .takes_value(true)
+                .num_args(1)
                 .short('p')
                 .long("contraction-stop")
                 .conflicts_with("mlp-file")
@@ -34,22 +34,24 @@ pub fn get_arguments() -> clap::Result<(String, String, f64, String)> {
         .arg(
             Arg::new("output-file")
                 .help("the output file")
-                .takes_value(true)
+                .num_args(1)
                 .short('o')
                 .long("output")
                 .required(true),
         )
         .get_matches();
 
-    let fmi_file = matches.value_of("graph-file").unwrap();
-    let mlp_file = matches.value_of("mlp-file").unwrap_or("");
-    let contraction_stop = match matches.value_of("mlp-file") {
+    let fmi_file = matches.get_one::<String>("graph-file").expect("`graph-file` is required");
+    let binding = "".to_string();
+    let mlp_file = matches.get_one::<String>("mlp-file").unwrap_or(&binding);
+
+    let contraction_stop = match matches.get_one::<String>("mlp-file") {
         Some(_value) => 1.0,
-        None => matches
-            .values_of_t::<f64>("contraction-stop")
-            .unwrap_or_else(|e| e.exit())[0],
+        None => *matches
+            .get_one::<f64>("contraction-stop")
+            .expect("unable to read `contraction-stop` parameter"),
     };
-    let output_file = matches.value_of("output-file").unwrap();
+    let output_file = matches.get_one::<String>("output-file").expect("`output-file` is required");
 
     Ok((
         fmi_file.to_string(),
