@@ -54,7 +54,7 @@ pub fn calculate_levels(
         })
         .collect();
 
-    for (node_id, mut node) in nodes.iter_mut().enumerate() {
+    for (node_id, node) in nodes.iter_mut().enumerate() {
         let node_edges =
             graph_helper::get_all_edge_ids(node_id, up_offset, down_offset, down_index);
         node.level = node_edges

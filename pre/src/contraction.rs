@@ -360,7 +360,7 @@ pub fn prp_contraction(
         }
 
         // assign core-edge
-        for mut edge in edges.iter_mut() {
+        for edge in edges.iter_mut() {
             edge.level = Some(level);
         }
 
@@ -395,7 +395,7 @@ pub fn prp_contraction(
     assert_eq!(unique_set.len(), edges.len());
 
     // assign each top edge to top level
-    for mut edge in edges.iter_mut() {
+    for edge in edges.iter_mut() {
         edge.level = Some(mlp_levels.len());
     }
 
