@@ -452,7 +452,10 @@ fn get_arguments() -> (
         .expect("`query` is required");
 
     (
-        matches.get_one::<String>("fmi-file").expect("`fmi-file` is required").to_string(),
+        matches
+            .get_one::<String>("fmi-file")
+            .expect("`fmi-file` is required")
+            .to_string(),
         matches.get_one::<String>("eval-file").cloned(),
         eval_type.copied(),
         *query_type,

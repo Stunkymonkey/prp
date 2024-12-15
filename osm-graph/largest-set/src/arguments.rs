@@ -23,8 +23,12 @@ pub fn get_arguments() -> clap::error::Result<(String, String)> {
         )
         .get_matches();
 
-    let in_file = matches.get_one::<String>("input-file").expect("`input-file` is required");
-    let out_file = matches.get_one::<String>("output-file").expect("`output-file` is required");
+    let in_file = matches
+        .get_one::<String>("input-file")
+        .expect("`input-file` is required");
+    let out_file = matches
+        .get_one::<String>("output-file")
+        .expect("`output-file` is required");
 
     Ok((in_file.to_string(), out_file.to_string()))
 }

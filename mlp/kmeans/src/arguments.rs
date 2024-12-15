@@ -1,4 +1,4 @@
-use clap::{Arg, Command, value_parser};
+use clap::{value_parser, Arg, Command};
 
 pub fn get_arguments() -> clap::error::Result<(String, String, Vec<usize>)> {
     let matches = Command::new("mlp_kmeans")
@@ -34,10 +34,16 @@ pub fn get_arguments() -> clap::error::Result<(String, String, Vec<usize>)> {
 
     let partitions = matches
         .get_many("partitions")
-        .expect("`partitions` are required").copied().collect();
+        .expect("`partitions` are required")
+        .copied()
+        .collect();
 
-    let fmi_file = matches.get_one::<String>("graph-file").expect("`graph-file` is required");
-    let mlp_file = matches.get_one::<String>("mlp-file").expect("`mlp-file` is required");
+    let fmi_file = matches
+        .get_one::<String>("graph-file")
+        .expect("`graph-file` is required");
+    let mlp_file = matches
+        .get_one::<String>("mlp-file")
+        .expect("`mlp-file` is required");
 
     Ok((fmi_file.to_string(), mlp_file.to_string(), partitions))
 }

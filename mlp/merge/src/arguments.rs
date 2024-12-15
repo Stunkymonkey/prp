@@ -1,4 +1,4 @@
-use clap::{Arg, Command, value_parser};
+use clap::{value_parser, Arg, Command};
 
 pub fn get_arguments() -> clap::error::Result<(String, String, Vec<usize>, Vec<usize>)> {
     let matches = Command::new("mlp_merge")
@@ -43,11 +43,23 @@ pub fn get_arguments() -> clap::error::Result<(String, String, Vec<usize>, Vec<u
         )
         .get_matches();
 
-    let partitions = if matches.get_many::<usize>("partitions").is_some() {matches.get_many("partitions").unwrap().copied().collect()} else {vec![]};
-    let sizes = if matches.get_many::<usize>("sizes").is_some() {matches.get_many("sizes").unwrap().copied().collect()} else {vec![]};
+    let partitions = if matches.get_many::<usize>("partitions").is_some() {
+        matches.get_many("partitions").unwrap().copied().collect()
+    } else {
+        vec![]
+    };
+    let sizes = if matches.get_many::<usize>("sizes").is_some() {
+        matches.get_many("sizes").unwrap().copied().collect()
+    } else {
+        vec![]
+    };
 
-    let fmi_file = matches.get_one::<String>("graph-file").expect("`graph-file` is required");
-    let mlp_file = matches.get_one::<String>("mlp-file").expect("`mlp-file` is required");
+    let fmi_file = matches
+        .get_one::<String>("graph-file")
+        .expect("`graph-file` is required");
+    let mlp_file = matches
+        .get_one::<String>("mlp-file")
+        .expect("`mlp-file` is required");
 
     Ok((
         fmi_file.to_string(),
