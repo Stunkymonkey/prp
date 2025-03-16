@@ -3,7 +3,7 @@ use ndarray::Array2;
 use crate::constants::*;
 use crate::structs::*;
 
-pub fn partition(partitions: &[usize], nodes: &mut Vec<Node>) -> Result<(), String> {
+pub fn partition(partitions: &[usize], nodes: &mut [Node]) -> Result<(), String> {
     // ids of all nodes
     let mut partition_order: Vec<NodeId> = (0..nodes.len()).collect();
     // indices which divides the partitions (including all at the beginning)

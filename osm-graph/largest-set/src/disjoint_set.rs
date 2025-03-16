@@ -4,8 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub fn get_largest_disjoint_set(nodes: &[Node], edges: &[Edge]) -> Vec<NodeId> {
     // create offsets
-    let mut up_offset = Vec::<EdgeId>::new();
-    up_offset.resize(nodes.len() + 1, 0);
+    let mut up_offset = vec![0; nodes.len() + 1];
     let sources: Vec<EdgeId> = edges.par_iter().map(|x| x.from).rev().collect();
     offset::fill_offset(sources, &mut up_offset);
 

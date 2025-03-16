@@ -27,7 +27,7 @@ pub fn calculate_heuristics(
     let mut heuristics: Vec<usize> = Vec::with_capacity(nodes.len());
     for (node_id, node) in nodes.iter().enumerate() {
         if node.level != level_height {
-            heuristics.push(std::usize::MAX);
+            heuristics.push(usize::MAX);
         } else {
             heuristics.push(calculate_single_heuristic(
                 node_id,
@@ -119,15 +119,16 @@ fn independent_set_test() {
         remaining_nodes.insert(node_id);
     }
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
-    edges.push(Edge::new(2, 3, vec![1.0]));
-    edges.push(Edge::new(3, 4, vec![1.0]));
-    edges.push(Edge::new(4, 5, vec![1.0]));
-    edges.push(Edge::new(5, 6, vec![1.0]));
-    edges.push(Edge::new(6, 7, vec![1.0]));
-    edges.push(Edge::new(7, 8, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![1.0]),
+        Edge::new(1, 2, vec![1.0]),
+        Edge::new(2, 3, vec![1.0]),
+        Edge::new(3, 4, vec![1.0]),
+        Edge::new(4, 5, vec![1.0]),
+        Edge::new(5, 6, vec![1.0]),
+        Edge::new(6, 7, vec![1.0]),
+        Edge::new(7, 8, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();

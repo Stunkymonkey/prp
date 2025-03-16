@@ -1,6 +1,6 @@
 use super::*;
 use hop_bfs::HopBFS;
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use rand::{rngs::StdRng, SeedableRng};
 use std::collections::BTreeSet;
 
@@ -13,8 +13,7 @@ pub fn partition(
     let mut partition_indices: Vec<usize> = vec![0, nodes.len()];
     let mut rng: Box<StdRng> = Box::new(SeedableRng::seed_from_u64(42));
 
-    let mut up_offset = Vec::<EdgeId>::new();
-    up_offset.resize(nodes.len() + 1, 0);
+    let mut up_offset = vec![0; nodes.len() + 1];
     let sources: Vec<EdgeId> = edges.iter().map(|x| x.from).rev().collect();
     offset::fill_offset(sources, &mut up_offset);
 

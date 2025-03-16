@@ -116,7 +116,7 @@ fn level_contraction(
     shortcut_id: &AtomicUsize,
     resulting_edges: &mut Vec<Edge>,
     rank: &mut Rank,
-    nodes: &mut Vec<Node>,
+    nodes: &mut [Node],
     edges: &mut Vec<Edge>,
     up_offset: &mut Vec<EdgeId>,
     down_offset: &mut Vec<EdgeId>,
@@ -325,7 +325,7 @@ fn level_contraction(
 }
 
 pub fn prp_contraction(
-    nodes: &mut Vec<Node>,
+    nodes: &mut [Node],
     edges: &mut Vec<Edge>,
     up_offset: &mut Vec<EdgeId>,
     down_offset: &mut Vec<EdgeId>,
@@ -437,50 +437,52 @@ fn revert_indices_test() {
     // 1 -> 2 -> 3 -> 4
 
     let amount_nodes = 10;
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::test(6, 4, vec![20.0], 8));
-    edges.push(Edge::test(6, 3, vec![20.0], 7));
-    edges.push(Edge::test(5, 6, vec![1.0], 9));
-    edges.push(Edge::test(5, 7, vec![5.0], 6));
-    edges.push(Edge::shortcut(5, 3, vec![21.0], 12, (9, 7)));
-    edges.push(Edge::test(0, 5, vec![5.0], 0));
-    edges.push(Edge::test(3, 4, vec![20.0], 1));
-    edges.push(Edge::test(2, 3, vec![1.0], 2));
-    edges.push(Edge::test(8, 9, vec![1.0], 11));
-    edges.push(Edge::test(7, 8, vec![1.0], 5));
-    edges.push(Edge::test(1, 2, vec![1.0], 3));
-    edges.push(Edge::test(0, 1, vec![1.0], 4));
-    edges.push(Edge::shortcut(0, 7, vec![10.0], 13, (0, 6)));
-    edges.push(Edge::shortcut(0, 2, vec![2.0], 16, (4, 3)));
-    edges.push(Edge::test(9, 4, vec![1.0], 10));
-    edges.push(Edge::shortcut(7, 9, vec![2.0], 15, (5, 11)));
-    edges.push(Edge::shortcut(7, 4, vec![3.0], 17, (15, 10)));
-    edges.push(Edge::shortcut(2, 4, vec![21.0], 14, (2, 1)));
+    let mut edges = vec![
+        Edge::test(6, 4, vec![20.0], 8),
+        Edge::test(6, 3, vec![20.0], 7),
+        Edge::test(5, 6, vec![1.0], 9),
+        Edge::test(5, 7, vec![5.0], 6),
+        Edge::shortcut(5, 3, vec![21.0], 12, (9, 7)),
+        Edge::test(0, 5, vec![5.0], 0),
+        Edge::test(3, 4, vec![20.0], 1),
+        Edge::test(2, 3, vec![1.0], 2),
+        Edge::test(8, 9, vec![1.0], 11),
+        Edge::test(7, 8, vec![1.0], 5),
+        Edge::test(1, 2, vec![1.0], 3),
+        Edge::test(0, 1, vec![1.0], 4),
+        Edge::shortcut(0, 7, vec![10.0], 13, (0, 6)),
+        Edge::shortcut(0, 2, vec![2.0], 16, (4, 3)),
+        Edge::test(9, 4, vec![1.0], 10),
+        Edge::shortcut(7, 9, vec![2.0], 15, (5, 11)),
+        Edge::shortcut(7, 4, vec![3.0], 17, (15, 10)),
+        Edge::shortcut(2, 4, vec![21.0], 14, (2, 1)),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
     let _down_index =
         offset::generate_offsets(&mut edges, &mut up_offset, &mut down_offset, amount_nodes);
 
-    let mut expected_edges = Vec::<Edge>::new();
-    expected_edges.push(Edge::test(0, 1, vec![1.0], 4));
-    expected_edges.push(Edge::shortcut(0, 2, vec![2.0], 16, (0, 4)));
-    expected_edges.push(Edge::test(0, 5, vec![5.0], 0));
-    expected_edges.push(Edge::shortcut(0, 7, vec![10.0], 13, (2, 10)));
-    expected_edges.push(Edge::test(1, 2, vec![1.0], 3));
-    expected_edges.push(Edge::test(2, 3, vec![1.0], 2));
-    expected_edges.push(Edge::shortcut(2, 4, vec![21.0], 14, (5, 7)));
-    expected_edges.push(Edge::test(3, 4, vec![20.0], 1));
-    expected_edges.push(Edge::shortcut(5, 3, vec![21.0], 12, (9, 11)));
-    expected_edges.push(Edge::test(5, 6, vec![1.0], 9));
-    expected_edges.push(Edge::test(5, 7, vec![5.0], 6));
-    expected_edges.push(Edge::test(6, 3, vec![20.0], 7));
-    expected_edges.push(Edge::test(6, 4, vec![20.0], 8));
-    expected_edges.push(Edge::shortcut(7, 4, vec![3.0], 17, (15, 17)));
-    expected_edges.push(Edge::test(7, 8, vec![1.0], 5));
-    expected_edges.push(Edge::shortcut(7, 9, vec![2.0], 15, (14, 16)));
-    expected_edges.push(Edge::test(8, 9, vec![1.0], 11));
-    expected_edges.push(Edge::test(9, 4, vec![1.0], 10));
+    let expected_edges = vec![
+        Edge::test(0, 1, vec![1.0], 4),
+        Edge::shortcut(0, 2, vec![2.0], 16, (0, 4)),
+        Edge::test(0, 5, vec![5.0], 0),
+        Edge::shortcut(0, 7, vec![10.0], 13, (2, 10)),
+        Edge::test(1, 2, vec![1.0], 3),
+        Edge::test(2, 3, vec![1.0], 2),
+        Edge::shortcut(2, 4, vec![21.0], 14, (5, 7)),
+        Edge::test(3, 4, vec![20.0], 1),
+        Edge::shortcut(5, 3, vec![21.0], 12, (9, 11)),
+        Edge::test(5, 6, vec![1.0], 9),
+        Edge::test(5, 7, vec![5.0], 6),
+        Edge::test(6, 3, vec![20.0], 7),
+        Edge::test(6, 4, vec![20.0], 8),
+        Edge::shortcut(7, 4, vec![3.0], 17, (15, 17)),
+        Edge::test(7, 8, vec![1.0], 5),
+        Edge::shortcut(7, 9, vec![2.0], 15, (14, 16)),
+        Edge::test(8, 9, vec![1.0], 11),
+        Edge::test(9, 4, vec![1.0], 10),
+    ];
 
     revert_indices(&mut edges);
 

@@ -8,14 +8,13 @@ use std::time::Instant;
 pub fn merge(
     partition_amounts: &mut Vec<usize>,
     partition_sizes: &[usize],
-    nodes: &mut Vec<Node>,
+    nodes: &mut [Node],
     edges: &[Edge],
 ) -> Result<(), String> {
     let heuristic_time = Instant::now();
 
     // create offsets
-    let mut up_offset = Vec::<EdgeId>::new();
-    up_offset.resize(nodes.len() + 1, 0);
+    let mut up_offset = vec![0; nodes.len() + 1];
     let sources: Vec<EdgeId> = edges.iter().map(|x| x.from).rev().collect();
     offset::fill_offset(sources, &mut up_offset);
 
@@ -349,5 +348,5 @@ fn get_priority(
 
     (connecting_a_b * (1 + border_nodes_a + border_nodes_b - new_border_nodes)) as f64
         / (nodes_a.len() * nodes_b.len()) as f64
-        * rng.gen_range(1.0..1.01)
+        * rng.random_range(1.0..1.01)
 }

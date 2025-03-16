@@ -142,10 +142,11 @@ fn simple_path() {
 
     let amount_nodes = 4;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![2.0]));
-    edges.push(Edge::new(1, 3, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![1.0]),
+        Edge::new(1, 2, vec![2.0]),
+        Edge::new(1, 3, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
@@ -173,13 +174,14 @@ fn shortest_path() {
 
     let amount_nodes = 6;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![9.0]));
-    edges.push(Edge::new(1, 2, vec![9.0]));
-    edges.push(Edge::new(0, 3, vec![1.0]));
-    edges.push(Edge::new(3, 4, vec![1.0]));
-    edges.push(Edge::new(4, 5, vec![1.0]));
-    edges.push(Edge::new(5, 2, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![9.0]),
+        Edge::new(1, 2, vec![9.0]),
+        Edge::new(0, 3, vec![1.0]),
+        Edge::new(3, 4, vec![1.0]),
+        Edge::new(4, 5, vec![1.0]),
+        Edge::new(5, 2, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
@@ -198,10 +200,11 @@ fn simple_line() {
     // 0->1->2->3
     let amount_nodes = 4;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
-    edges.push(Edge::new(2, 3, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![1.0]),
+        Edge::new(1, 2, vec![1.0]),
+        Edge::new(2, 3, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
@@ -223,9 +226,7 @@ fn twice() {
     // 0->1->2
     let amount_nodes = 3;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
+    let mut edges = vec![Edge::new(0, 1, vec![1.0]), Edge::new(1, 2, vec![1.0])];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
@@ -273,19 +274,20 @@ fn multiple_paths() {
 
     let amount_nodes = 10;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
-    edges.push(Edge::new(2, 3, vec![1.0]));
-    edges.push(Edge::new(3, 4, vec![20.0]));
-    edges.push(Edge::new(0, 5, vec![5.0]));
-    edges.push(Edge::new(5, 6, vec![1.0]));
-    edges.push(Edge::new(6, 4, vec![20.0]));
-    edges.push(Edge::new(6, 3, vec![20.0]));
-    edges.push(Edge::new(5, 7, vec![5.0]));
-    edges.push(Edge::new(7, 8, vec![1.0]));
-    edges.push(Edge::new(8, 9, vec![1.0]));
-    edges.push(Edge::new(9, 4, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![1.0]),
+        Edge::new(1, 2, vec![1.0]),
+        Edge::new(2, 3, vec![1.0]),
+        Edge::new(3, 4, vec![20.0]),
+        Edge::new(0, 5, vec![5.0]),
+        Edge::new(5, 6, vec![1.0]),
+        Edge::new(6, 4, vec![20.0]),
+        Edge::new(6, 3, vec![20.0]),
+        Edge::new(5, 7, vec![5.0]),
+        Edge::new(7, 8, vec![1.0]),
+        Edge::new(8, 9, vec![1.0]),
+        Edge::new(9, 4, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
@@ -333,13 +335,14 @@ fn ndim() {
 
     let amount_nodes = 6;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![9.0, 1.0]));
-    edges.push(Edge::new(0, 3, vec![1.0, 9.0]));
-    edges.push(Edge::new(1, 2, vec![9.0, 1.0]));
-    edges.push(Edge::new(2, 5, vec![9.0, 1.0]));
-    edges.push(Edge::new(3, 4, vec![1.0, 9.0]));
-    edges.push(Edge::new(4, 5, vec![1.0, 9.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![9.0, 1.0]),
+        Edge::new(0, 3, vec![1.0, 9.0]),
+        Edge::new(1, 2, vec![9.0, 1.0]),
+        Edge::new(2, 5, vec![9.0, 1.0]),
+        Edge::new(3, 4, vec![1.0, 9.0]),
+        Edge::new(4, 5, vec![1.0, 9.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();

@@ -10,6 +10,6 @@ clap = { version = "4.4", features = ["cargo"] }
 crossbeam-channel = "0.5"
 mch = { path = "./mch" }
 num_cpus = "1.13"
-ordered-float = "4.1"
+ordered-float = "5.0"
 rayon = "1.8"
 serde = { version = "1.0", features = ["derive"] }

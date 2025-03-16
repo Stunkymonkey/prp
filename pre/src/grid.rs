@@ -95,39 +95,40 @@ pub fn generate_grid(
 
 #[test]
 fn grid_grid_bounds() {
-    let mut nodes = Vec::new();
-    nodes.push(Node {
-        latitude: 10.0,
-        longitude: 30.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
-    nodes.push(Node {
-        latitude: 20.0,
-        longitude: 30.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
-    nodes.push(Node {
-        latitude: 10.0,
-        longitude: 40.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
-    nodes.push(Node {
-        latitude: 20.0,
-        longitude: 40.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
+    let nodes = vec![
+        Node {
+            latitude: 10.0,
+            longitude: 30.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+        Node {
+            latitude: 20.0,
+            longitude: 30.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+        Node {
+            latitude: 10.0,
+            longitude: 40.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+        Node {
+            latitude: 20.0,
+            longitude: 40.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+    ];
 
     let grid_bounds: GridBounds = get_min_max(&nodes);
 
@@ -140,39 +141,40 @@ fn grid_grid_bounds() {
 
 #[test]
 fn grid_id() {
-    let mut nodes = Vec::new();
-    nodes.push(Node {
-        latitude: 10.0,
-        longitude: 10.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
-    nodes.push(Node {
-        latitude: 20.0,
-        longitude: 10.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
-    nodes.push(Node {
-        latitude: 10.0,
-        longitude: 20.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
-    nodes.push(Node {
-        latitude: 20.0,
-        longitude: 20.0,
-        rank: 0,
-        partition: INVALID_PARTITION,
-        level: INVALID_LEVEL,
-        old_id: None,
-    });
+    let nodes = vec![
+        Node {
+            latitude: 10.0,
+            longitude: 10.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+        Node {
+            latitude: 20.0,
+            longitude: 10.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+        Node {
+            latitude: 10.0,
+            longitude: 20.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+        Node {
+            latitude: 20.0,
+            longitude: 20.0,
+            rank: 0,
+            partition: INVALID_PARTITION,
+            level: INVALID_LEVEL,
+            old_id: None,
+        },
+    ];
 
     let grid_bounds: GridBounds = get_min_max(&nodes);
 

@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 clap = { version = "4.4", features = ["cargo"] }
-rand = "0.8"
+rand = "0.9"
 rayon = "1.8"
-ordered-float = "4.1"
+ordered-float = "5.0"

@@ -24,7 +24,7 @@ impl ValidFlag {
     }
 
     pub fn invalidate_all(&mut self) {
-        if self.valid_flag == std::usize::MAX {
+        if self.valid_flag == usize::MAX {
             self.nodes = vec![0; self.nodes.len()];
             self.valid_flag = 1;
         } else {

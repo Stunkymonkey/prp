@@ -1,7 +1,7 @@
 use super::*;
 
 /// fill offset array
-pub fn fill_offset(edges: Vec<NodeId>, offset: &mut Vec<usize>) {
+pub fn fill_offset(edges: Vec<NodeId>, offset: &mut [usize]) {
     for edge in edges {
         offset[edge + 1] += 1;
     }
@@ -13,7 +13,7 @@ pub fn fill_offset(edges: Vec<NodeId>, offset: &mut Vec<usize>) {
 /// make sure edges are already sorted!!
 #[allow(dead_code)]
 pub fn generate_offsets_unstable(
-    edges: &mut Vec<Edge>,
+    edges: &mut [Edge],
     up_offset: &mut Vec<EdgeId>,
     down_offset: &mut Vec<EdgeId>,
     amount_nodes: usize,

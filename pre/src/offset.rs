@@ -1,7 +1,7 @@
 use super::*;
 
 /// fill offset array
-fn fill_offset(edges: Vec<NodeId>, offset: &mut Vec<usize>) {
+fn fill_offset(edges: Vec<NodeId>, offset: &mut [usize]) {
     for edge in edges {
         offset[edge + 1] += 1;
     }
@@ -12,7 +12,7 @@ fn fill_offset(edges: Vec<NodeId>, offset: &mut Vec<usize>) {
 
 /// make sure edges are already sorted!!
 pub fn generate_offsets_unstable(
-    edges: &mut Vec<Edge>,
+    edges: &mut [Edge],
     up_offset: &mut Vec<EdgeId>,
     down_offset: &mut Vec<EdgeId>,
     amount_nodes: usize,
@@ -81,19 +81,20 @@ fn all_offsets() {
 
     let amount_nodes = 10;
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
-    edges.push(Edge::new(2, 3, vec![1.0]));
-    edges.push(Edge::new(3, 4, vec![20.0]));
-    edges.push(Edge::new(0, 5, vec![5.0]));
-    edges.push(Edge::new(5, 6, vec![1.0]));
-    edges.push(Edge::new(6, 4, vec![20.0]));
-    edges.push(Edge::new(6, 3, vec![20.0]));
-    edges.push(Edge::new(5, 7, vec![5.0]));
-    edges.push(Edge::new(7, 8, vec![1.0]));
-    edges.push(Edge::new(8, 9, vec![1.0]));
-    edges.push(Edge::new(9, 4, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![1.0]),
+        Edge::new(1, 2, vec![1.0]),
+        Edge::new(2, 3, vec![1.0]),
+        Edge::new(3, 4, vec![20.0]),
+        Edge::new(0, 5, vec![5.0]),
+        Edge::new(5, 6, vec![1.0]),
+        Edge::new(6, 4, vec![20.0]),
+        Edge::new(6, 3, vec![20.0]),
+        Edge::new(5, 7, vec![5.0]),
+        Edge::new(7, 8, vec![1.0]),
+        Edge::new(8, 9, vec![1.0]),
+        Edge::new(9, 4, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();

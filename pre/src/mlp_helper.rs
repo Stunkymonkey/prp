@@ -144,21 +144,22 @@ fn node_height() {
         old_id: None,
     });
 
-    let mut edges = Vec::<Edge>::new();
-    edges.push(Edge::new(0, 1, vec![1.0]));
-    edges.push(Edge::new(0, 6, vec![1.0]));
-    edges.push(Edge::new(1, 2, vec![1.0]));
-    edges.push(Edge::new(2, 3, vec![1.0]));
-    edges.push(Edge::new(3, 4, vec![1.0]));
-    edges.push(Edge::new(4, 5, vec![1.0]));
-    edges.push(Edge::new(5, 11, vec![1.0]));
-    edges.push(Edge::new(6, 7, vec![1.0]));
-    edges.push(Edge::new(7, 8, vec![1.0]));
-    edges.push(Edge::new(8, 9, vec![1.0]));
-    edges.push(Edge::new(9, 10, vec![1.0]));
-    edges.push(Edge::new(10, 11, vec![1.0]));
-    edges.push(Edge::new(11, 13, vec![1.0]));
-    edges.push(Edge::new(12, 5, vec![1.0]));
+    let mut edges = vec![
+        Edge::new(0, 1, vec![1.0]),
+        Edge::new(0, 6, vec![1.0]),
+        Edge::new(1, 2, vec![1.0]),
+        Edge::new(2, 3, vec![1.0]),
+        Edge::new(3, 4, vec![1.0]),
+        Edge::new(4, 5, vec![1.0]),
+        Edge::new(5, 11, vec![1.0]),
+        Edge::new(6, 7, vec![1.0]),
+        Edge::new(7, 8, vec![1.0]),
+        Edge::new(8, 9, vec![1.0]),
+        Edge::new(9, 10, vec![1.0]),
+        Edge::new(10, 11, vec![1.0]),
+        Edge::new(11, 13, vec![1.0]),
+        Edge::new(12, 5, vec![1.0]),
+    ];
 
     let mut up_offset = Vec::<EdgeId>::new();
     let mut down_offset = Vec::<EdgeId>::new();
