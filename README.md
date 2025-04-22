@@ -11,6 +11,7 @@ based on [related work](https://ad-publications.cs.uni-freiburg.de/GIS_personal_
 ```bash
 git submodule update --init --recursive
 cargo build --release
+cargo test --release
 ```
 
 ## Extract OSM-data
