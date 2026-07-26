@@ -11,5 +11,7 @@
       rustfmt
       clippy
       cargo-outdated
+      # analysis
+      qgis
     ];
 }
